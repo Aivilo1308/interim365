@@ -1,0 +1,348 @@
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+<!-- Sidebar Navigation -->
+<!--   <div class="sidebar" id="sidebar">
+    <div class="logo"><a href="{% url 'index' %}">I365</a></div>
+    <a href="{% url 'index' %}" class="nav-item active" title="Tableau de bord">
+      <i class="fas fa-home"></i>
+    </a>
+    <a href="{% url 'interim_recherche' %}" class="nav-item" title="Recherche candidats">
+      <i class="fas fa-user-friends"></i>
+    </a>
+    <a href="{% url 'historique_interim' %}" class="nav-item" title="Planning">
+      <i class="fas fa-calendar-alt"></i>
+    </a>
+    <a href="{% url 'interim_stats' %}" class="nav-item" title="Statistiques">
+      <i class="fas fa-chart-pie"></i>
+    </a>
+    <a href="#" class="nav-item" title="Configuration">
+      <i class="fas fa-cog"></i>
+    </a>
+    <div class="divider"></div>
+    <a href="#" class="nav-item" title="Notifications">
+      <i class="fas fa-bell"></i>
+    </a>
+    <a href="#" class="nav-item" title="Aide">
+      <i class="fas fa-question-circle"></i>
+    </a>
+  </div>
+ -->
+  <!-- *********----------------------------**************---------------------- -->
+
+  <!-- Sidebar Navigation -->
+  {% block sidebar %}
+  <div class="sidebar" id="sidebar">
+    <div class="logo"><a href="{% url 'index' %}">I365</a></div>
+    
+    <!-- TABLEAU DE BORD -->
+    <div class="nav-section">
+      <a href="{% url 'index' %}" class="nav-item active" title="Accueil">
+        <i class="fas fa-home"></i>
+      </a>
+      
+      {% if profil_utilisateur.type_profil in 'CHEF_EQUIPE,RESPONSABLE,DIRECTEUR,RH' %}
+      <a href="{% url 'index_chef_equipe' %}" class="nav-item" title="Mon Dashboard">
+        <i class="fas fa-tachometer-alt"></i>
+        {% if mes_validations_stats.a_valider > 0 %}
+        <span class="notification-badge">{{ mes_validations_stats.a_valider }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+      
+      <a href="{% url 'historique_mes_propositions' %}" class="nav-item" title="Mes propositions">
+        <i class="fas fa-chart-line"></i>
+        {% if mes_propositions_stats.soumises > 0 %}
+        <span class="notification-badge">{{ mes_propositions_stats.soumises }}</span>
+        {% endif %}
+      </a>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- DEMANDES -->
+    <div class="nav-section">
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Nouvelle demande" data-dropdown="nouvelle-demande">
+          <i class="fas fa-plus-circle"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-nouvelle-demande">
+          <a href="{% url 'interim_demande' %}" class="dropdown-item">
+            <i class="fas fa-plus"></i>
+            <span>Nouvelle demande</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Mes demandes" data-dropdown="mes-demandes">
+          <i class="fas fa-folder-open"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+          {% if mes_demandes_stats.en_attente > 0 %}
+          <span class="notification-badge">{{ mes_demandes_stats.en_attente }}</span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu" id="dropdown-mes-demandes">
+          <a href="{% url 'historique_interim' %}" class="dropdown-item">
+            <i class="fas fa-list"></i>
+            <span>Mes demandes</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Rechercher" data-dropdown="rechercher">
+          <i class="fas fa-search"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-rechercher">
+          <a href="{% url 'interim_recherche' %}" class="dropdown-item">
+            <i class="fas fa-search"></i>
+            <span>Rechercher</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Suivi" data-dropdown="suivi">
+          <i class="fas fa-chart-bar"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-suivi">
+          <a href="{% url 'interim_stats' %}" class="dropdown-item">
+            <i class="fas fa-chart-bar"></i>
+            <span>Suivi</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- ÉQUIPE & CANDIDATS -->
+    <div class="nav-section">
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Employés" data-dropdown="employes">
+          <i class="fas fa-users"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-employes">
+          <a href="{% url 'employes_liste' %}" class="dropdown-item">
+            <i class="fas fa-users"></i>
+            <span>Employés</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Propositions" data-dropdown="propositions">
+          <i class="fas fa-hand-paper"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+          {% if stats.propositions_en_attente > 0 %}
+          <span class="notification-badge">{{ stats.propositions_en_attente }}</span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu" id="dropdown-propositions">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-hand-paper"></i>
+            <span>Propositions</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Planning" data-dropdown="planning">
+          <i class="fas fa-calendar-alt"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-planning">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-calendar"></i>
+            <span>Planning</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Disponibilités" data-dropdown="disponibilites">
+          <i class="fas fa-clock"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-disponibilites">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-clock"></i>
+            <span>Disponibilités</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- VALIDATION -->
+    <div class="nav-section">
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="À valider" data-dropdown="a-valider">
+          <i class="fas fa-clipboard-check"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+          {% if mes_validations_stats.a_valider > 0 %}
+          <span class="notification-badge">{{ mes_validations_stats.a_valider }}</span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu" id="dropdown-a-valider">
+          <a href="{% url 'liste_interim_validation' %}" class="dropdown-item">
+            <i class="fas fa-clipboard-check"></i>
+            <span>À valider</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Workflow" data-dropdown="workflow">
+          <i class="fas fa-project-diagram"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-workflow">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-project-diagram"></i>
+            <span>Workflow</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Notifications" data-dropdown="notifications">
+          <i class="fas fa-bell"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+          {% if notifications|length > 0 %}
+          <span class="notification-badge">{{ notifications|length }}</span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu" id="dropdown-notifications">
+          <a href="{% url 'notifications' %}" class="dropdown-item">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Actions" data-dropdown="actions">
+          <i class="fas fa-tasks"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-actions">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-tasks"></i>
+            <span>Actions</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- ANALYSES -->
+    <div class="nav-section">
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Statistiques" data-dropdown="statistiques">
+          <i class="fas fa-chart-pie"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-statistiques">
+          <a href="{% url 'interim_stats' %}" class="dropdown-item">
+            <i class="fas fa-chart-pie"></i>
+            <span>Statistiques</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Rapports" data-dropdown="rapports">
+          <i class="fas fa-file-alt"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-rapports">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-file-alt"></i>
+            <span>Rapports</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Exports" data-dropdown="exports">
+          <i class="fas fa-file-export"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-exports">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-file-export"></i>
+            <span>Exports</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- CONFIGURATION (si admin) -->
+    {% if profil_utilisateur.type_profil in 'ADMIN,RH' %}
+    <div class="nav-section">
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Système" data-dropdown="systeme">
+          <i class="fas fa-cog"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-systeme">
+          <a href="{% url 'config_parametres' %}" class="dropdown-item">
+            <i class="fas fa-cog"></i>
+            <span>Système</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Utilisateurs" data-dropdown="utilisateurs">
+          <i class="fas fa-users-cog"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-utilisateurs">
+          <a href="{% url 'config_utilisateurs' %}" class="dropdown-item">
+            <i class="fas fa-users-cog"></i>
+            <span>Utilisateurs</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Intégrations" data-dropdown="integrations">
+          <i class="fas fa-plug"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-integrations">
+          <a href="{% url 'config_integrations' %}" class="dropdown-item">
+            <i class="fas fa-plug"></i>
+            <span>Intégrations</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-item-dropdown">
+        <button class="nav-item" title="Documentation" data-dropdown="documentation">
+          <i class="fas fa-book"></i>
+          <i class="fas fa-chevron-right dropdown-arrow"></i>
+        </button>
+        <div class="dropdown-menu" id="dropdown-documentation">
+          <a href="{% url 'aide_documentation' %}" class="dropdown-item">
+            <i class="fas fa-book"></i>
+            <span>Documentation</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>

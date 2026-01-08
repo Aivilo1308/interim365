@@ -1,0 +1,1700 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Statistiques d'intérim{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Chart.js pour les graphiques -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Header statistiques -->
+<div class="stats-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8" style="margin-left: 20px;">
+        <h1 class="mb-0">
+          <i class="fas fa-chart-bar"></i>
+          Statistiques d'intérim
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-calendar-alt"></i> Période : {{ date_debut|date:"d/m/Y" }} - {{ date_fin|date:"d/m/Y" }}
+          <span class="periode-badge">{{ periode_jours }} jour{{ periode_jours|pluralize }}</span>
+        </p>
+      </div>
+      <div class="col-md-4 text-end" style="margin-left: 20px; margin-top:15px;">
+        <div class="header-actions">
+          <button onclick="window.print()" class="btn btn-outline-light">
+            <i class="fas fa-print"></i>
+            Imprimer
+          </button>
+          <a href="{% url 'index' %}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left"></i>
+            Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sélecteur de période -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-calendar"></i>
+      Période d'analyse
+    </h2>
+  </div>
+  <div class="card-body">
+    <form method="get" class="periode-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="date_debut" class="form-label">Date de début</label>
+          <input type="date" name="date_debut" id="date_debut" class="form-input" 
+                 value="{{ date_debut|date:'Y-m-d' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="date_fin" class="form-label">Date de fin</label>
+          <input type="date" name="date_fin" id="date_fin" class="form-input" 
+                 value="{{ date_fin|date:'Y-m-d' }}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              Analyser
+            </button>
+            <button type="button" class="btn btn-outline" onclick="setPeriodePredefinie('7')">
+              7 jours
+            </button>
+            <button type="button" class="btn btn-outline" onclick="setPeriodePredefinie('30')">
+              30 jours
+            </button>
+            <button type="button" class="btn btn-outline" onclick="setPeriodePredefinie('90')">
+              90 jours
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Vue d'ensemble -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-tachometer-alt"></i>
+      Vue d'ensemble
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="overview-stats">
+      <div class="overview-card primary">
+        <div class="overview-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="overview-content">
+          <div class="overview-number">{{ total_interims }}</div>
+          <div class="overview-label">Demande{{ total_interims|pluralize }} d'intérim</div>
+          <div class="overview-detail">{{ demandes_par_jour|floatformat:1 }}/jour en moyenne</div>
+        </div>
+      </div>
+      
+      <div class="overview-card success">
+        <div class="overview-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="overview-content">
+          <div class="overview-number">{{ pourcentage_demandes_abouties }}%</div>
+          <div class="overview-label">Taux de réussite</div>
+          <div class="overview-detail">Demandes abouties avec succès</div>
+        </div>
+      </div>
+      
+      <div class="overview-card info">
+        <div class="overview-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="overview-content">
+          <div class="overview-number">{{ candidats_actifs }}</div>
+          <div class="overview-label">Candidat{{ candidats_actifs|pluralize }} actif{{ candidats_actifs|pluralize }}</div>
+          <div class="overview-detail">{{ candidats_disponibles }} disponible{{ candidats_disponibles|pluralize }} pour intérim</div>
+        </div>
+      </div>
+      
+      <div class="overview-card warning">
+        <div class="overview-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="overview-content">
+          <div class="overview-number">{{ delai_demande_debut_jours }}</div>
+          <div class="overview-label">Jour{{ delai_demande_debut_jours|pluralize }} moyen{{ delai_demande_debut_jours|pluralize }}</div>
+          <div class="overview-detail">Entre demande et début de mission</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques de volume -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-line"></i>
+      Statistiques de volume
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-list-ol"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ total_interims }}</div>
+          <div class="stat-label">Total intérims</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ duree_moyenne_jours }}</div>
+          <div class="stat-label">Durée moyenne (jours)</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-redo"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ renouvellements }}</div>
+          <div class="stat-label">Renouvellements</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ taux_renouvellement }}%</div>
+          <div class="stat-label">Taux renouvellement</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Répartition par durée -->
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <h5><i class="fas fa-pie-chart"></i> Répartition par durée</h5>
+        <div class="repartition-list">
+          <div class="repartition-item">
+            <span class="repartition-label">< 1 semaine</span>
+            <span class="repartition-count">{{ repartition_duree.moins_1_semaine }}</span>
+          </div>
+          <div class="repartition-item">
+            <span class="repartition-label">1-4 semaines</span>
+            <span class="repartition-count">{{ repartition_duree.de_1_a_4_semaines }}</span>
+          </div>
+          <div class="repartition-item">
+            <span class="repartition-label">1-3 mois</span>
+            <span class="repartition-count">{{ repartition_duree.de_1_a_3_mois }}</span>
+          </div>
+          <div class="repartition-item">
+            <span class="repartition-label">> 3 mois</span>
+            <span class="repartition-count">{{ repartition_duree.plus_3_mois }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <h5><i class="fas fa-chart-area"></i> Évolution mensuelle</h5>
+        <canvas id="chartEvolutionMensuelle" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Analyse des secteurs et métiers -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-industry"></i>
+      Analyse des secteurs et métiers
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h5><i class="fas fa-trophy"></i> Top 10 des postes demandés</h5>
+        <div class="top-list">
+          {% for poste in top_postes %}
+          <div class="top-item">
+            <div class="top-rank">{{ forloop.counter }}</div>
+            <div class="top-content">
+              <div class="top-name">{{ poste.poste__titre|default:"Poste non défini" }}</div>
+              <div class="top-count">{{ poste.count }} demande{{ poste.count|pluralize }}</div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-message">Aucune donnée disponible</div>
+          {% endfor %}
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <h5><i class="fas fa-building"></i> Répartition par secteur</h5>
+        <canvas id="chartRepartitionSecteur" height="300"></canvas>
+      </div>
+    </div>
+    
+    <div class="row mt-4">
+      <div class="col-12">
+        <h5><i class="fas fa-exclamation-triangle"></i> Postes difficiles à pourvoir</h5>
+        <div class="postes-difficiles">
+          {% for poste in postes_difficiles %}
+          <div class="poste-difficile-item">
+            <div class="poste-name">{{ poste.poste__titre|default:"Poste non défini" }}</div>
+            <div class="poste-stats">
+              <span class="stat">{{ poste.nb_demandes }} demande{{ poste.nb_demandes|pluralize }}</span>
+              <span class="stat">{{ poste.nb_propositions }} proposition{{ poste.nb_propositions|pluralize }}</span>
+              <span class="ratio {% if poste.ratio < 1 %}critique{% elif poste.ratio < 2 %}moyen{% else %}bon{% endif %}">
+                Ratio: {{ poste.ratio|floatformat:1 }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-message">Aucune donnée disponible</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Performance commerciale -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-pie"></i>
+      Performance commerciale
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card commercial">
+        <div class="stat-icon">
+          <i class="fas fa-heart"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ taux_fidelisation }}%</div>
+          <div class="stat-label">Taux fidélisation</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <h5><i class="fas fa-crown"></i> Top clients</h5>
+        <div class="top-list">
+          {% for client in top_clients %}
+          <div class="top-item">
+            <div class="top-rank">{{ forloop.counter }}</div>
+            <div class="top-content">
+              <div class="top-name">{{ client.poste__site__nom|default:"Site non défini" }}</div>
+              <div class="top-details">
+                <span class="top-count">{{ client.volume }} mission{{ client.volume|pluralize }}</span>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-message">Aucune donnée disponible</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gestion des candidats -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-users"></i>
+      Gestion des candidats
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card candidats">
+        <div class="stat-icon">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ candidats_actifs }}</div>
+          <div class="stat-label">Candidats actifs</div>
+        </div>
+      </div>
+      
+      <div class="stat-card candidats">
+        <div class="stat-icon">
+          <i class="fas fa-user-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ candidats_disponibles }}</div>
+          <div class="stat-label">Disponibles intérim</div>
+        </div>
+      </div>
+      
+      <div class="stat-card candidats">
+        <div class="stat-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ taux_placement }}%</div>
+          <div class="stat-label">Taux de placement</div>
+        </div>
+      </div>
+      
+      <div class="stat-card candidats">
+        <div class="stat-icon">
+          <i class="fas fa-stopwatch"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ delai_placement_jours }}</div>
+          <div class="stat-label">Délai placement (jours)</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row mt-4">
+      <div class="col-12">
+        <h5><i class="fas fa-star"></i> Candidats les plus demandés</h5>
+        <div class="candidats-demandes">
+          {% for candidat in candidats_demandes %}
+          <div class="candidat-item">
+            <div class="candidat-name">
+              {{ candidat.candidat_propose__user__first_name|default:"" }} 
+              {{ candidat.candidat_propose__user__last_name|default:"" }}
+              {% if not candidat.candidat_propose__user__first_name and not candidat.candidat_propose__user__last_name %}
+                {{ candidat.candidat_propose__matricule|default:"Candidat inconnu" }}
+              {% endif %}
+            </div>
+            <div class="candidat-stats">
+              <span class="candidat-count">{{ candidat.nb_propositions }} proposition{{ candidat.nb_propositions|pluralize }}</span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-message">Aucune donnée disponible</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ratios de performance clés -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-tachometer-alt"></i>
+      Ratios de performance clés
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <i class="fas fa-exchange-alt"></i>
+          <span>Taux de conversion</span>
+        </div>
+        <div class="kpi-value">{{ taux_conversion }}%</div>
+        <div class="kpi-description">Demandes → Sélections finales</div>
+        <div class="kpi-gauge">
+          <div class="gauge-fill" style="width: {{ taux_conversion }}%;"></div>
+        </div>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <i class="fas fa-chart-area"></i>
+          <span>Taux d'occupation</span>
+        </div>
+        <div class="kpi-value">{{ taux_occupation }}%</div>
+        <div class="kpi-description">Missions actives / Candidats disponibles</div>
+        <div class="kpi-gauge">
+          <div class="gauge-fill" style="width: {{ taux_occupation }}%;"></div>
+        </div>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <i class="fas fa-clock"></i>
+          <span>Délai moyen</span>
+        </div>
+        <div class="kpi-value">{{ delai_demande_debut_jours }} j</div>
+        <div class="kpi-description">Demande → Début mission</div>
+        <div class="kpi-gauge">
+          <div class="gauge-fill" style="width: {% widthratio delai_demande_debut_jours 30 100 %}%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Analyse géographique -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-map-marker-alt"></i>
+      Analyse géographique
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h5><i class="fas fa-city"></i> Répartition par ville</h5>
+        <div class="geo-list">
+          {% for ville in repartition_geo %}
+          <div class="geo-item">
+            <div class="geo-name">{{ ville.poste__site__ville|default:"Ville non définie" }}</div>
+            <div class="geo-count">{{ ville.count }} demande{{ ville.count|pluralize }}</div>
+            <div class="geo-bar">
+              <div class="geo-fill" style="width: {% widthratio ville.count total_interims 100 %}%;"></div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-message">Aucune donnée disponible</div>
+          {% endfor %}
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <h5><i class="fas fa-building"></i> Performance par site</h5>
+        <div class="performance-list">
+          {% for site in performance_sites %}
+          <div class="performance-item">
+            <div class="performance-header">
+              <div class="performance-name">{{ site.poste__site__nom|default:"Site non défini" }}</div>
+              <div class="performance-count">{{ site.count }}</div>
+            </div>
+            <div class="performance-details">
+              <span class="performance-rate">Taux: {{ site.taux_reussite|default:0|floatformat:1 }}%</span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-message">Aucune donnée disponible</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Workflow et validations -->
+{% if stats_validations or stats_propositions %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Workflow et validations
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      {% if stats_validations %}
+      <div class="col-md-6">
+        <h5><i class="fas fa-check-square"></i> Validations par type</h5>
+        <div class="workflow-list">
+          {% for validation in stats_validations %}
+          <div class="workflow-item">
+            <div class="workflow-type">{{ validation.type_validation }}</div>
+            <div class="workflow-stats">
+              <span class="workflow-count">{{ validation.count }}</span>
+              {% if validation.delai_moyen %}
+              <span class="workflow-delai">{{ validation.delai_moyen.days }}j moyen</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+      {% if stats_propositions %}
+      <div class="col-md-6">
+        <h5><i class="fas fa-user-plus"></i> Propositions par source</h5>
+        <div class="workflow-list">
+          {% for proposition in stats_propositions %}
+          <div class="workflow-item">
+            <div class="workflow-type">{{ proposition.source_proposition }}</div>
+            <div class="workflow-stats">
+              <span class="workflow-count">{{ proposition.count }}</span>
+              {% if proposition.score_moyen %}
+              <span class="workflow-score">Score: {{ proposition.score_moyen|floatformat:1 }}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Actions disponibles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-tools"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      <a href="{% url 'index' %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Tableau de bord</div>
+          <div class="action-description">
+            Retour au tableau de bord principal
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'liste_interim_validation' %}" class="action-card secondary">
+        <div class="action-icon">
+          <i class="fas fa-list"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Demandes en cours</div>
+          <div class="action-description">
+            Voir les demandes d'intérim en cours
+          </div>
+        </div>
+      </a>
+      
+      <button type="button" class="action-card info" onclick="exportStats()">
+        <div class="action-icon">
+          <i class="fas fa-file-export"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Exporter</div>
+          <div class="action-description">
+            Télécharger les statistiques
+          </div>
+        </div>
+      </button>
+      
+      <button type="button" class="action-card refresh" onclick="window.location.reload()">
+        <div class="action-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Actualiser</div>
+          <div class="action-description">
+            Recharger les données
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles inspirés de historique_interim.html avec thème stats */
+.stats-header {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.periode-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Overview cards spéciaux */
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.overview-card {
+  display: flex;
+  align-items: center;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 2px solid;
+  gap: 1.5rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.overview-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.overview-card.primary {
+  border-color: #007bff;
+  background: linear-gradient(135deg, #ffffff, #f8f9ff);
+}
+
+.overview-card.success {
+  border-color: #28a745;
+  background: linear-gradient(135deg, #ffffff, #f8fff9);
+}
+
+.overview-card.info {
+  border-color: #17a2b8;
+  background: linear-gradient(135deg, #ffffff, #f8feff);
+}
+
+.overview-card.warning {
+  border-color: #ffc107;
+  background: linear-gradient(135deg, #ffffff, #fffef8);
+}
+
+.overview-icon {
+  font-size: 3rem;
+  min-width: 80px;
+  text-align: center;
+}
+
+.overview-card.primary .overview-icon {
+  color: #007bff;
+}
+
+.overview-card.success .overview-icon {
+  color: #28a745;
+}
+
+.overview-card.info .overview-icon {
+  color: #17a2b8;
+}
+
+.overview-card.warning .overview-icon {
+  color: #ffc107;
+}
+
+.overview-content {
+  flex: 1;
+}
+
+.overview-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #212529;
+  line-height: 1;
+}
+
+.overview-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-top: 0.5rem;
+}
+
+.overview-detail {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Stats cards variées */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+  border-left-color: #28a745;
+}
+
+.stat-card.commercial {
+  border-left-color: #007bff;
+}
+
+.stat-card.candidats {
+  border-left-color: #17a2b8;
+}
+
+.stat-card.qualite {
+  border-left-color: #6f42c1;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #28a745;
+  min-width: 50px;
+  text-align: center;
+}
+
+.stat-card.commercial .stat-icon {
+  color: #007bff;
+}
+
+.stat-card.candidats .stat-icon {
+  color: #17a2b8;
+}
+
+.stat-card.qualite .stat-icon {
+  color: #6f42c1;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #212529;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Listes spécialisées */
+.top-list, .candidats-demandes, .geo-list, .performance-list, .workflow-list {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.top-item, .candidat-item, .geo-item, .performance-item, .workflow-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.top-item:last-child, .candidat-item:last-child, .geo-item:last-child, 
+.performance-item:last-child, .workflow-item:last-child {
+  border-bottom: none;
+}
+
+.top-rank {
+  background: #28a745;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-right: 1rem;
+}
+
+.top-content, .candidat-name, .geo-name, .performance-header, .workflow-type {
+  flex: 1;
+}
+
+.top-name, .candidat-name, .geo-name, .performance-name, .workflow-type {
+  font-weight: 600;
+  color: #495057;
+}
+
+.top-count, .candidat-count, .geo-count, .performance-count, .workflow-count {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.top-details, .performance-details, .workflow-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.performance-rate, .workflow-delai, .workflow-score {
+  background: #d4edda;
+  color: #155724;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Barres géographiques */
+.geo-bar {
+  width: 100px;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-left: 1rem;
+}
+
+.geo-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #28a745, #20c997);
+  transition: width 0.5s ease;
+}
+
+/* Postes difficiles */
+.postes-difficiles {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.poste-difficile-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #ffc107;
+}
+
+.poste-name {
+  font-weight: 600;
+  color: #495057;
+  flex: 1;
+}
+
+.poste-stats {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.poste-stats .stat {
+  background: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.ratio {
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ratio.critique {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.ratio.moyen {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.ratio.bon {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+  border-color: #28a745;
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.1);
+}
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.kpi-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #28a745;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.kpi-gauge {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #28a745, #20c997);
+  transition: width 0.8s ease;
+  border-radius: 4px;
+}
+
+/* Répartitions */
+.repartition-list {
+  background: white;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.repartition-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.repartition-item:last-child {
+  border-bottom: none;
+}
+
+.repartition-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.repartition-count {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.primary {
+  border-color: #007bff;
+  color: #004085;
+}
+
+.action-card.primary:hover {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.action-card.secondary {
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.action-card.secondary:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.action-card.info {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.action-card.refresh {
+  border-color: #28a745;
+  color: #155724;
+}
+
+.action-card.refresh:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Form styles */
+.periode-form {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-input, .form-select {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: 0;
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-primary:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+  color: white;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.empty-message {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .stats-header {
+    padding: 1rem 0;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .overview-stats, .stats-grid, .kpi-grid, .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .overview-card, .kpi-card {
+    padding: 1.5rem;
+  }
+  
+  .overview-number, .kpi-value {
+    font-size: 2rem;
+  }
+  
+  .overview-icon {
+    font-size: 2.5rem;
+    min-width: 60px;
+  }
+  
+  .top-item, .candidat-item, .geo-item, .performance-item, .workflow-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .poste-difficile-item, .poste-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes statsAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.overview-card, .stat-card, .kpi-card {
+  animation: statsAppear 0.5s ease-out forwards;
+}
+
+.overview-card:nth-child(1) { animation-delay: 0.1s; }
+.overview-card:nth-child(2) { animation-delay: 0.2s; }
+.overview-card:nth-child(3) { animation-delay: 0.3s; }
+.overview-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Styles pour l'impression */
+@media print {
+  .stats-header {
+    background: #28a745 !important;
+    -webkit-print-color-adjust: exact;
+  }
+  
+  .header-actions, .actions-grid {
+    display: none !important;
+  }
+  
+  .card-container {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+  
+  .overview-stats, .stats-grid {
+    break-inside: avoid;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📊 Page statistiques d\'intérim initialisée');
+  
+  // Données des graphiques depuis Django
+  const interimsMoisData = {{ interims_mois_json|safe }};
+  const repartitionSecteurData = {{ repartition_secteur_json|safe }};
+  
+  // Configuration des couleurs
+  const colors = {
+    primary: '#28a745',
+    secondary: '#20c997',
+    info: '#17a2b8',
+    warning: '#ffc107',
+    danger: '#dc3545',
+    light: '#f8f9fa',
+    dark: '#343a40'
+  };
+  
+  // Graphique évolution mensuelle
+  if (interimsMoisData && interimsMoisData.length > 0) {
+    const ctx1 = document.getElementById('chartEvolutionMensuelle');
+    if (ctx1) {
+      new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: interimsMoisData.map(item => {
+            const date = new Date(item.mois);
+            return date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+          }),
+          datasets: [{
+            label: 'Demandes d\'intérim',
+            data: interimsMoisData.map(item => item.count),
+            borderColor: colors.primary,
+            backgroundColor: colors.primary + '20',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+  }
+  
+  // Graphique répartition par secteur
+  if (repartitionSecteurData && repartitionSecteurData.length > 0) {
+    const ctx2 = document.getElementById('chartRepartitionSecteur');
+    if (ctx2) {
+      const colors_array = [
+        colors.primary, colors.info, colors.warning, colors.danger, colors.secondary,
+        '#6f42c1', '#fd7e14', '#e83e8c', '#6c757d', '#007bff'
+      ];
+      
+      new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: repartitionSecteurData.map(item => item.poste__departement__nom || 'Non défini'),
+          datasets: [{
+            data: repartitionSecteurData.map(item => item.count),
+            backgroundColor: colors_array.slice(0, repartitionSecteurData.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+  
+  // Animation d'entrée progressive pour les cartes
+  const overviewCards = document.querySelectorAll('.overview-card');
+  overviewCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.6s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 150);
+  });
+  
+  // Animation des stats cards
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateX(0)';
+    }, 500 + (index * 100));
+  });
+  
+  // Animation des KPI cards
+  const kpiCards = document.querySelectorAll('.kpi-card');
+  kpiCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.9)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'scale(1)';
+    }, 1000 + (index * 200));
+  });
+  
+  // Compteur animé pour les chiffres
+  const animateNumbers = () => {
+    const numbers = document.querySelectorAll('.overview-number, .stat-number, .kpi-value');
+    numbers.forEach(number => {
+      const text = number.textContent;
+      const value = parseFloat(text);
+      
+      if (!isNaN(value) && value > 0) {
+        let current = 0;
+        const increment = Math.ceil(value / 30);
+        const suffix = text.replace(value.toString(), '');
+        
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= value) {
+            current = value;
+            clearInterval(timer);
+          }
+          
+          if (suffix.includes('%')) {
+            number.textContent = Math.floor(current) + '%';
+          } else if (suffix.includes('/')) {
+            number.textContent = (current).toFixed(1) + suffix.substring(suffix.indexOf('/'));
+          } else {
+            number.textContent = Math.floor(current) + suffix;
+          }
+        }, 50);
+      }
+    });
+  };
+  
+  // Démarrer l'animation des chiffres après un délai
+  setTimeout(animateNumbers, 1500);
+  
+  // Animation des jauges KPI
+  const animateGauges = () => {
+    const gauges = document.querySelectorAll('.gauge-fill');
+    gauges.forEach((gauge, index) => {
+      setTimeout(() => {
+        const width = gauge.style.width;
+        gauge.style.width = '0%';
+        gauge.style.transition = 'width 1.5s ease-out';
+        
+        setTimeout(() => {
+          gauge.style.width = width;
+        }, 100);
+      }, index * 300);
+    });
+  };
+  
+  setTimeout(animateGauges, 2000);
+  
+  // Animation des barres géographiques
+  const animateGeoBars = () => {
+    const bars = document.querySelectorAll('.geo-fill');
+    bars.forEach((bar, index) => {
+      setTimeout(() => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        
+        setTimeout(() => {
+          bar.style.width = width;
+        }, 100);
+      }, index * 100);
+    });
+  };
+  
+  setTimeout(animateGeoBars, 2500);
+  
+  console.log('✅ Animations et graphiques initialisés');
+});
+
+// Fonction pour définir une période prédéfinie
+function setPeriodePredefinie(jours) {
+  const dateFin = new Date();
+  const dateDebut = new Date();
+  dateDebut.setDate(dateFin.getDate() - parseInt(jours));
+  
+  document.getElementById('date_debut').value = dateDebut.toISOString().split('T')[0];
+  document.getElementById('date_fin').value = dateFin.toISOString().split('T')[0];
+  
+  // Soumettre automatiquement le formulaire
+  document.querySelector('.periode-form').submit();
+}
+
+// Fonction d'export des statistiques
+function exportStats() {
+  const exportBtn = document.querySelector('[onclick="exportStats()"]');
+  if (exportBtn) {
+    const icon = exportBtn.querySelector('i');
+    const originalClass = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    exportBtn.disabled = true;
+  }
+  
+  // Simuler l'export (à remplacer par l'appel réel)
+  setTimeout(() => {
+    // Restaurer le bouton
+    if (exportBtn) {
+      const icon = exportBtn.querySelector('i');
+      icon.className = 'fas fa-file-export';
+      exportBtn.disabled = false;
+    }
+    
+    // Notification de succès
+    showNotification('Export terminé avec succès !', 'success');
+    
+  }, 2000);
+}
+
+// Fonction pour afficher les notifications
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideInRight 0.3s ease;
+  `;
+  
+  const colors = {
+    success: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
+    info: { bg: '#d1ecf1', color: '#0c5460', border: '#bee5eb' },
+    warning: { bg: '#fff3cd', color: '#856404', border: '#ffeaa7' },
+    danger: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' }
+  };
+  
+  const colorScheme = colors[type] || colors.info;
+  notification.style.backgroundColor = colorScheme.bg;
+  notification.style.color = colorScheme.color;
+  notification.style.border = `1px solid ${colorScheme.border}`;
+  
+  const icon = type === 'success' ? 'check-circle' : 
+              type === 'warning' ? 'exclamation-triangle' :
+              type === 'danger' ? 'times-circle' : 'info-circle';
+  
+  notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 3000);
+}
+
+// Styles CSS pour les animations
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+`;
+
+document.head.appendChild(style);
+
+// Initialisation des raccourcis clavier
+document.addEventListener('keydown', function(e) {
+  // Ctrl+P pour imprimer
+  if (e.ctrlKey && e.key === 'p') {
+    e.preventDefault();
+    window.print();
+  }
+  
+  // Ctrl+E pour exporter
+  if (e.ctrlKey && e.key === 'e') {
+    e.preventDefault();
+    exportStats();
+  }
+});
+
+console.log('✅ Statistiques d\'intérim - Toutes les fonctionnalités chargées');
+</script>
+{% endblock extra_js %}

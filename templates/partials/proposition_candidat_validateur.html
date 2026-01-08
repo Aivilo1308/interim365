@@ -1,0 +1,1252 @@
+<!-- ================================================================
+     SECTION PROPOSITION DE NOUVEAU CANDIDAT POUR VALIDATEURS
+     À intégrer dans interim_validation.html avant la section des actions
+================================================================ -->
+
+<!-- Section Proposition de Nouveau Candidat (visible selon permissions) -->
+{% if permissions.peut_proposer_nouveau %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-user-plus"></i>
+      Proposer un nouveau candidat
+    </h2>
+    <div class="card-header-actions">
+      <button type="button" class="btn btn-outline" onclick="togglePropositionSection()">
+        <i class="fas fa-plus" id="toggleIcon"></i>
+        <span id="toggleText">Ajouter une proposition</span>
+      </button>
+    </div>
+  </div>
+  
+  <div class="card-body" id="propositionSection" style="display: none;">
+    
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle"></i>
+      <div class="alert-content">
+        <div class="alert-title">Nouvelle proposition personnelle</div>
+        <p>En tant que {{ workflow_info.type_validateur }}, vous pouvez proposer un candidat supplémentaire 
+           qui sera ajouté aux candidats existants et pourra être sélectionné pour cette mission.</p>
+      </div>
+    </div>
+
+    <form id="formPropositionCandidatValidateur" method="post" action="{% url 'ajouter_proposition_validation' demande.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="AJOUTER_PROPOSITION">
+      <input type="hidden" name="source_proposition" value="VALIDATION_ETAPE">
+      <input type="hidden" name="niveau_validation" value="{{ workflow_info.niveau_a_valider }}">
+      
+      <!-- Recherche et sélection du candidat -->
+      <div class="form-group">
+        <label for="candidatPropose" class="form-label required">
+          <i class="fas fa-search"></i>
+          Rechercher un candidat
+        </label>
+        
+        <!-- Champ de recherche avec auto-complétion -->
+        <div class="candidat-search-container">
+          <input type="text" 
+                 id="candidatSearch" 
+                 class="form-input candidat-search-input" 
+                 placeholder="Tapez le nom, matricule ou département du candidat..."
+                 autocomplete="off">
+          <div class="search-spinner" id="searchSpinner" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </div>
+        
+        <!-- Résultats de recherche -->
+        <div class="candidats-search-results" id="candidatsSearchResults" style="display: none;">
+          <!-- Résultats dynamiques via AJAX -->
+        </div>
+        
+        <!-- Candidat sélectionné -->
+        <div class="candidat-selectionne" id="candidatSelectionne" style="display: none;">
+          <div class="candidat-selectionne-card">
+            <div class="candidat-selectionne-info">
+              <div class="candidat-selectionne-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="candidat-selectionne-details">
+                <div class="candidat-selectionne-nom" id="candidatSelectionneNom"></div>
+                <div class="candidat-selectionne-poste" id="candidatSelectionnePoste"></div>
+                <div class="candidat-selectionne-departement" id="candidatSelectionneDepartement"></div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-small" onclick="deselectionnerCandidat()">
+              <i class="fas fa-times"></i>
+              Changer
+            </button>
+          </div>
+          
+          <!-- Champ hidden pour l'ID du candidat -->
+          <input type="hidden" name="candidat_propose_id" id="candidatProposeId">
+        </div>
+      </div>
+
+      <!-- Justification obligatoire -->
+      <div class="form-group">
+        <label for="justificationProposition" class="form-label required">
+          <i class="fas fa-comment-alt"></i>
+          Justification de votre proposition
+        </label>
+        <textarea name="justification_proposition" 
+                  id="justificationProposition" 
+                  class="form-textarea" 
+                  rows="4" 
+                  required
+                  placeholder="Expliquez pourquoi vous proposez ce candidat (compétences, expérience, disponibilité, etc.)..."></textarea>
+        <div class="form-help">
+          Cette justification sera visible dans l'historique de la demande et par les autres validateurs.
+        </div>
+      </div>
+
+      <!-- Évaluation préliminaire (optionnelle) -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-star"></i>
+          Évaluation préliminaire (optionnel)
+        </label>
+        
+        <div class="evaluation-grid">
+          <div class="evaluation-item">
+            <label class="evaluation-label">Adéquation au poste</label>
+            <select name="eval_adequation" class="form-select-small">
+              <option value="">Non évalué</option>
+              <option value="25">Faible (25%)</option>
+              <option value="50">Correcte (50%)</option>
+              <option value="75">Bonne (75%)</option>
+              <option value="100">Excellente (100%)</option>
+            </select>
+          </div>
+          
+          <div class="evaluation-item">
+            <label class="evaluation-label">Expérience similaire</label>
+            <select name="eval_experience" class="form-select-small">
+              <option value="">Non évalué</option>
+              <option value="25">Limitée (25%)</option>
+              <option value="50">Suffisante (50%)</option>
+              <option value="75">Solide (75%)</option>
+              <option value="100">Experte (100%)</option>
+            </select>
+          </div>
+          
+          <div class="evaluation-item">
+            <label class="evaluation-label">Disponibilité</label>
+            <select name="eval_disponibilite" class="form-select-small">
+              <option value="">Non évalué</option>
+              <option value="0">Indisponible (0%)</option>
+              <option value="50">Partiellement (50%)</option>
+              <option value="100">Complètement (100%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priorité de la proposition -->
+      <div class="form-group">
+        <label for="prioriteProposition" class="form-label">
+          <i class="fas fa-exclamation-circle"></i>
+          Priorité de cette proposition
+        </label>
+        <select name="priorite_proposition" id="prioriteProposition" class="form-select">
+          <option value="NORMALE">Normale - Candidat supplémentaire</option>
+          <option value="ELEVEE">Élevée - Candidat fortement recommandé</option>
+          <option value="CRITIQUE">Critique - Candidat prioritaire</option>
+        </select>
+        <div class="form-help">
+          La priorité influence le score final et l'ordre d'affichage du candidat.
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="proposition-actions">
+        <button type="button" class="btn btn-outline" onclick="annulerProposition()">
+          <i class="fas fa-times"></i>
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" id="btnSoumetteProposition" disabled>
+          <i class="fas fa-user-plus"></i>
+          Ajouter cette proposition
+          <div class="loading-spinner" id="propositionSpinner" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </button>
+      </div>
+    </form>
+    
+    <!-- Aperçu scoring prévisionnel -->
+    <div class="scoring-preview" id="scoringPreview" style="display: none;">
+      <h6><i class="fas fa-chart-line"></i> Aperçu du scoring prévisionnel</h6>
+      <div class="scoring-preview-content">
+        <div class="score-preview-circle">
+          <span class="score-preview-value" id="scorePreviewValue">--</span>
+          <small>Score estimé</small>
+        </div>
+        <div class="score-preview-details">
+          <div class="score-preview-item">
+            <span class="score-preview-label">Score de base (algorithme):</span>
+            <span class="score-preview-score" id="scoreBase">--</span>
+          </div>
+          <div class="score-preview-item">
+            <span class="score-preview-label">Bonus {{ workflow_info.type_validateur }}:</span>
+            <span class="score-preview-score" id="scoreBonus">--</span>
+          </div>
+          <div class="score-preview-item">
+            <span class="score-preview-label">Bonus évaluation:</span>
+            <span class="score-preview-score" id="scoreBonusEval">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
+<!-- Section des Propositions Ajoutées par ce Validateur -->
+{% if propositions_validateur_actuel %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-user-check"></i>
+      Vos propositions pour cette demande
+      <span class="count-badge">{{ propositions_validateur_actuel|length }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    
+    <div class="propositions-validateur-grid">
+      {% for proposition in propositions_validateur_actuel %}
+      <div class="proposition-validateur-card" data-proposition-id="{{ proposition.id }}">
+        
+        <div class="proposition-validateur-header">
+          <div class="proposition-validateur-info">
+            <div class="proposition-candidat-nom">{{ proposition.candidat_propose.nom_complet }}</div>
+            <div class="proposition-candidat-poste">{{ proposition.candidat_propose.poste.titre }}</div>
+            <div class="proposition-candidat-matricule">{{ proposition.candidat_propose.matricule }}</div>
+          </div>
+          <div class="proposition-score">
+            <div class="score-circle {{ proposition.score_class }}">
+              {{ proposition.score_final }}
+            </div>
+            <small>Score final</small>
+          </div>
+        </div>
+
+        <div class="proposition-validateur-details">
+          <div class="proposition-meta">
+            <div class="proposition-meta-item">
+              <i class="fas fa-calendar"></i>
+              <span>{{ proposition.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="proposition-meta-item">
+              <i class="fas fa-flag"></i>
+              <span class="priorite-badge priorite-{{ proposition.priorite_proposition|lower }}">
+                {{ proposition.get_priorite_proposition_display }}
+              </span>
+            </div>
+          </div>
+          
+          {% if proposition.justification %}
+          <div class="proposition-justification">
+            <strong>Justification :</strong>
+            <p>{{ proposition.justification }}</p>
+          </div>
+          {% endif %}
+          
+          <div class="proposition-statut">
+            <span class="statut-badge statut-{{ proposition.statut|lower }}">
+              <i class="fas fa-info-circle"></i>
+              {{ proposition.get_statut_display }}
+            </span>
+          </div>
+        </div>
+
+        <div class="proposition-validateur-actions">
+          <button type="button" class="btn btn-outline-small" 
+                  onclick="voirDetailsCandidats('{{ proposition.candidat_propose.id }}')">
+            <i class="fas fa-eye"></i>
+            Voir profil
+          </button>
+          <button type="button" class="btn btn-outline-small" 
+                  onclick="modifierProposition('{{ proposition.id }}')">
+            <i class="fas fa-edit"></i>
+            Modifier
+          </button>
+          {% if proposition.statut == 'SOUMISE' %}
+          <button type="button" class="btn btn-outline-small text-danger" 
+                  onclick="retirerProposition('{{ proposition.id }}')">
+            <i class="fas fa-trash"></i>
+            Retirer
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+  </div>
+</div>
+{% endif %}
+
+<style>
+/* ================================================================
+   STYLES POUR LA SECTION PROPOSITION DE CANDIDAT
+================================================================ */
+
+.candidat-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.candidat-search-input {
+  flex: 1;
+  padding-right: 2.5rem;
+}
+
+.search-spinner {
+  position: absolute;
+  right: 0.75rem;
+  color: #6c757d;
+}
+
+.candidats-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.candidat-search-result {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.candidat-search-result:hover {
+  background-color: #f8f9fa;
+}
+
+.candidat-search-result:last-child {
+  border-bottom: none;
+}
+
+.candidat-result-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.candidat-result-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007bff, #6ec6ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.candidat-result-details {
+  flex: 1;
+}
+
+.candidat-result-nom {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.candidat-result-poste {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.125rem;
+}
+
+.candidat-result-meta {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.candidat-selectionne-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+}
+
+.candidat-selectionne-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.candidat-selectionne-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.candidat-selectionne-nom {
+  font-weight: 600;
+  color: #155724;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.candidat-selectionne-poste {
+  color: #155724;
+  font-size: 0.9rem;
+  margin-bottom: 0.125rem;
+}
+
+.candidat-selectionne-departement {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.evaluation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.evaluation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.evaluation-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.form-select-small {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.proposition-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.scoring-preview {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+}
+
+.scoring-preview h6 {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scoring-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.score-preview-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #17a2b8, #6ec6ff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.score-preview-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.score-preview-details {
+  flex: 1;
+}
+
+.score-preview-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.score-preview-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.score-preview-score {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* ================================================================
+   STYLES POUR LES PROPOSITIONS DU VALIDATEUR ACTUEL
+================================================================ */
+
+.propositions-validateur-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.proposition-validateur-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.proposition-validateur-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.proposition-validateur-header {
+  padding: 1rem;
+  border-bottom: 1px solid #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.proposition-candidat-nom {
+  font-weight: 600;
+  color: #495057;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.proposition-candidat-poste {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.125rem;
+}
+
+.proposition-candidat-matricule {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.proposition-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.score-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  font-size: 1rem;
+}
+
+.score-circle.excellent { background: #28a745; }
+.score-circle.good { background: #17a2b8; }
+.score-circle.average { background: #ffc107; color: #212529; }
+.score-circle.poor { background: #dc3545; }
+
+.proposition-validateur-details {
+  padding: 1rem;
+}
+
+.proposition-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.proposition-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.priorite-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.priorite-badge.priorite-normale {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.priorite-badge.priorite-elevee {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.priorite-badge.priorite-critique {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.proposition-justification {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #17a2b8;
+}
+
+.proposition-justification strong {
+  color: #495057;
+  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.proposition-justification p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.proposition-statut {
+  margin-bottom: 1rem;
+}
+
+.statut-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statut-badge.statut-soumise {
+  background: #cce7ff;
+  color: #004085;
+}
+
+.statut-badge.statut-en_evaluation {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.statut-badge.statut-retenue {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statut-badge.statut-rejetee {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.proposition-validateur-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0 1rem 1rem;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 768px) {
+  .candidat-search-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .candidat-selectionne-card {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .evaluation-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .scoring-preview-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .proposition-actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .propositions-validateur-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .proposition-validateur-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .proposition-meta {
+    justify-content: center;
+  }
+}
+</style>
+
+<script>
+// ================================================================
+// JAVASCRIPT POUR LA GESTION DES PROPOSITIONS DE CANDIDATS
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  initPropositionCandidatFeatures();
+});
+
+function initPropositionCandidatFeatures() {
+  console.log('🚀 Initialisation des fonctionnalités de proposition de candidats');
+  
+  // Variables globales
+  let candidatSelectionne = null;
+  let timeoutRecherche = null;
+  let scoresPrevisionnels = {};
+  
+  // Éléments DOM
+  const candidatSearch = document.getElementById('candidatSearch');
+  const searchResults = document.getElementById('candidatsSearchResults');
+  const candidatSelectionneDiv = document.getElementById('candidatSelectionne');
+  const btnSoumettre = document.getElementById('btnSoumetteProposition');
+  const scoringPreview = document.getElementById('scoringPreview');
+  
+  // ================================================================
+  // GESTION DE LA RECHERCHE DE CANDIDATS
+  // ================================================================
+  
+  if (candidatSearch) {
+    candidatSearch.addEventListener('input', function() {
+      const query = this.value.trim();
+      
+      // Effacer le timeout précédent
+      clearTimeout(timeoutRecherche);
+      
+      if (query.length < 2) {
+        masquerResultatsRecherche();
+        return;
+      }
+      
+      // Délai pour éviter trop de requêtes
+      timeoutRecherche = setTimeout(() => {
+        rechercherCandidats(query);
+      }, 300);
+    });
+    
+    // Masquer les résultats quand on clique ailleurs
+    document.addEventListener('click', function(e) {
+      if (!candidatSearch.contains(e.target) && !searchResults.contains(e.target)) {
+        masquerResultatsRecherche();
+      }
+    });
+  }
+  
+  function rechercherCandidats(query) {
+    console.log('🔍 Recherche candidats:', query);
+    
+    afficherSpinnerRecherche(true);
+    
+    fetch(`/interim/ajax/rechercher-candidats/?q=${encodeURIComponent(query)}&demande_id={{ demande.id }}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        afficherResultatsRecherche(data.candidats);
+      } else {
+        console.error('Erreur recherche candidats:', data.error);
+        afficherErreurRecherche(data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Erreur AJAX recherche candidats:', error);
+      afficherErreurRecherche('Erreur de communication avec le serveur');
+    })
+    .finally(() => {
+      afficherSpinnerRecherche(false);
+    });
+  }
+  
+  function afficherResultatsRecherche(candidats) {
+    if (!candidats || candidats.length === 0) {
+      searchResults.innerHTML = `
+        <div class="candidat-search-result">
+          <div class="text-muted text-center">
+            <i class="fas fa-search"></i>
+            Aucun candidat trouvé
+          </div>
+        </div>
+      `;
+    } else {
+      searchResults.innerHTML = candidats.map(candidat => `
+        <div class="candidat-search-result" onclick="selectionnerCandidat(${candidat.id}, '${candidat.nom_complet}', '${candidat.poste || ''}', '${candidat.departement || ''}', ${candidat.score_previsionnel || 0})">
+          <div class="candidat-result-info">
+            <div class="candidat-result-avatar">
+              ${candidat.initiales || candidat.nom_complet.split(' ').map(n => n[0]).join('').substring(0, 2)}
+            </div>
+            <div class="candidat-result-details">
+              <div class="candidat-result-nom">${candidat.nom_complet}</div>
+              <div class="candidat-result-poste">${candidat.poste || 'Poste non renseigné'}</div>
+              <div class="candidat-result-meta">
+                <i class="fas fa-id-badge"></i> ${candidat.matricule}
+                ${candidat.departement ? ` • <i class="fas fa-building"></i> ${candidat.departement}` : ''}
+                ${candidat.score_previsionnel ? ` • <i class="fas fa-star"></i> Score: ${candidat.score_previsionnel}` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    searchResults.style.display = 'block';
+  }
+  
+  function afficherErreurRecherche(message) {
+    searchResults.innerHTML = `
+      <div class="candidat-search-result">
+        <div class="text-danger text-center">
+          <i class="fas fa-exclamation-triangle"></i>
+          ${message}
+        </div>
+      </div>
+    `;
+    searchResults.style.display = 'block';
+  }
+  
+  function masquerResultatsRecherche() {
+    if (searchResults) {
+      searchResults.style.display = 'none';
+    }
+  }
+  
+  function afficherSpinnerRecherche(afficher) {
+    const spinner = document.getElementById('searchSpinner');
+    if (spinner) {
+      spinner.style.display = afficher ? 'block' : 'none';
+    }
+  }
+  
+  // ================================================================
+  // GESTION DE LA SÉLECTION DE CANDIDAT
+  // ================================================================
+  
+  window.selectionnerCandidat = function(id, nom, poste, departement, scorePrevisionnel) {
+    console.log('👤 Sélection candidat:', { id, nom, poste, departement, scorePrevisionnel });
+    
+    candidatSelectionne = { id, nom, poste, departement, scorePrevisionnel };
+    
+    // Mettre à jour l'affichage
+    document.getElementById('candidatSelectionneNom').textContent = nom;
+    document.getElementById('candidatSelectionnePoste').textContent = poste || 'Poste non renseigné';
+    document.getElementById('candidatSelectionneDepartement').textContent = departement || 'Département non renseigné';
+    document.getElementById('candidatProposeId').value = id;
+    
+    // Afficher la section candidat sélectionné
+    candidatSelectionneDiv.style.display = 'block';
+    
+    // Masquer les résultats de recherche
+    masquerResultatsRecherche();
+    
+    // Vider le champ de recherche
+    candidatSearch.value = '';
+    
+    // Mettre à jour le scoring prévisionnel
+    if (scorePrevisionnel && scorePrevisionnel > 0) {
+      mettreAJourScoringPrevisionnel(scorePrevisionnel);
+    }
+    
+    // Activer le bouton de soumission
+    mettreAJourEtatBoutonSoumission();
+  };
+  
+  window.deselectionnerCandidat = function() {
+    console.log('❌ Désélection candidat');
+    
+    candidatSelectionne = null;
+    
+    // Masquer la section candidat sélectionné
+    candidatSelectionneDiv.style.display = 'none';
+    
+    // Vider les champs
+    document.getElementById('candidatProposeId').value = '';
+    
+    // Masquer le scoring prévisionnel
+    scoringPreview.style.display = 'none';
+    
+    // Désactiver le bouton de soumission
+    mettreAJourEtatBoutonSoumission();
+    
+    // Focus sur la recherche
+    candidatSearch.focus();
+  };
+  
+  // ================================================================
+  // GESTION DU SCORING PRÉVISIONNEL
+  // ================================================================
+  
+  function mettreAJourScoringPrevisionnel(scoreBase) {
+    console.log('📊 Mise à jour scoring prévisionnel:', scoreBase);
+    
+    // Calculer les bonus
+    const bonusValidateur = getBonusValidateur();
+    const bonusEvaluation = getBonusEvaluation();
+    
+    const scoreFinal = Math.min(100, scoreBase + bonusValidateur + bonusEvaluation);
+    
+    // Mettre à jour l'affichage
+    document.getElementById('scorePreviewValue').textContent = scoreFinal;
+    document.getElementById('scoreBase').textContent = scoreBase;
+    document.getElementById('scoreBonus').textContent = `+${bonusValidateur}`;
+    document.getElementById('scoreBonusEval').textContent = `+${bonusEvaluation}`;
+    
+    // Appliquer la classe CSS selon le score
+    const circle = document.querySelector('.score-preview-circle');
+    circle.className = 'score-preview-circle';
+    if (scoreFinal >= 80) circle.classList.add('score-excellent');
+    else if (scoreFinal >= 60) circle.classList.add('score-good');
+    else if (scoreFinal >= 40) circle.classList.add('score-average');
+    else circle.classList.add('score-poor');
+    
+    // Afficher la section
+    scoringPreview.style.display = 'block';
+  }
+  
+  function getBonusValidateur() {
+    // Bonus selon le type de validateur (basé sur la hiérarchie)
+    const typeValidateur = '{{ workflow_info.type_validateur|default:"UTILISATEUR" }}';
+    const bonusMapping = {
+      'RESPONSABLE': 15,
+      'DIRECTEUR': 18,
+      'RH': 20,
+      'ADMIN': 20,
+      'SUPERUSER': 25
+    };
+    return bonusMapping[typeValidateur] || 5;
+  }
+  
+  function getBonusEvaluation() {
+    // Calculer le bonus basé sur l'évaluation préliminaire
+    const adequation = parseInt(document.querySelector('[name="eval_adequation"]')?.value || '0');
+    const experience = parseInt(document.querySelector('[name="eval_experience"]')?.value || '0');
+    const disponibilite = parseInt(document.querySelector('[name="eval_disponibilite"]')?.value || '0');
+    
+    if (adequation === 0 && experience === 0 && disponibilite === 0) {
+      return 0; // Pas d'évaluation
+    }
+    
+    const moyenneEval = (adequation + experience + disponibilite) / 3;
+    return Math.round(moyenneEval * 0.15); // Bonus max de 15 points
+  }
+  
+  // ================================================================
+  // GESTION DU FORMULAIRE
+  // ================================================================
+  
+  function mettreAJourEtatBoutonSoumission() {
+    const candidatSelectionneOk = candidatSelectionne && candidatSelectionne.id;
+    const justificationOk = document.getElementById('justificationProposition')?.value?.trim().length > 10;
+    
+    if (btnSoumettre) {
+      btnSoumettre.disabled = !(candidatSelectionneOk && justificationOk);
+    }
+  }
+  
+  // Écouteurs pour la justification
+  const justificationTextarea = document.getElementById('justificationProposition');
+  if (justificationTextarea) {
+    justificationTextarea.addEventListener('input', function() {
+      mettreAJourEtatBoutonSoumission();
+    });
+  }
+  
+  // Écouteurs pour l'évaluation (mise à jour du scoring)
+  document.querySelectorAll('[name^="eval_"]').forEach(select => {
+    select.addEventListener('change', function() {
+      if (candidatSelectionne && candidatSelectionne.scorePrevisionnel) {
+        mettreAJourScoringPrevisionnel(candidatSelectionne.scorePrevisionnel);
+      }
+    });
+  });
+  
+  // ================================================================
+  // SOUMISSION DU FORMULAIRE
+  // ================================================================
+  
+  const formProposition = document.getElementById('formPropositionCandidatValidateur');
+  if (formProposition) {
+    formProposition.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!candidatSelectionne || !candidatSelectionne.id) {
+        alert('Veuillez sélectionner un candidat');
+        return;
+      }
+      
+      const justification = document.getElementById('justificationProposition').value.trim();
+      if (justification.length < 10) {
+        alert('La justification doit contenir au moins 10 caractères');
+        return;
+      }
+      
+      soumettrePropositionCandidat();
+    });
+  }
+  
+  function soumettrePropositionCandidat() {
+    console.log('📝 Soumission proposition candidat');
+    
+    const formData = new FormData(formProposition);
+    
+    // Ajouter les données du candidat sélectionné
+    formData.append('candidat_nom', candidatSelectionne.nom);
+    formData.append('score_previsionnel', candidatSelectionne.scorePrevisionnel || 0);
+    
+    // Afficher le spinner
+    document.getElementById('propositionSpinner').style.display = 'inline-block';
+    btnSoumettre.disabled = true;
+    
+    fetch(formProposition.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Succès', data.message || 'Proposition ajoutée avec succès', 'success');
+        
+        // Masquer la section proposition après succès
+        document.getElementById('propositionSection').style.display = 'none';
+        document.getElementById('toggleText').textContent = 'Ajouter une proposition';
+        document.getElementById('toggleIcon').className = 'fas fa-plus';
+        
+        // Réinitialiser le formulaire
+        reinitialiserFormulaireProposition();
+        
+        // Recharger la page après 2 secondes pour voir la nouvelle proposition
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+        
+      } else {
+        showToast('Erreur', data.error || 'Erreur lors de l\'ajout de la proposition', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur soumission proposition:', error);
+      showToast('Erreur', 'Erreur de communication avec le serveur', 'error');
+    })
+    .finally(() => {
+      document.getElementById('propositionSpinner').style.display = 'none';
+      btnSoumettre.disabled = false;
+    });
+  }
+  
+  function reinitialiserFormulaireProposition() {
+    // Réinitialiser le candidat
+    deselectionnerCandidat();
+    
+    // Vider les champs
+    document.getElementById('justificationProposition').value = '';
+    document.getElementById('prioriteProposition').value = 'NORMALE';
+    
+    // Réinitialiser l'évaluation
+    document.querySelectorAll('[name^="eval_"]').forEach(select => {
+      select.value = '';
+    });
+    
+    // Masquer le scoring
+    scoringPreview.style.display = 'none';
+  }
+}
+
+// ================================================================
+// FONCTIONS GLOBALES POUR LES ACTIONS
+// ================================================================
+
+window.togglePropositionSection = function() {
+  const section = document.getElementById('propositionSection');
+  const toggleText = document.getElementById('toggleText');
+  const toggleIcon = document.getElementById('toggleIcon');
+  
+  if (section.style.display === 'none' || section.style.display === '') {
+    section.style.display = 'block';
+    toggleText.textContent = 'Masquer la proposition';
+    toggleIcon.className = 'fas fa-minus';
+    
+    // Focus sur la recherche
+    setTimeout(() => {
+      document.getElementById('candidatSearch')?.focus();
+    }, 100);
+  } else {
+    section.style.display = 'none';
+    toggleText.textContent = 'Ajouter une proposition';
+    toggleIcon.className = 'fas fa-plus';
+  }
+};
+
+window.annulerProposition = function() {
+  const section = document.getElementById('propositionSection');
+  section.style.display = 'none';
+  
+  document.getElementById('toggleText').textContent = 'Ajouter une proposition';
+  document.getElementById('toggleIcon').className = 'fas fa-plus';
+  
+  // Réinitialiser le formulaire
+  const form = document.getElementById('formPropositionCandidatValidateur');
+  if (form) {
+    form.reset();
+  }
+  
+  // Réinitialiser la sélection
+  if (typeof deselectionnerCandidat === 'function') {
+    deselectionnerCandidat();
+  }
+};
+
+window.modifierProposition = function(propositionId) {
+  console.log('✏️ Modifier proposition:', propositionId);
+  
+  // Ouvrir la modal de modification
+  fetch(`/interim/ajax/proposition-details/${propositionId}/`, {
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Afficher modal de modification
+      // TODO: Implémenter la modal de modification
+      showToast('Info', 'Fonctionnalité de modification en cours de développement', 'info');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur modification:', error);
+  });
+};
+
+window.retirerProposition = function(propositionId) {
+  console.log('🗑️ Retirer proposition:', propositionId);
+  
+  if (!confirm('Êtes-vous sûr de vouloir retirer cette proposition ?')) {
+    return;
+  }
+  
+  fetch(`/interim/ajax/retirer-proposition/${propositionId}/`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('Succès', 'Proposition retirée avec succès', 'success');
+      
+      // Masquer la carte de proposition
+      const card = document.querySelector(`[data-proposition-id="${propositionId}"]`);
+      if (card) {
+        card.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          card.remove();
+        }, 300);
+      }
+    } else {
+      showToast('Erreur', data.error || 'Erreur lors du retrait', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur retrait:', error);
+    showToast('Erreur', 'Erreur de communication', 'error');
+  });
+};
+
+// Styles pour les animations
+const style = document.createElement('style');
+style.textContent = `
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+.score-excellent { background: linear-gradient(135deg, #28a745, #20c997); }
+.score-good { background: linear-gradient(135deg, #17a2b8, #6ec6ff); }
+.score-average { background: linear-gradient(135deg, #ffc107, #ffb347); }
+.score-poor { background: linear-gradient(135deg, #dc3545, #e91e63); }
+`;
+document.head.appendChild(style);
+</script>

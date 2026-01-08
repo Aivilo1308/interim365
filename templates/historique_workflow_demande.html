@@ -1,0 +1,2600 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Historique Workflow - {{ demande.numero_demande }}{% endblock %}
+
+{% block content %}
+<!-- Header de l'historique -->
+<div class="historique-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <div class="breadcrumb-custom">
+          <a href="{% url 'connexion' %}">Dashboard</a>
+          <i class="fas fa-chevron-right"></i>
+          <span>Historique Workflow</span>
+        </div>
+        <h1 class="mb-0">
+          <i class="fas fa-history"></i>
+          Historique du workflow
+        </h1>
+        <p class="mb-0 mt-2">
+          Demande {{ demande.numero_demande|default:"N/A" }} - {{ demande.poste.titre|default:"Poste non défini" }}
+          <span class="demande-statut {{ demande.statut|lower }}">
+            {{ demande.get_statut_display|default:"N/A" }}
+          </span>
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="progression-workflow">
+          <div class="progression-info">
+            <span class="progression-texte">
+              Niveau {{ demande.niveau_validation_actuel|default:0 }} / {{ demande.niveaux_validation_requis|default:1 }}
+            </span>
+          </div>
+          <div class="progression-bar">
+            {% with progression=demande.niveau_validation_actuel|default:0 total=demande.niveaux_validation_requis|default:1 %}
+            <div class="progression-fill" style="width: {% widthratio progression total 100 %}%"></div>
+            {% endwith %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations de la demande -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations de la demande
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-item">
+        <div class="info-label">Demandeur</div>
+        <div class="info-value">
+          {{ demande.demandeur.nom_complet|default:"N/A" }}
+          <small class="text-muted d-block">{{ demande.demandeur.poste.titre|default:"N/A" }}</small>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Personne à remplacer</div>
+        <div class="info-value">
+          {{ demande.personne_remplacee.nom_complet|default:"N/A" }}
+          <small class="text-muted d-block">{{ demande.motif_absence.nom|default:"N/A" }}</small>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Poste et lieu</div>
+        <div class="info-value">
+          {{ demande.poste.titre|default:"N/A" }}
+          <small class="text-muted d-block">
+            {{ demande.poste.departement.nom|default:"N/A" }} - {{ demande.poste.site.nom|default:"N/A" }}
+          </small>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Période</div>
+        <div class="info-value">
+          {% if demande.date_debut and demande.date_fin %}
+          {{ demande.date_debut|date:"d/m/Y" }} au {{ demande.date_fin|date:"d/m/Y" }}
+          <small class="text-muted d-block">
+            {{ demande.duree_mission|default:"0" }} jour{% if demande.duree_mission > 1 %}s{% endif %}
+          </small>
+          {% else %}
+          Dates non définies
+          {% endif %}
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Urgence</div>
+        <div class="info-value">
+          <span class="urgence-badge {{ demande.urgence|lower }}">
+            {{ demande.get_urgence_display|default:"N/A" }}
+          </span>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Candidat sélectionné</div>
+        <div class="info-value">
+          {% if demande.candidat_selectionne %}
+          {{ demande.candidat_selectionne.nom_complet }}
+          <small class="text-muted d-block">{{ demande.candidat_selectionne.poste.titre|default:"N/A" }}</small>
+          {% else %}
+          <span class="text-muted">Aucun candidat sélectionné</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques du workflow -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Statistiques du workflow
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number text-primary">
+          {{ historique_actions|length|default:"0" }}
+        </div>
+        <div class="stat-label">Actions totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number text-success">
+          {{ validations|length|default:"0" }}
+        </div>
+        <div class="stat-label">Validations effectuées</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number text-info">
+          {{ propositions|length|default:"0" }}
+        </div>
+        <div class="stat-label">Propositions candidats</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number text-warning">
+          {{ notifications_envoyees|length|default:"0" }}
+        </div>
+        <div class="stat-label">Notifications envoyées</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres de la timeline -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Filtrer la timeline
+      <button type="button" class="btn btn-outline-sm ms-auto" data-bs-toggle="collapse" data-bs-target="#filtresTimeline">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+    </h2>
+  </div>
+  <div class="collapse" id="filtresTimeline">
+    <div class="card-body">
+      <div class="filtres-timeline">
+        <div class="filtre-groupe">
+          <label class="form-label">Afficher :</label>
+          <div class="filtres-checkboxes">
+            <label class="checkbox-item">
+              <input type="checkbox" id="filter-actions" checked>
+              <span class="checkmark"></span>
+              <i class="fas fa-cog text-primary"></i> Actions ({{ historique_actions|length }})
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="filter-validations" checked>
+              <span class="checkmark"></span>
+              <i class="fas fa-check-circle text-success"></i> Validations ({{ validations|length }})
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="filter-propositions" checked>
+              <span class="checkmark"></span>
+              <i class="fas fa-user-plus text-info"></i> Propositions ({{ propositions|length }})
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="filter-notifications" checked>
+              <span class="checkmark"></span>
+              <i class="fas fa-bell text-warning"></i> Notifications ({{ notifications_envoyees|length }})
+            </label>
+          </div>
+        </div>
+        <div class="filtre-groupe">
+          <label class="form-label">Période :</label>
+          <div class="periode-buttons">
+            <button type="button" class="btn btn-outline-sm active" onclick="filtrerPeriode('all')">Tout</button>
+            <button type="button" class="btn btn-outline-sm" onclick="filtrerPeriode('today')">Aujourd'hui</button>
+            <button type="button" class="btn btn-outline-sm" onclick="filtrerPeriode('week')">Cette semaine</button>
+            <button type="button" class="btn btn-outline-sm" onclick="filtrerPeriode('month')">Ce mois</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline du workflow -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-stream"></i>
+      Timeline du workflow
+      {% if timeline %}
+        <span class="count-badge">{{ timeline|length }}</span>
+      {% endif %}
+    </h2>
+  </div>
+  <div class="card-body p-0">
+    {% if timeline %}
+    <div class="timeline-container">
+      <div class="timeline">
+        {% for item in timeline %}
+        <div class="timeline-item" data-type="{{ item.type }}" data-timestamp="{{ item.timestamp|date:'Y-m-d' }}">
+          <div class="timeline-marker">
+            {% if item.type == 'action' %}
+            <div class="timeline-icon action">
+              <i class="fas fa-cog"></i>
+            </div>
+            {% elif item.type == 'validation' %}
+            <div class="timeline-icon validation">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            {% elif item.type == 'proposition' %}
+            <div class="timeline-icon proposition">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            {% elif item.type == 'evaluation' %}
+            <div class="timeline-icon evaluation">
+              <i class="fas fa-star"></i>
+            </div>
+            {% else %}
+            <div class="timeline-icon notification">
+              <i class="fas fa-bell"></i>
+            </div>
+            {% endif %}
+          </div>
+          
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <div class="timeline-title">{{ item.titre }}</div>
+              <div class="timeline-meta">
+                <span class="timeline-user">
+                  {% if item.utilisateur %}
+                  <i class="fas fa-user"></i>
+                  {{ item.utilisateur.nom_complet }}
+                  {% else %}
+                  <i class="fas fa-robot"></i>
+                  Système
+                  {% endif %}
+                </span>
+                <span class="timeline-date">
+                  <i class="fas fa-clock"></i>
+                  {{ item.timestamp|date:"d/m/Y H:i" }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="timeline-description">
+              {{ item.description }}
+            </div>
+            
+            {% if item.commentaire %}
+            <div class="timeline-comment">
+              <i class="fas fa-quote-left"></i>
+              <em>{{ item.commentaire }}</em>
+            </div>
+            {% endif %}
+            
+            {% if item.score %}
+            <div class="timeline-score">
+              <span class="score-label">Score :</span>
+              <span class="score-value {{ item.score|default:0|add:0|floatformat:0|add:0|length|add:0 }}">
+                {{ item.score }}
+              </span>
+            </div>
+            {% endif %}
+            
+            {% if item.donnees %}
+            <div class="timeline-details">
+              <button type="button" class="btn btn-outline-xs" data-bs-toggle="collapse" data-bs-target="#details_{{ forloop.counter }}">
+                <i class="fas fa-info-circle"></i> Détails techniques
+              </button>
+              <div class="collapse mt-2" id="details_{{ forloop.counter }}">
+                <div class="details-content">
+                  <pre>{{ item.donnees|pprint }}</pre>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <!-- Aucun élément dans la timeline -->
+    <div class="empty-state">
+      <i class="fas fa-stream fa-4x text-muted mb-3"></i>
+      <h4>Aucun événement dans l'historique</h4>
+      <p class="text-muted">
+        Cette demande n'a pas encore d'historique d'actions disponible.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Résumé des validations -->
+{% if validations %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-clipboard-check"></i>
+      Résumé des validations
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="validations-resume">
+      {% for validation in validations %}
+      <div class="validation-item">
+        <div class="validation-niveau">
+          <div class="niveau-badge niveau-{{ validation.niveau_validation }}">
+            N{{ validation.niveau_validation }}
+          </div>
+        </div>
+        <div class="validation-info">
+          <div class="validation-header">
+            <span class="validation-type">{{ validation.get_type_validation_display }}</span>
+            <span class="validation-decision {{ validation.decision|lower }}">
+              {{ validation.get_decision_display }}
+            </span>
+          </div>
+          <div class="validation-details">
+            <span class="validation-validateur">
+              <i class="fas fa-user"></i>
+              {{ validation.validateur.nom_complet }}
+            </span>
+            <span class="validation-date">
+              <i class="fas fa-calendar"></i>
+              {{ validation.date_validation|date:"d/m/Y H:i" }}
+            </span>
+          </div>
+          {% if validation.commentaire %}
+          <div class="validation-commentaire">
+            <i class="fas fa-comment"></i>
+            {{ validation.commentaire }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Propositions de candidats -->
+{% if propositions %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-users"></i>
+      Propositions de candidats
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="propositions-resume">
+      {% for proposition in propositions %}
+      <div class="proposition-item">
+        <div class="proposition-candidat">
+          <div class="candidat-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="candidat-info">
+            <div class="candidat-nom">{{ proposition.candidat_propose.nom_complet }}</div>
+            <div class="candidat-poste">{{ proposition.candidat_propose.poste.titre|default:"N/A" }}</div>
+          </div>
+        </div>
+        <div class="proposition-details">
+          <div class="proposition-meta">
+            <span class="proposition-proposant">
+              <i class="fas fa-user-plus"></i>
+              Proposé par {{ proposition.proposant.nom_complet }}
+            </span>
+            <span class="proposition-date">
+              <i class="fas fa-clock"></i>
+              {{ proposition.created_at|date:"d/m/Y H:i" }}
+            </span>
+          </div>
+          <div class="proposition-statut">
+            <span class="statut-badge {{ proposition.statut|lower }}">
+              {{ proposition.get_statut_display }}
+            </span>
+            {% if proposition.score_final %}
+            <span class="score-badge">
+              Score: {{ proposition.score_final }}
+            </span>
+            {% endif %}
+          </div>
+          {% if proposition.justification %}
+          <div class="proposition-justification">
+            <i class="fas fa-quote-left"></i>
+            {{ proposition.justification|truncatewords:20 }}
+            {% if proposition.justification|length > 100 %}
+            <button type="button" class="btn btn-link btn-sm" data-bs-toggle="modal" data-bs-target="#justificationModal{{ forloop.counter }}">
+              Voir plus
+            </button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Actions rapides -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-bolt"></i>
+      Actions rapides
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-rapides">
+      {% if demande.statut != 'TERMINEE' and demande.statut != 'ANNULEE' %}
+      <a href="{% url 'demande_interim_propositions_liste' demande.id %}" class="btn btn-info">
+        <i class="fas fa-users"></i>
+        Voir les propositions
+      </a>
+      {% endif %}
+      
+      {% if profil_utilisateur.type_profil in 'RH,ADMIN,DIRECTEUR' %}
+      <button type="button" class="btn btn-warning" onclick="exporterHistorique()">
+        <i class="fas fa-download"></i>
+        Exporter l'historique
+      </button>
+      {% endif %}
+      
+      <button type="button" class="btn btn-outline" onclick="imprimerHistorique()">
+        <i class="fas fa-print"></i>
+        Imprimer
+      </button>
+      
+      <button type="button" class="btn btn-outline" onclick="window.history.back()">
+        <i class="fas fa-arrow-left"></i>
+        Retour
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modales pour les justifications complètes -->
+{% for proposition in propositions %}
+{% if proposition.justification|length > 100 %}
+<div class="modal fade" id="justificationModal{{ forloop.counter }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-comment"></i>
+          Justification complète - {{ proposition.candidat_propose.nom_complet }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="justification-complete">
+          <div class="proposition-meta mb-3">
+            <strong>Proposé par :</strong> {{ proposition.proposant.nom_complet }}<br>
+            <strong>Date :</strong> {{ proposition.created_at|date:"d/m/Y H:i" }}<br>
+            <strong>Statut :</strong> {{ proposition.get_statut_display }}
+          </div>
+          <div class="justification-text">
+            {{ proposition.justification|linebreaks }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Chargement en cours...</p>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container">
+  <!-- Les toasts seront ajoutés ici dynamiquement -->
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES DE BASE POUR L'HISTORIQUE
+================================================================ */
+
+.historique-header {
+  background: linear-gradient(135deg, #6f42c1, #495057);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.breadcrumb-custom {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.breadcrumb-custom a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+.breadcrumb-custom a:hover {
+  color: white;
+}
+
+.breadcrumb-custom i {
+  margin: 0 0.5rem;
+  opacity: 0.6;
+}
+
+.demande-statut {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-left: 1rem;
+}
+
+.demande-statut.soumise {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.demande-statut.en_validation {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.demande-statut.validee {
+  background-color: #28a745;
+  color: white;
+}
+
+.demande-statut.en_cours {
+  background-color: #007bff;
+  color: white;
+}
+
+.demande-statut.terminee {
+  background-color: #6c757d;
+  color: white;
+}
+
+.demande-statut.refusee {
+  background-color: #dc3545;
+  color: white;
+}
+
+.progression-workflow {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.progression-info {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.progression-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progression-fill {
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* ================================================================
+   STYLES DES INFORMATIONS DE DEMANDE
+================================================================ */
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #212529;
+}
+
+.urgence-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.urgence-badge.moyenne {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.urgence-badge.normale {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* ================================================================
+   STYLES DES STATISTIQUES
+================================================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary, #007bff);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--primary, #007bff);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* ================================================================
+   STYLES DES FILTRES DE TIMELINE
+================================================================ */
+
+.filtres-timeline {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.filtre-groupe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.filtres-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.checkbox-item:hover {
+  background-color: #f8f9fa;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin: 0;
+}
+
+.checkmark {
+  width: 18px;
+  height: 18px;
+}
+
+.periode-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.periode-buttons .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.periode-buttons .btn.active {
+  background-color: var(--primary, #007bff);
+  color: white;
+  border-color: var(--primary, #007bff);
+}
+
+/* ================================================================
+   STYLES DE LA TIMELINE
+================================================================ */
+
+.timeline-container {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 3rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 1.5rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #007bff, #6c757d);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.timeline-item.hidden {
+  display: none;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -3rem;
+  top: 1rem;
+  z-index: 2;
+}
+
+.timeline-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  border: 3px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.timeline-icon.action {
+  background-color: #007bff;
+}
+
+.timeline-icon.validation {
+  background-color: #28a745;
+}
+
+.timeline-icon.proposition {
+  background-color: #17a2b8;
+}
+
+.timeline-icon.evaluation {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.timeline-icon.notification {
+  background-color: #fd7e14;
+}
+
+.timeline-content {
+  padding: 1.5rem;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.timeline-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.timeline-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+  flex-wrap: wrap;
+}
+
+.timeline-user,
+.timeline-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.timeline-description {
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.timeline-comment {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  border-radius: 0 4px 4px 0;
+  font-style: italic;
+}
+
+.timeline-score {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.score-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.score-value {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+  color: white;
+  background-color: #6c757d;
+}
+
+.timeline-details {
+  margin-top: 1rem;
+}
+
+.details-content {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.details-content pre {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #495057;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ================================================================
+   STYLES DU RÉSUMÉ DES VALIDATIONS
+================================================================ */
+
+.validations-resume {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.validation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.validation-niveau {
+  flex-shrink: 0;
+}
+
+.niveau-badge {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.niveau-badge.niveau-1 {
+  background-color: #007bff;
+}
+
+.niveau-badge.niveau-2 {
+  background-color: #17a2b8;
+}
+
+.niveau-badge.niveau-3 {
+  background-color: #28a745;
+}
+
+.validation-info {
+  flex: 1;
+}
+
+.validation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.validation-type {
+  font-weight: 600;
+  color: #495057;
+}
+
+.validation-decision {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.validation-decision.approuve {
+  background-color: #28a745;
+  color: white;
+}
+
+.validation-decision.refuse {
+  background-color: #dc3545;
+  color: white;
+}
+
+.validation-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.validation-validateur,
+.validation-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.validation-commentaire {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* ================================================================
+   STYLES DES PROPOSITIONS
+================================================================ */
+
+.propositions-resume {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.proposition-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+}
+
+.proposition-candidat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.candidat-avatar {
+  width: 3rem;
+  height: 3rem;
+  background: #17a2b8;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.candidat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.candidat-nom {
+  font-weight: 600;
+  color: #495057;
+}
+
+.candidat-poste {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.proposition-details {
+  flex: 1;
+}
+
+.proposition-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.proposition-proposant,
+.proposition-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.proposition-statut {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.statut-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statut-badge.soumise {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.statut-badge.evaluee {
+  background-color: #28a745;
+  color: white;
+}
+
+.statut-badge.retenue {
+  background-color: #007bff;
+  color: white;
+}
+
+.statut-badge.rejetee {
+  background-color: #dc3545;
+  color: white;
+}
+
+.score-badge {
+  padding: 0.25rem 0.5rem;
+  background-color: #ffc107;
+  color: #212529;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.proposition-justification {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* ================================================================
+   STYLES DES ACTIONS RAPIDES
+================================================================ */
+
+.actions-rapides {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.actions-rapides .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ================================================================
+   STYLES COMMUNS
+================================================================ */
+
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+  color: white;
+}
+
+.btn-info {
+  color: white;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  color: white;
+}
+
+.btn-warning {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  color: #212529;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+  background-color: transparent;
+  border: 1px solid #6c757d;
+}
+
+.btn-outline-sm:hover {
+  color: white;
+  background-color: #6c757d;
+}
+
+.btn-outline-xs {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.75rem;
+  color: #6c757d;
+  background-color: transparent;
+  border: 1px solid #6c757d;
+}
+
+.btn-link {
+  color: #007bff;
+  text-decoration: none;
+  background-color: transparent;
+  border: none;
+}
+
+.btn-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-state h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state .text-muted {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1050;
+}
+
+/* ================================================================
+   STYLES RESPONSIFS
+================================================================ */
+
+@media (max-width: 768px) {
+  .historique-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .timeline {
+    padding-left: 2rem;
+  }
+  
+  .timeline::before {
+    left: 1rem;
+  }
+  
+  .timeline-marker {
+    left: -2rem;
+  }
+  
+  .timeline-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.9rem;
+  }
+  
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .timeline-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .filtres-timeline {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .actions-rapides {
+    flex-direction: column;
+  }
+  
+  .actions-rapides .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .validation-item,
+  .proposition-item {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .proposition-candidat {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .timeline-content {
+    padding: 1rem;
+  }
+  
+  .validation-header,
+  .proposition-statut {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .proposition-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.timeline-item {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.timeline-icon:hover {
+  animation: pulse 0.5s ease-in-out;
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Interface historique workflow initialisée');
+
+  // ================================================================
+  // VARIABLES GLOBALES
+  // ================================================================
+  
+  const timelineItems = document.querySelectorAll('.timeline-item');
+  const filterCheckboxes = document.querySelectorAll('#filtresTimeline input[type="checkbox"]');
+  const periodeButtons = document.querySelectorAll('.periode-buttons .btn');
+
+  // ================================================================
+  // FONCTIONS DE FILTRAGE
+  // ================================================================
+  
+  function filtrerTimeline() {
+    const filtresActifs = {
+      actions: document.getElementById('filter-actions').checked,
+      validations: document.getElementById('filter-validations').checked,
+      propositions: document.getElementById('filter-propositions').checked,
+      notifications: document.getElementById('filter-notifications').checked
+    };
+    
+    console.log('Filtres actifs:', filtresActifs);
+    
+    timelineItems.forEach(item => {
+      const type = item.dataset.type;
+      let afficher = false;
+      
+      switch(type) {
+        case 'action':
+          afficher = filtresActifs.actions;
+          break;
+        case 'validation':
+          afficher = filtresActifs.validations;
+          break;
+        case 'proposition':
+        case 'evaluation':
+          afficher = filtresActifs.propositions;
+          break;
+        case 'notification':
+          afficher = filtresActifs.notifications;
+          break;
+        default:
+          afficher = true;
+      }
+      
+      if (afficher) {
+        item.classList.remove('hidden');
+        item.style.display = 'block';
+      } else {
+        item.classList.add('hidden');
+        item.style.display = 'none';
+      }
+    });
+    
+    // Mettre à jour les compteurs
+    mettreAJourCompteurs();
+  }
+
+  window.filtrerPeriode = function(periode) {
+    console.log('Filtre période:', periode);
+    
+    // Mettre à jour les boutons actifs
+    periodeButtons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const maintenant = new Date();
+    let dateDebut;
+    
+    switch(periode) {
+      case 'today':
+        dateDebut = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+        break;
+      case 'week':
+        dateDebut = new Date(maintenant.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        dateDebut = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
+        break;
+      default:
+        dateDebut = null;
+    }
+    
+    timelineItems.forEach(item => {
+      if (periode === 'all') {
+        item.style.display = 'block';
+        return;
+      }
+      
+      const itemDate = new Date(item.dataset.timestamp);
+      if (itemDate >= dateDebut) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+    
+    // Réappliquer les filtres de type
+    setTimeout(filtrerTimeline, 100);
+  };
+
+  function mettreAJourCompteurs() {
+    const compteurs = {
+      actions: 0,
+      validations: 0,
+      propositions: 0,
+      notifications: 0
+    };
+    
+    timelineItems.forEach(item => {
+      if (item.style.display !== 'none') {
+        const type = item.dataset.type;
+        switch(type) {
+          case 'action':
+            compteurs.actions++;
+            break;
+          case 'validation':
+            compteurs.validations++;
+            break;
+          case 'proposition':
+          case 'evaluation':
+            compteurs.propositions++;
+            break;
+          case 'notification':
+            compteurs.notifications++;
+            break;
+        }
+      }
+    });
+    
+    // Mettre à jour les labels des filtres
+    const labels = {
+      'filter-actions': `Actions (${compteurs.actions})`,
+      'filter-validations': `Validations (${compteurs.validations})`,
+      'filter-propositions': `Propositions (${compteurs.propositions})`,
+      'filter-notifications': `Notifications (${compteurs.notifications})`
+    };
+    
+    Object.entries(labels).forEach(([id, text]) => {
+      const label = document.querySelector(`label[for="${id}"]`);
+      if (label) {
+        const icon = label.querySelector('i');
+        const iconHtml = icon ? icon.outerHTML : '';
+        label.innerHTML = `<input type="checkbox" id="${id}" ${document.getElementById(id).checked ? 'checked' : ''}><span class="checkmark"></span>${iconHtml} ${text}`;
+      }
+    });
+  }
+
+  // ================================================================
+  // FONCTIONS D'EXPORT ET IMPRESSION
+  // ================================================================
+  
+  window.exporterHistorique = function() {
+    console.log('Export historique');
+    showLoading();
+    
+    // Préparer les données pour l'export
+    const donneesExport = {
+      demande: {
+        numero: '{{ demande.numero_demande }}',
+        statut: '{{ demande.statut }}',
+        poste: '{{ demande.poste.titre }}',
+        demandeur: '{{ demande.demandeur.nom_complet }}',
+        date_creation: '{{ demande.created_at|date:"d/m/Y H:i" }}'
+      },
+      timeline: []
+    };
+    
+    // Collecter les éléments visibles de la timeline
+    timelineItems.forEach(item => {
+      if (item.style.display !== 'none') {
+        const titre = item.querySelector('.timeline-title').textContent;
+        const description = item.querySelector('.timeline-description').textContent;
+        const date = item.querySelector('.timeline-date').textContent;
+        const utilisateur = item.querySelector('.timeline-user').textContent;
+        
+        donneesExport.timeline.push({
+          type: item.dataset.type,
+          titre: titre.trim(),
+          description: description.trim(),
+          date: date.trim(),
+          utilisateur: utilisateur.trim()
+        });
+      }
+    });
+    
+    // Simulation de l'export (à remplacer par un vrai appel API)
+    setTimeout(() => {
+      hideLoading();
+      
+      // Créer un fichier JSON pour téléchargement
+      const dataStr = JSON.stringify(donneesExport, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `historique_${donneesExport.demande.numero}_${new Date().toISOString().slice(0,10)}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      showToast('Succès', 'Historique exporté avec succès', 'success');
+    }, 2000);
+  };
+
+  window.imprimerHistorique = function() {
+    console.log('Impression historique');
+    
+    // Créer une nouvelle fenêtre pour l'impression
+    const printWindow = window.open('', '_blank');
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Historique Workflow - {{ demande.numero_demande }}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+          .timeline-item { margin-bottom: 15px; padding: 10px; border-left: 3px solid #007bff; }
+          .timeline-title { font-weight: bold; margin-bottom: 5px; }
+          .timeline-meta { font-size: 12px; color: #666; margin-bottom: 5px; }
+          .timeline-description { margin-bottom: 10px; }
+          .page-break { page-break-before: always; }
+          @media print { .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Historique du Workflow</h1>
+          <p><strong>Demande:</strong> {{ demande.numero_demande }}</p>
+          <p><strong>Poste:</strong> {{ demande.poste.titre }}</p>
+          <p><strong>Statut:</strong> {{ demande.get_statut_display }}</p>
+          <p><strong>Date d'impression:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+        </div>
+        
+        <div class="timeline">
+          ${Array.from(timelineItems).filter(item => item.style.display !== 'none').map(item => {
+            const titre = item.querySelector('.timeline-title').textContent;
+            const description = item.querySelector('.timeline-description').textContent;
+            const date = item.querySelector('.timeline-date').textContent;
+            const utilisateur = item.querySelector('.timeline-user').textContent;
+            
+            return `
+              <div class="timeline-item">
+                <div class="timeline-title">${titre}</div>
+                <div class="timeline-meta">${utilisateur} - ${date}</div>
+                <div class="timeline-description">${description}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
+  // ================================================================
+  // FONCTIONS UTILITAIRES
+  // ================================================================
+  
+  function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+  }
+  
+  function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+  
+  function showToast(titre, message, type = 'info') {
+    const toastContainer = document.querySelector('.toast-container');
+    const toastId = 'toast_' + Date.now();
+    
+    const bgClass = {
+      'success': 'bg-success',
+      'error': 'bg-danger',
+      'warning': 'bg-warning',
+      'info': 'bg-info'
+    }[type] || 'bg-info';
+    
+    const icon = {
+      'success': 'fa-check-circle',
+      'error': 'fa-exclamation-circle',
+      'warning': 'fa-exclamation-triangle',
+      'info': 'fa-info-circle'
+    }[type] || 'fa-info-circle';
+    
+    const toastHtml = `
+      <div class="toast ${bgClass} text-white" id="${toastId}" role="alert">
+        <div class="toast-header ${bgClass} text-white">
+          <i class="fas ${icon} me-2"></i>
+          <strong class="me-auto">${titre}</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+          ${message}
+        </div>
+      </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+      autohide: true,
+      delay: type === 'error' ? 8000 : 5000
+    });
+    
+    toast.show();
+    
+    // Nettoyer après fermeture
+    toastElement.addEventListener('hidden.bs.toast', function() {
+      this.remove();
+    });
+  }
+
+  // ================================================================
+  // INITIALISATION DES EVENT LISTENERS
+  // ================================================================
+
+  // Event listeners pour les filtres
+  filterCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', filtrerTimeline);
+  });
+
+  // Raccourcis clavier
+  document.addEventListener('keydown', function(e) {
+    // Ctrl+P : Imprimer
+    if (e.ctrlKey && e.key === 'p') {
+      e.preventDefault();
+      imprimerHistorique();
+    }
+    
+    // Ctrl+E : Exporter
+    if (e.ctrlKey && e.key === 'e') {
+      e.preventDefault();
+      if (typeof exporterHistorique === 'function') {
+        exporterHistorique();
+      }
+    }
+    
+    // Escape : Fermer les modales
+    if (e.key === 'Escape') {
+      const modals = document.querySelectorAll('.modal.show');
+      modals.forEach(modal => {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+      });
+    }
+  });
+
+  // Smooth scroll pour les liens internes
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+
+  // Animation d'entrée pour les éléments de timeline
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateX(0)';
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  timelineItems.forEach(item => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(-20px)';
+    item.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(item);
+  });
+
+  // Tooltips Bootstrap
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Auto-scroll vers l'élément le plus récent
+  if (timelineItems.length > 0) {
+    const premierElement = timelineItems[0];
+    setTimeout(() => {
+      premierElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 1000);
+  }
+
+  // Initialisation des compteurs
+  mettreAJourCompteurs();
+
+  console.log('✅ Interface historique workflow prête');
+  console.log(`📊 ${timelineItems.length} éléments dans la timeline`);
+});
+
+// ================================================================
+// FONCTIONS GLOBALES POUR COMPATIBILITÉ
+// ================================================================
+
+window.showLoading = function() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+};
+
+window.hideLoading = function() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+};
+
+window.showToast = function(titre, message, type = 'info') {
+  // Fonction définie dans le DOMContentLoaded
+  const toastContainer = document.querySelector('.toast-container');
+  if (toastContainer) {
+    // Réutiliser la logique de showToast
+    const event = new CustomEvent('showToast', {
+      detail: { titre, message, type }
+    });
+    document.dispatchEvent(event);
+  }
+};
+
+// Gestion des erreurs globales
+window.addEventListener('error', function(e) {
+  console.error('Erreur JavaScript:', e.error);
+  if (typeof showToast === 'function') {
+    showToast('Erreur', 'Une erreur inattendue s\'est produite', 'error');
+  }
+});
+
+// Fonction de recherche dans la timeline
+window.rechercherDansTimeline = function(terme) {
+  console.log('Recherche dans timeline:', terme);
+  
+  if (!terme || terme.length < 2) {
+    // Réafficher tous les éléments
+    timelineItems.forEach(item => {
+      item.style.display = 'block';
+      item.classList.remove('search-highlight');
+    });
+    return;
+  }
+  
+  terme = terme.toLowerCase();
+  let resultatsAffiches = 0;
+  
+  timelineItems.forEach(item => {
+    const titre = item.querySelector('.timeline-title').textContent.toLowerCase();
+    const description = item.querySelector('.timeline-description').textContent.toLowerCase();
+    const utilisateur = item.querySelector('.timeline-user').textContent.toLowerCase();
+    
+    if (titre.includes(terme) || description.includes(terme) || utilisateur.includes(terme)) {
+      item.style.display = 'block';
+      item.classList.add('search-highlight');
+      resultatsAffiches++;
+    } else {
+      item.style.display = 'none';
+      item.classList.remove('search-highlight');
+    }
+  });
+  
+  // Afficher un message si aucun résultat
+  const messageRecherche = document.getElementById('messageRecherche');
+  if (messageRecherche) {
+    if (resultatsAffiches === 0) {
+      messageRecherche.textContent = `Aucun résultat trouvé pour "${terme}"`;
+      messageRecherche.style.display = 'block';
+    } else {
+      messageRecherche.textContent = `${resultatsAffiches} résultat(s) trouvé(s)`;
+      messageRecherche.style.display = 'block';
+    }
+  }
+};
+
+// Fonction de zoom sur la timeline
+window.zoomTimeline = function(action) {
+  const timeline = document.querySelector('.timeline-container');
+  if (!timeline) return;
+  
+  const currentFontSize = parseInt(window.getComputedStyle(timeline).fontSize);
+  let newFontSize;
+  
+  switch(action) {
+    case 'in':
+      newFontSize = Math.min(currentFontSize + 2, 24);
+      break;
+    case 'out':
+      newFontSize = Math.max(currentFontSize - 2, 12);
+      break;
+    case 'reset':
+      newFontSize = 16;
+      break;
+    default:
+      return;
+  }
+  
+  timeline.style.fontSize = newFontSize + 'px';
+  console.log('Zoom timeline:', action, 'nouvelle taille:', newFontSize);
+};
+
+// Fonction de navigation dans la timeline
+window.naviguerTimeline = function(direction) {
+  const itemsVisibles = Array.from(timelineItems).filter(item => item.style.display !== 'none');
+  if (itemsVisibles.length === 0) return;
+  
+  const itemActuel = document.querySelector('.timeline-item.current');
+  let index = 0;
+  
+  if (itemActuel) {
+    index = itemsVisibles.indexOf(itemActuel);
+    itemActuel.classList.remove('current');
+  }
+  
+  if (direction === 'next') {
+    index = (index + 1) % itemsVisibles.length;
+  } else if (direction === 'prev') {
+    index = index > 0 ? index - 1 : itemsVisibles.length - 1;
+  } else if (direction === 'first') {
+    index = 0;
+  } else if (direction === 'last') {
+    index = itemsVisibles.length - 1;
+  }
+  
+  const nouvelItem = itemsVisibles[index];
+  nouvelItem.classList.add('current');
+  nouvelItem.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+  
+  console.log('Navigation timeline:', direction, 'item', index + 1, 'sur', itemsVisibles.length);
+};
+
+// Fonction de copie de lien vers un élément spécifique
+window.copierLienElement = function(elementId) {
+  const url = window.location.href.split('#')[0] + '#' + elementId;
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('Succès', 'Lien copié dans le presse-papiers', 'success');
+    }).catch(() => {
+      // Fallback pour les navigateurs plus anciens
+      copierTexteDepuisFallback(url);
+    });
+  } else {
+    copierTexteDepuisFallback(url);
+  }
+};
+
+function copierTexteDepuisFallback(text) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.top = '-1000px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showToast('Succès', 'Lien copié dans le presse-papiers', 'success');
+  } catch (err) {
+    showToast('Erreur', 'Impossible de copier le lien', 'error');
+  } finally {
+    document.body.removeChild(textArea);
+  }
+}
+
+// Fonction de comparaison de versions
+window.comparerVersions = function(elementId1, elementId2) {
+  const element1 = document.getElementById(elementId1);
+  const element2 = document.getElementById(elementId2);
+  
+  if (!element1 || !element2) {
+    showToast('Erreur', 'Éléments non trouvés pour la comparaison', 'error');
+    return;
+  }
+  
+  // Créer une modal de comparaison
+  const modalHtml = `
+    <div class="modal fade" id="modalComparaison" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-exchange-alt"></i>
+              Comparaison d'éléments
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Élément 1</h6>
+                <div class="comparaison-element">
+                  ${element1.outerHTML}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6>Élément 2</h6>
+                <div class="comparaison-element">
+                  ${element2.outerHTML}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Supprimer l'ancienne modal si elle existe
+  const ancienneModal = document.getElementById('modalComparaison');
+  if (ancienneModal) {
+    ancienneModal.remove();
+  }
+  
+  // Ajouter la nouvelle modal
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  
+  // Afficher la modal
+  const modal = new bootstrap.Modal(document.getElementById('modalComparaison'));
+  modal.show();
+  
+  console.log('Comparaison lancée entre', elementId1, 'et', elementId2);
+};
+
+// Fonctions d'accessibilité
+window.toggleContrasteFort = function() {
+  document.body.classList.toggle('contraste-fort');
+  const etat = document.body.classList.contains('contraste-fort');
+  localStorage.setItem('contraste_fort', etat);
+  showToast('Accessibilité', `Contraste fort ${etat ? 'activé' : 'désactivé'}`, 'info');
+};
+
+window.toggleGrosseTaille = function() {
+  document.body.classList.toggle('grosse-taille');
+  const etat = document.body.classList.contains('grosse-taille');
+  localStorage.setItem('grosse_taille', etat);
+  showToast('Accessibilité', `Grosse taille ${etat ? 'activée' : 'désactivée'}`, 'info');
+};
+
+// Fonction de lecture automatique (Text-to-Speech)
+window.lireElement = function(elementId) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Erreur', 'La synthèse vocale n\'est pas supportée par votre navigateur', 'error');
+    return;
+  }
+  
+  const element = document.getElementById(elementId);
+  if (!element) {
+    showToast('Erreur', 'Élément non trouvé', 'error');
+    return;
+  }
+  
+  // Arrêter toute lecture en cours
+  speechSynthesis.cancel();
+  
+  // Extraire le texte à lire
+  const titre = element.querySelector('.timeline-title')?.textContent || '';
+  const description = element.querySelector('.timeline-description')?.textContent || '';
+  const utilisateur = element.querySelector('.timeline-user')?.textContent || '';
+  const date = element.querySelector('.timeline-date')?.textContent || '';
+  
+  const texteALire = `${titre}. ${description}. Par ${utilisateur}, ${date}.`;
+  
+  const utterance = new SpeechSynthesisUtterance(texteALire);
+  utterance.lang = 'fr-FR';
+  utterance.rate = 0.8;
+  utterance.pitch = 1;
+  
+  utterance.onstart = function() {
+    element.classList.add('en-lecture');
+    showToast('Lecture', 'Lecture en cours...', 'info');
+  };
+  
+  utterance.onend = function() {
+    element.classList.remove('en-lecture');
+  };
+  
+  utterance.onerror = function(event) {
+    element.classList.remove('en-lecture');
+    showToast('Erreur', 'Erreur lors de la lecture', 'error');
+  };
+  
+  speechSynthesis.speak(utterance);
+  console.log('Lecture audio démarrée pour:', elementId);
+};
+
+// Fonction d'analyse de performance
+window.analyserPerformanceWorkflow = function() {
+  console.log('Analyse de performance du workflow');
+  
+  const elements = Array.from(timelineItems).filter(item => item.style.display !== 'none');
+  if (elements.length === 0) {
+    showToast('Info', 'Aucun élément à analyser', 'info');
+    return;
+  }
+  
+  // Analyser les délais entre les étapes
+  const analyse = {
+    duree_totale: 0,
+    nb_etapes: elements.length,
+    etapes_par_type: {},
+    delais_moyens: {},
+    goulots_etranglement: []
+  };
+  
+  elements.forEach((element, index) => {
+    const type = element.dataset.type;
+    analyse.etapes_par_type[type] = (analyse.etapes_par_type[type] || 0) + 1;
+    
+    if (index > 0) {
+      const dateActuelle = new Date(element.dataset.timestamp);
+      const datePrecedente = new Date(elements[index - 1].dataset.timestamp);
+      const delai = dateActuelle - datePrecedente;
+      
+      if (!analyse.delais_moyens[type]) {
+        analyse.delais_moyens[type] = [];
+      }
+      analyse.delais_moyens[type].push(delai);
+      
+      // Identifier les goulots (délai > 2 jours)
+      if (delai > 2 * 24 * 60 * 60 * 1000) {
+        analyse.goulots_etranglement.push({
+          etape: element.querySelector('.timeline-title').textContent,
+          delai_jours: Math.round(delai / (24 * 60 * 60 * 1000)),
+          type: type
+        });
+      }
+    }
+  });
+  
+  // Calculer les moyennes
+  Object.keys(analyse.delais_moyens).forEach(type => {
+    const delais = analyse.delais_moyens[type];
+    const moyenne = delais.reduce((a, b) => a + b, 0) / delais.length;
+    analyse.delais_moyens[type] = Math.round(moyenne / (60 * 60 * 1000)); // en heures
+  });
+  
+  // Durée totale
+  if (elements.length > 1) {
+    const debut = new Date(elements[elements.length - 1].dataset.timestamp);
+    const fin = new Date(elements[0].dataset.timestamp);
+    analyse.duree_totale = Math.round((fin - debut) / (24 * 60 * 60 * 1000)); // en jours
+  }
+  
+  // Afficher les résultats
+  const modalAnalyse = `
+    <div class="modal fade" id="modalAnalysePerformance" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-chart-line"></i>
+              Analyse de performance du workflow
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Statistiques générales</h6>
+                <ul class="list-unstyled">
+                  <li><strong>Durée totale:</strong> ${analyse.duree_totale} jour(s)</li>
+                  <li><strong>Nombre d'étapes:</strong> ${analyse.nb_etapes}</li>
+                  <li><strong>Goulots identifiés:</strong> ${analyse.goulots_etranglement.length}</li>
+                </ul>
+                
+                <h6>Répartition par type</h6>
+                <ul class="list-unstyled">
+                  ${Object.entries(analyse.etapes_par_type).map(([type, count]) => 
+                    `<li><strong>${type}:</strong> ${count}</li>`
+                  ).join('')}
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Délais moyens (heures)</h6>
+                <ul class="list-unstyled">
+                  ${Object.entries(analyse.delais_moyens).map(([type, delai]) => 
+                    `<li><strong>${type}:</strong> ${delai}h</li>`
+                  ).join('')}
+                </ul>
+                
+                ${analyse.goulots_etranglement.length > 0 ? `
+                <h6>Goulots d'étranglement</h6>
+                <ul class="list-unstyled">
+                  ${analyse.goulots_etranglement.map(goulot => 
+                    `<li class="text-warning"><strong>${goulot.etape}:</strong> ${goulot.delai_jours} jour(s)</li>`
+                  ).join('')}
+                </ul>
+                ` : '<p class="text-success">Aucun goulot identifié</p>'}
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="exporterAnalyse()">
+              <i class="fas fa-download"></i> Exporter l'analyse
+            </button>
+            <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Supprimer l'ancienne modal si elle existe
+  const ancienneModal = document.getElementById('modalAnalysePerformance');
+  if (ancienneModal) {
+    ancienneModal.remove();
+  }
+  
+  // Ajouter et afficher la modal
+  document.body.insertAdjacentHTML('beforeend', modalAnalyse);
+  const modal = new bootstrap.Modal(document.getElementById('modalAnalysePerformance'));
+  modal.show();
+  
+  // Stocker l'analyse pour l'export
+  window.derniereAnalyse = analyse;
+};
+
+window.exporterAnalyse = function() {
+  if (!window.derniereAnalyse) {
+    showToast('Erreur', 'Aucune analyse disponible', 'error');
+    return;
+  }
+  
+  const dataStr = JSON.stringify(window.derniereAnalyse, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  
+  const exportFileDefaultName = `analyse_performance_${new Date().toISOString().slice(0,10)}.json`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+  
+  showToast('Succès', 'Analyse exportée avec succès', 'success');
+};
+
+// Initialisation des préférences d'accessibilité
+document.addEventListener('DOMContentLoaded', function() {
+  // Charger les préférences d'accessibilité
+  if (localStorage.getItem('contraste_fort') === 'true') {
+    document.body.classList.add('contraste-fort');
+  }
+  
+  if (localStorage.getItem('grosse_taille') === 'true') {
+    document.body.classList.add('grosse-taille');
+  }
+  
+  // Ajouter la barre d'outils d'accessibilité
+  const barreOutils = `
+    <div class="barre-accessibilite" id="barreAccessibilite">
+      <button type="button" class="btn btn-outline-sm" onclick="toggleContrasteFort()" title="Basculer le contraste fort">
+        <i class="fas fa-adjust"></i>
+      </button>
+      <button type="button" class="btn btn-outline-sm" onclick="toggleGrosseTaille()" title="Basculer la grosse taille">
+        <i class="fas fa-text-height"></i>
+      </button>
+      <button type="button" class="btn btn-outline-sm" onclick="zoomTimeline('in')" title="Zoom avant">
+        <i class="fas fa-search-plus"></i>
+      </button>
+      <button type="button" class="btn btn-outline-sm" onclick="zoomTimeline('out')" title="Zoom arrière">
+        <i class="fas fa-search-minus"></i>
+      </button>
+      <button type="button" class="btn btn-outline-sm" onclick="zoomTimeline('reset')" title="Taille normale">
+        <i class="fas fa-undo"></i>
+      </button>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', barreOutils);
+});
+
+console.log('🎯 Fonctionnalités avancées d\'historique workflow chargées');
+console.log('⚡ Fonctions disponibles: recherche, zoom, navigation, accessibilité, analyse');
+</script>
+
+<!-- Styles CSS additionnels pour les fonctionnalités avancées -->
+<style>
+/* ================================================================
+   STYLES POUR LES FONCTIONNALITÉS AVANCÉES
+================================================================ */
+
+/* Barre d'outils d'accessibilité */
+.barre-accessibilite {
+  position: fixed;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.barre-accessibilite .btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Styles pour contraste fort */
+.contraste-fort {
+  filter: contrast(150%) brightness(110%);
+}
+
+.contraste-fort .timeline-item {
+  border: 2px solid #000;
+}
+
+.contraste-fort .timeline-icon {
+  border: 3px solid #000;
+}
+
+/* Styles pour grosse taille */
+.grosse-taille {
+  font-size: 120%;
+}
+
+.grosse-taille .timeline-icon {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.5rem;
+}
+
+.grosse-taille .btn {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+}
+
+/* Styles pour la recherche */
+.search-highlight {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7) !important;
+  border-left: 4px solid #ffc107 !important;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.3) !important;
+}
+
+.search-highlight .timeline-title {
+  color: #856404;
+  font-weight: bold;
+}
+
+/* Styles pour la navigation */
+.timeline-item.current {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+  border-left: 4px solid #2196f3 !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
+}
+
+/* Styles pour la lecture audio */
+.timeline-item.en-lecture {
+  background: linear-gradient(135deg, #e8f5e8, #c8e6c9) !important;
+  border-left: 4px solid #4caf50 !important;
+  animation: lecture-pulse 2s infinite;
+}
+
+@keyframes lecture-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Styles pour la comparaison */
+.comparaison-element {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.comparaison-element .timeline-item {
+  margin-bottom: 0;
+  transform: none !important;
+}
+
+/* Styles pour les messages */
+#messageRecherche {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  text-align: center;
+  display: none;
+}
+
+/* Responsive pour la barre d'outils */
+@media (max-width: 768px) {
+  .barre-accessibilite {
+    right: 5px;
+    padding: 0.25rem;
+  }
+  
+  .barre-accessibilite .btn {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* Styles pour l'impression */
+@media print {
+  .barre-accessibilite,
+  .loading-overlay,
+  .toast-container,
+  .btn,
+  .modal {
+    display: none !important;
+  }
+  
+  .timeline-item {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .timeline-icon {
+    background: #000 !important;
+    color: #fff !important;
+  }
+}
+
+/* Animations fluides */
+.timeline-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-item:hover {
+  transform: translateX(5px) scale(1.01);
+}
+
+/* Focus visible pour l'accessibilité */
+.btn:focus,
+.timeline-item:focus {
+  outline: 3px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Amélioration du contraste des liens */
+a {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #004085;
+  text-decoration: none;
+}
+
+/* Indicateurs visuels pour les états */
+.timeline-item[data-type="validation"] {
+  border-left-color: #28a745;
+}
+
+.timeline-item[data-type="action"] {
+  border-left-color: #007bff;
+}
+
+.timeline-item[data-type="proposition"] {
+  border-left-color: #17a2b8;
+}
+
+.timeline-item[data-type="notification"] {
+  border-left-color: #fd7e14;
+}
+</style>
+{% endblock extra_js %}

@@ -1,0 +1,1008 @@
+{% comment %}
+Étiquette affichant le délai avant le prochain jour férié
+À inclure dans base.html ou index.html avec: {% include 'includes/etiquette_prochain_ferie.html' %}
+
+IMPORTANT: L'étiquette ne s'affiche que si le prochain férié arrive dans les 15 jours ou moins.
+Cette limite est configurée dans context_processors.py (DELAI_AFFICHAGE_FERIE)
+
+Fichier à placer dans: templates/includes/etiquette_prochain_ferie.html
+{% endcomment %}
+
+{% if prochain_ferie and prochain_ferie_afficher %}
+<div class="ferie-badge-container" id="ferieBadgeContainer">
+  <!-- Badge principal -->
+  <div class="ferie-badge {% if prochain_ferie_jours <= 3 %}ferie-badge-urgent{% elif prochain_ferie_jours <= 7 %}ferie-badge-soon{% endif %} {% if prochain_ferie_est_musulman %}ferie-badge-muslim{% endif %}"
+       onclick="toggleFerieDetails()" 
+       title="Cliquez pour plus de détails">
+    
+    <div class="ferie-badge-icon">
+      {% if prochain_ferie_est_musulman %}
+        <i class="fas fa-moon"></i>
+      {% else %}
+        <i class="fas fa-calendar-day"></i>
+      {% endif %}
+    </div>
+    
+    <div class="ferie-badge-content">
+      <span class="ferie-badge-label">Prochain férié</span>
+      <span class="ferie-badge-countdown">
+        {% if prochain_ferie_jours == 0 %}
+          <strong>Aujourd'hui !</strong>
+        {% elif prochain_ferie_jours == 1 %}
+          <strong>Demain</strong>
+        {% else %}
+          <strong>{{ prochain_ferie_jours }}</strong> jours
+        {% endif %}
+      </span>
+    </div>
+    
+    {% if prochain_ferie_est_musulman and prochain_ferie_est_modifiable %}
+    <div class="ferie-badge-alert" title="Date pouvant varier selon l'observation lunaire">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- Panneau de détails (caché par défaut) -->
+  <div class="ferie-details-panel" id="ferieDetailsPanel">
+    <div class="ferie-details-header">
+      <h4>
+        {% if prochain_ferie_est_musulman %}
+          <i class="fas fa-moon"></i>
+        {% else %}
+          <i class="fas fa-calendar-check"></i>
+        {% endif %}
+        {{ prochain_ferie.nom }}
+      </h4>
+      <button class="ferie-details-close" onclick="toggleFerieDetails()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="ferie-details-body">
+      <div class="ferie-details-date">
+        <i class="fas fa-calendar"></i>
+        <span>{{ prochain_ferie.date_ferie|date:"l d F Y" }}</span>
+      </div>
+      
+      <div class="ferie-details-type">
+        <i class="fas fa-tag"></i>
+        <span class="ferie-type-badge ferie-type-{{ prochain_ferie.type_ferie|lower }}">
+          {{ prochain_ferie.get_type_ferie_display }}
+        </span>
+      </div>
+      
+      {% if prochain_ferie_jours <= 7 %}
+      <div class="ferie-details-countdown">
+        {% if prochain_ferie_jours == 0 %}
+          <span class="countdown-today">🎉 C'est aujourd'hui !</span>
+        {% elif prochain_ferie_jours == 1 %}
+          <span class="countdown-tomorrow">⏰ C'est demain !</span>
+        {% else %}
+          <span class="countdown-soon">📅 Dans {{ prochain_ferie_jours }} jours</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      
+      {% if prochain_ferie_est_musulman and prochain_ferie_est_modifiable %}
+      <div class="ferie-details-warning">
+        <i class="fas fa-info-circle"></i>
+        <p>
+          Cette date est calculée selon le calendrier Hijri et peut varier 
+          selon l'observation de la lune par les autorités religieuses.
+        </p>
+      </div>
+      
+      <!-- Bouton pour signaler une correction (utilisateurs) -->
+      <button class="btn-signaler-correction" onclick="ouvrirModalSignalement()">
+        <i class="fas fa-flag"></i>
+        Signaler une correction de date
+      </button>
+      {% endif %}
+      
+      {% if prochain_ferie.est_modifie %}
+      <div class="ferie-details-modified">
+        <i class="fas fa-edit"></i>
+        <span>Date modifiée (initiale: {{ prochain_ferie.date_calculee|date:"d/m/Y" }})</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal de signalement pour les utilisateurs -->
+{% if prochain_ferie and prochain_ferie_afficher and prochain_ferie_est_musulman and prochain_ferie_est_modifiable %}
+<div class="modal-signalement-overlay" id="modalSignalement">
+  <div class="modal-signalement">
+    <div class="modal-signalement-header">
+      <h3>
+        <i class="fas fa-flag"></i>
+        Signaler une correction de date
+      </h3>
+      <button class="modal-close" onclick="fermerModalSignalement()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-signalement-body">
+      <div class="modal-info-ferie">
+        <strong>{{ prochain_ferie.nom }}</strong>
+        <span>Date actuelle: {{ prochain_ferie.date_ferie|date:"d/m/Y" }}</span>
+      </div>
+      
+      <form id="formSignalement" method="POST" action="{% url 'signaler_correction_ferie' %}">
+        {% csrf_token %}
+        <input type="hidden" name="ferie_id" value="{{ prochain_ferie.id }}">
+        
+        <div class="form-group">
+          <label for="date_suggeree">
+            <i class="fas fa-calendar-alt"></i>
+            Date correcte suggérée
+          </label>
+          <input type="date" 
+                 id="date_suggeree" 
+                 name="date_suggeree" 
+                 class="form-control"
+                 required>
+        </div>
+        
+        <div class="form-group">
+          <label for="source_info">
+            <i class="fas fa-link"></i>
+            Source de l'information
+          </label>
+          <input type="text" 
+                 id="source_info" 
+                 name="source_info" 
+                 class="form-control"
+                 placeholder="Ex: COSIM, média, site officiel..."
+                 required>
+        </div>
+        
+        <div class="form-group">
+          <label for="commentaire">
+            <i class="fas fa-comment"></i>
+            Commentaire (optionnel)
+          </label>
+          <textarea id="commentaire" 
+                    name="commentaire" 
+                    class="form-control"
+                    rows="3"
+                    placeholder="Précisions supplémentaires..."></textarea>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="fermerModalSignalement()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i>
+            Envoyer le signalement
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+/* ================================================
+   BADGE PROCHAIN FÉRIÉ
+   ================================================ */
+.ferie-badge-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Drag & Drop */
+  user-select: none;
+  touch-action: none;
+}
+
+.ferie-badge-container.dragging {
+  opacity: 0.9;
+  transition: none !important;
+}
+
+.ferie-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  cursor: grab;
+  transition: all 0.3s ease;
+  animation: fadeInRight 0.5s ease-out;
+}
+
+.ferie-badge:active {
+  cursor: grabbing;
+}
+
+.ferie-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+/* Indicateur de drag */
+.ferie-badge::before {
+  content: '⋮⋮';
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin-right: -0.25rem;
+  letter-spacing: -2px;
+}
+
+/* Variante urgente (3 jours ou moins) */
+.ferie-badge-urgent {
+  background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+  box-shadow: 0 4px 15px rgba(241, 39, 17, 0.4);
+  animation: pulse 2s infinite;
+}
+
+/* Variante proche (7 jours ou moins) */
+.ferie-badge-soon {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
+}
+
+/* Variante musulmane */
+.ferie-badge-muslim {
+  background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
+}
+
+.ferie-badge-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.ferie-badge-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.ferie-badge-label {
+  font-size: 0.7rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ferie-badge-countdown {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.ferie-badge-alert {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 193, 7, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #856404;
+  animation: bounce 1s infinite;
+}
+
+/* ================================================
+   PANNEAU DE DÉTAILS
+   ================================================ */
+.ferie-details-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 320px;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  display: none;
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+}
+
+.ferie-details-panel.active {
+  display: block;
+}
+
+.ferie-details-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ferie-details-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ferie-details-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.ferie-details-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ferie-details-body {
+  padding: 1.25rem;
+}
+
+.ferie-details-date,
+.ferie-details-type,
+.ferie-details-modified {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.ferie-details-date i,
+.ferie-details-type i,
+.ferie-details-modified i {
+  width: 20px;
+  color: #667eea;
+}
+
+.ferie-type-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ferie-type-ferie_civil { background: #dbeafe; color: #1e40af; }
+.ferie-type-ferie_chretien { background: #f3e8ff; color: #7c3aed; }
+.ferie-type-ferie_musulman { background: #d1fae5; color: #065f46; }
+.ferie-type-ferie_interne { background: #fef3c7; color: #d97706; }
+
+.ferie-details-countdown {
+  text-align: center;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  background: #f7fafc;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.countdown-today { color: #059669; font-size: 1.1rem; }
+.countdown-tomorrow { color: #d97706; }
+.countdown-soon { color: #667eea; }
+
+.ferie-details-warning {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #92400e;
+}
+
+.ferie-details-warning i {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ferie-details-warning p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ferie-details-modified {
+  background: #e0e7ff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.btn-signaler-correction {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  margin-top: 0.75rem;
+}
+
+.btn-signaler-correction:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
+}
+
+/* ================================================
+   MODAL DE SIGNALEMENT
+   ================================================ */
+.modal-signalement-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-signalement-overlay.active {
+  display: flex;
+}
+
+.modal-signalement {
+  background: white;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: zoomIn 0.3s ease-out;
+}
+
+.modal-signalement-header {
+  background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
+  color: white;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.modal-signalement-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-signalement-body {
+  padding: 1.5rem;
+}
+
+.modal-info-ferie {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.modal-info-ferie strong {
+  color: #166534;
+  font-size: 1rem;
+}
+
+.modal-info-ferie span {
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.form-group label i {
+  color: #2d6a4f;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #2d6a4f;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.modal-actions .btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
+  border: none;
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
+}
+
+/* ================================================
+   ANIMATIONS
+   ================================================ */
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(241, 39, 17, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(241, 39, 17, 0.6);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* ================================================
+   RESPONSIVE
+   ================================================ */
+@media (max-width: 768px) {
+  .ferie-badge-container {
+    top: auto;
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .ferie-badge {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .ferie-badge-label {
+    display: none;
+  }
+  
+  .ferie-details-panel {
+    position: fixed;
+    top: auto;
+    bottom: 5rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+  
+  .modal-signalement {
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+</style>
+
+<script>
+// Toggle du panneau de détails
+function toggleFerieDetails() {
+  const panel = document.getElementById('ferieDetailsPanel');
+  if (panel) {
+    panel.classList.toggle('active');
+  }
+}
+
+// Fermer le panneau si on clique ailleurs
+document.addEventListener('click', function(event) {
+  const container = document.getElementById('ferieBadgeContainer');
+  const panel = document.getElementById('ferieDetailsPanel');
+  
+  if (container && panel && !container.contains(event.target)) {
+    panel.classList.remove('active');
+  }
+});
+
+// Ouvrir la modal de signalement
+function ouvrirModalSignalement() {
+  const modal = document.getElementById('modalSignalement');
+  if (modal) {
+    modal.classList.add('active');
+    // Fermer le panneau de détails
+    const panel = document.getElementById('ferieDetailsPanel');
+    if (panel) panel.classList.remove('active');
+  }
+}
+
+// Fermer la modal de signalement
+function fermerModalSignalement() {
+  const modal = document.getElementById('modalSignalement');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// Fermer modal avec Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    fermerModalSignalement();
+    const panel = document.getElementById('ferieDetailsPanel');
+    if (panel) panel.classList.remove('active');
+  }
+});
+
+// Fermer modal si on clique sur l'overlay
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('modalSignalement');
+  if (modal && event.target === modal) {
+    fermerModalSignalement();
+  }
+});
+
+// Gestion du formulaire de signalement
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('formSignalement');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      
+      // État de chargement
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Afficher notification de succès
+          if (typeof showNotification === 'function') {
+            showNotification('Signalement envoyé avec succès. Un administrateur examinera votre demande.', 'success');
+          } else {
+            alert('Signalement envoyé avec succès !');
+          }
+          fermerModalSignalement();
+          form.reset();
+        } else {
+          if (typeof showNotification === 'function') {
+            showNotification(data.error || 'Erreur lors de l\'envoi du signalement', 'error');
+          } else {
+            alert(data.error || 'Erreur lors de l\'envoi');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+        if (typeof showNotification === 'function') {
+          showNotification('Erreur de connexion', 'error');
+        } else {
+          alert('Erreur de connexion');
+        }
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      });
+    });
+  }
+  
+  // ============================================
+  // DRAG & DROP - Étiquette flottante mobile
+  // ============================================
+  
+  const container = document.getElementById('ferieBadgeContainer');
+  if (!container) return;
+  
+  let isDragging = false;
+  let wasDragged = false;
+  let startX, startY, startLeft, startTop;
+  const DRAG_THRESHOLD = 5; // pixels avant de considérer comme drag
+  
+  // Charger la position sauvegardée
+  function loadSavedPosition() {
+    try {
+      const saved = localStorage.getItem('ferieBadgePosition');
+      if (saved) {
+        const pos = JSON.parse(saved);
+        // Vérifier que la position est valide (dans la fenêtre)
+        const maxX = window.innerWidth - container.offsetWidth;
+        const maxY = window.innerHeight - container.offsetHeight;
+        
+        if (pos.left >= 0 && pos.left <= maxX && pos.top >= 0 && pos.top <= maxY) {
+          container.style.left = pos.left + 'px';
+          container.style.top = pos.top + 'px';
+          container.style.right = 'auto';
+          return true;
+        }
+      }
+    } catch (e) {
+      console.log('Position non chargée');
+    }
+    return false;
+  }
+  
+  // Sauvegarder la position
+  function savePosition() {
+    try {
+      const rect = container.getBoundingClientRect();
+      localStorage.setItem('ferieBadgePosition', JSON.stringify({
+        left: rect.left,
+        top: rect.top
+      }));
+    } catch (e) {
+      // localStorage non disponible
+    }
+  }
+  
+  // Obtenir les coordonnées (souris ou touch)
+  function getCoords(e) {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+  }
+  
+  // Début du drag
+  function startDrag(e) {
+    // Ignorer si on clique sur un bouton ou lien
+    if (e.target.closest('button, a, input, .ferie-details-panel')) return;
+    
+    const coords = getCoords(e);
+    const rect = container.getBoundingClientRect();
+    
+    startX = coords.x;
+    startY = coords.y;
+    startLeft = rect.left;
+    startTop = rect.top;
+    
+    isDragging = true;
+    wasDragged = false;
+    
+    // Convertir de right à left pour le drag
+    container.style.left = rect.left + 'px';
+    container.style.top = rect.top + 'px';
+    container.style.right = 'auto';
+    
+    container.classList.add('dragging');
+    
+    e.preventDefault();
+  }
+  
+  // Pendant le drag
+  function doDrag(e) {
+    if (!isDragging) return;
+    
+    const coords = getCoords(e);
+    const deltaX = coords.x - startX;
+    const deltaY = coords.y - startY;
+    
+    // Vérifier si on a dépassé le seuil de drag
+    if (Math.abs(deltaX) > DRAG_THRESHOLD || Math.abs(deltaY) > DRAG_THRESHOLD) {
+      wasDragged = true;
+    }
+    
+    // Calculer la nouvelle position
+    let newLeft = startLeft + deltaX;
+    let newTop = startTop + deltaY;
+    
+    // Limiter aux bords de la fenêtre
+    const maxX = window.innerWidth - container.offsetWidth;
+    const maxY = window.innerHeight - container.offsetHeight;
+    
+    newLeft = Math.max(0, Math.min(newLeft, maxX));
+    newTop = Math.max(0, Math.min(newTop, maxY));
+    
+    container.style.left = newLeft + 'px';
+    container.style.top = newTop + 'px';
+    
+    e.preventDefault();
+  }
+  
+  // Fin du drag
+  function endDrag(e) {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    container.classList.remove('dragging');
+    
+    if (wasDragged) {
+      savePosition();
+      // Empêcher le clic si on a fait un drag
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+  
+  // Événements souris
+  container.addEventListener('mousedown', startDrag);
+  document.addEventListener('mousemove', doDrag);
+  document.addEventListener('mouseup', endDrag);
+  
+  // Événements tactiles (mobile)
+  container.addEventListener('touchstart', startDrag, { passive: false });
+  document.addEventListener('touchmove', doDrag, { passive: false });
+  document.addEventListener('touchend', endDrag);
+  
+  // Empêcher le clic si on a fait un drag
+  container.addEventListener('click', function(e) {
+    if (wasDragged) {
+      e.stopPropagation();
+      wasDragged = false;
+    }
+  }, true);
+  
+  // Réajuster si la fenêtre est redimensionnée
+  window.addEventListener('resize', function() {
+    const rect = container.getBoundingClientRect();
+    const maxX = window.innerWidth - container.offsetWidth;
+    const maxY = window.innerHeight - container.offsetHeight;
+    
+    if (rect.left > maxX) {
+      container.style.left = Math.max(0, maxX) + 'px';
+    }
+    if (rect.top > maxY) {
+      container.style.top = Math.max(0, maxY) + 'px';
+    }
+    
+    savePosition();
+  });
+  
+  // Charger la position au démarrage
+  loadSavedPosition();
+  
+  // Double-clic pour réinitialiser la position
+  container.addEventListener('dblclick', function(e) {
+    if (e.target.closest('.ferie-details-panel, button, a')) return;
+    
+    container.style.transition = 'all 0.3s ease';
+    container.style.top = '1rem';
+    container.style.right = '1rem';
+    container.style.left = 'auto';
+    
+    // Supprimer la position sauvegardée
+    try {
+      localStorage.removeItem('ferieBadgePosition');
+    } catch (e) {}
+    
+    // Réactiver la transition normale après l'animation
+    setTimeout(() => {
+      container.style.transition = '';
+    }, 300);
+  });
+});
+</script>

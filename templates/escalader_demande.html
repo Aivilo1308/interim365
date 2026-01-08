@@ -1,0 +1,713 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Escalader la demande{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header d'escalade -->
+<div class="escalade-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-0">
+          <i class="fas fa-arrow-up"></i>
+          Escalader la demande
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-file-alt"></i> Demande {{ demande.numero_demande|default:"N/A" }}
+          - {{ demande.poste.titre|default:"Poste non défini" }}
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'liste_interim_validation' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour à la liste
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations de la demande -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations de la demande
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-card">
+        <div class="info-label">📋 N° Demande</div>
+        <div class="info-value">{{ demande.numero_demande|default:"N/A" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">💼 Poste</div>
+        <div class="info-value">{{ demande.poste.titre|default:"Poste non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏢 Département</div>
+        <div class="info-value">{{ demande.poste.departement.nom|default:"Département N/A" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">👤 Demandeur</div>
+        <div class="info-value">{{ demande.demandeur.nom_complet|default:"Nom non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🔄 Personne remplacée</div>
+        <div class="info-value">{{ demande.personne_remplacee.nom_complet|default:"Nom non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📅 Période</div>
+        <div class="info-value">
+          {% if demande.date_debut and demande.date_fin %}
+            {{ demande.date_debut|date:"d/m/Y" }} - {{ demande.date_fin|date:"d/m/Y" }}
+          {% else %}
+            N/A
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">⚠️ Urgence</div>
+        <div class="info-value">
+          <span class="urgence-badge {{ urgence_classe|default:'normale' }}">
+            {{ demande.get_urgence_display|default:"N/A" }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📊 Niveau actuel</div>
+        <div class="info-value">
+          <span class="niveau-badge">
+            Niveau {{ demande.niveau_validation_actuel|default:"0" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statut d'escalade -->
+{% if verification_escalade %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-check-circle"></i>
+      Statut d'escalade
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="escalade-status-grid">
+      <div class="status-card {{ verification_escalade.escalade_possible|yesno:'success,danger' }}">
+        <div class="status-icon">
+          {% if verification_escalade.escalade_possible %}
+            <i class="fas fa-check-circle text-success"></i>
+          {% else %}
+            <i class="fas fa-times-circle text-danger"></i>
+          {% endif %}
+        </div>
+        <div class="status-content">
+          <div class="status-label">Escalade possible</div>
+          <div class="status-value">
+            {% if verification_escalade.escalade_possible %}
+              ✅ Oui - Cette demande peut être escaladée
+            {% else %}
+              ❌ Non - Cette demande ne peut pas être escaladée
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="status-card {{ verification_escalade.peut_escalader|yesno:'success,danger' }}">
+        <div class="status-icon">
+          {% if verification_escalade.peut_escalader %}
+            <i class="fas fa-user-check text-success"></i>
+          {% else %}
+            <i class="fas fa-user-times text-danger"></i>
+          {% endif %}
+        </div>
+        <div class="status-content">
+          <div class="status-label">Vos permissions</div>
+          <div class="status-value">
+            {% if verification_escalade.peut_escalader %}
+              ✅ Autorisé
+            {% else %}
+              ❌ Non autorisé
+            {% endif %}
+            <br><small>{{ verification_escalade.raison_user }}</small>
+          </div>
+        </div>
+      </div>
+      
+      {% if verification_escalade.escalade_possible %}
+      <div class="status-card info">
+        <div class="status-icon">
+          <i class="fas fa-arrow-up text-info"></i>
+        </div>
+        <div class="status-content">
+          <div class="status-label">Niveau cible</div>
+          <div class="status-value">
+            Niveau {{ verification_escalade.niveau_cible }} 
+            ({{ verification_escalade.type_validation_cible }})
+          </div>
+        </div>
+      </div>
+      
+      <div class="status-card info">
+        <div class="status-icon">
+          <i class="fas fa-users text-info"></i>
+        </div>
+        <div class="status-content">
+          <div class="status-label">Validateurs cibles</div>
+          <div class="status-value">
+            {{ verification_escalade.nb_validateurs_cibles }} validateur(s)
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Formulaire d'escalade -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-edit"></i>
+      Formulaire d'escalade
+    </h2>
+  </div>
+  <div class="card-body">
+    {% if verification_escalade.escalade_possible and verification_escalade.peut_escalader %}
+      <form method="post" id="formEscalade">
+        {% csrf_token %}
+        
+        <div class="form-group mb-4">
+          <label for="motif_escalade" class="form-label required">
+            <i class="fas fa-comment"></i> Motif de l'escalade
+          </label>
+          <textarea id="motif_escalade" name="motif_escalade" class="form-textarea form-control" 
+                    rows="6" required 
+                    placeholder="Expliquez en détail pourquoi cette demande doit être escaladée au niveau supérieur..."></textarea>
+          <div class="form-text">
+            <i class="fas fa-info-circle"></i> 
+            Ce motif sera visible par tous les validateurs du niveau supérieur et sera ajouté à l'historique de la demande.
+          </div>
+        </div>
+        
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="alert-content">
+            <strong>Attention :</strong> 
+            <ul class="mb-0 mt-2">
+              <li>L'escalade va transférer cette demande vers le niveau {{ verification_escalade.niveau_cible }} ({{ verification_escalade.type_validation_cible }})</li>
+              <li>{{ verification_escalade.nb_validateurs_cibles }} validateur(s) seront notifiés immédiatement</li>
+              <li>Cette action est <strong>irréversible</strong></li>
+              <li>La demande sera traitée en priorité au niveau supérieur</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="form-actions mt-4">
+          <button type="submit" class="btn btn-warning btn-lg" id="btnEscalader">
+            <i class="fas fa-arrow-up"></i>
+            Escalader la demande
+          </button>
+          <a href="{% url 'liste_interim_validation' %}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-times"></i>
+            Annuler
+          </a>
+        </div>
+      </form>
+    {% else %}
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i>
+        <div class="alert-content">
+          <strong>Escalade impossible :</strong>
+          <ul class="mb-0 mt-2">
+            {% if not verification_escalade.peut_escalader %}
+            <li>{{ verification_escalade.raison_user }}</li>
+            {% endif %}
+            {% if not verification_escalade.peut_etre_escaladee %}
+            <li>{{ verification_escalade.raison_demande }}</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      
+      <div class="form-actions mt-4">
+        <a href="{% url 'liste_interim_validation' %}" class="btn btn-primary btn-lg">
+          <i class="fas fa-arrow-left"></i>
+          Retour à la liste
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Validateurs qui seront notifiés -->
+{% if verification_escalade.escalade_possible and verification_escalade.validateurs_cibles %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-users"></i>
+      Validateurs qui seront notifiés
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="validateurs-grid">
+      {% for validateur in verification_escalade.validateurs_cibles %}
+      <div class="validateur-card">
+        <div class="validateur-icon">
+          <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="validateur-info">
+          <div class="validateur-nom">{{ validateur }}</div>
+          <div class="validateur-role">{{ verification_escalade.type_validation_cible }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+      <span class="visually-hidden">Traitement en cours...</span>
+    </div>
+    <p class="mt-3 text-white">Escalade en cours...</p>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+  <!-- Les toasts seront ajoutés ici dynamiquement -->
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles spécifiques pour l'escalade */
+.escalade-header {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #212529;
+  font-size: 1.1rem;
+}
+
+.escalade-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.status-card.success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.status-card.danger {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.status-card.info {
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+}
+
+.status-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.status-content {
+  flex: 1;
+}
+
+.status-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.status-value {
+  color: #212529;
+}
+
+.validateurs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.validateur-card {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  gap: 1rem;
+}
+
+.validateur-icon {
+  font-size: 1.5rem;
+  color: #007bff;
+  min-width: 40px;
+  text-align: center;
+}
+
+.validateur-nom {
+  font-weight: 500;
+  color: #212529;
+}
+
+.validateur-role {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.urgence-badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.urgence-badge.moyenne {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.urgence-badge.normale {
+  background-color: #6c757d;
+  color: white;
+}
+
+.niveau-badge {
+  background-color: #007bff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-label.required::after {
+  content: " *";
+  color: #dc3545;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-lg {
+  padding: 0.875rem 2rem;
+  font-size: 1.125rem;
+}
+
+.btn-warning {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  color: #212529;
+}
+
+.btn-secondary {
+  color: white;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+  border-color: #4e555b;
+  color: white;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+  color: white;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .escalade-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .escalade-status-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .validateurs-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚨 Page d\'escalade de demande initialisée');
+  
+  const form = document.getElementById('formEscalade');
+  const btnEscalader = document.getElementById('btnEscalader');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const motif = document.getElementById('motif_escalade').value.trim();
+      
+      if (!motif) {
+        alert('Le motif d\'escalade est obligatoire');
+        document.getElementById('motif_escalade').focus();
+        return;
+      }
+      
+      if (motif.length < 20) {
+        alert('Le motif doit contenir au moins 20 caractères');
+        document.getElementById('motif_escalade').focus();
+        return;
+      }
+      
+      if (confirm('Êtes-vous sûr de vouloir escalader cette demande ? Cette action est irréversible.')) {
+        // Afficher le loading
+        if (loadingOverlay) {
+          loadingOverlay.style.display = 'flex';
+        }
+        
+        // Désactiver le bouton
+        if (btnEscalader) {
+          btnEscalader.disabled = true;
+          btnEscalader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Escalade en cours...';
+        }
+        
+        // Soumettre le formulaire
+        form.submit();
+      }
+    });
+  }
+  
+  // Auto-focus sur le textarea
+  const motifTextarea = document.getElementById('motif_escalade');
+  if (motifTextarea) {
+    motifTextarea.focus();
+  }
+});
+</script>
+{% endblock extra_js %}

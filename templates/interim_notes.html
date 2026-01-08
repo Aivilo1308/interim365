@@ -1,0 +1,1750 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interim365 - BNI | Nouvelle demande de remplacement</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --secondary: #10b981;
+      --secondary-dark: #059669;
+      --secondary-light: #d1fae5;
+      --orange: #f97316;
+      --orange-light: #ffedd5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #eab308;
+      --warning-light: #fef3c7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 0.5rem;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --sidebar-width: 60px;
+      --sidebar-width-expanded: 220px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      position: relative;
+    }
+
+    /* Logo Container */
+    .logo-container {
+      display: flex;
+      justify-content: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo-container img {
+      max-width: 200px;
+      width: 25%;
+      height: auto;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #fff;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 0;
+      position: fixed;
+      height: 100%;
+      z-index: 20;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar .logo a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .sidebar .nav-item {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem 0;
+      color: var(--gray-500);
+      position: relative;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .sidebar .nav-item.active {
+      color: var(--primary);
+    }
+
+    .sidebar .nav-item:hover {
+      color: var(--primary-dark);
+      background-color: var(--gray-100);
+    }
+
+    .sidebar .nav-item.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: var(--primary);
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .sidebar .divider {
+      width: 30px;
+      height: 1px;
+      background-color: var(--gray-200);
+      margin: 0.5rem 0;
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 30;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: white;
+      box-shadow: var(--shadow);
+      justify-content: center;
+      align-items: center;
+      color: var(--gray-700);
+      cursor: pointer;
+      border: none;
+      font-size: 1.25rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 1.5rem 2rem;
+      max-width: 1600px;
+      width: calc(100% - var(--sidebar-width));
+      transition: all 0.3s ease;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-menu .icon-btn {
+      background: none;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .user-menu .icon-btn:hover {
+      background-color: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      min-width: 100px;
+    }
+
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 1rem;
+      right: -50%;
+      width: 100%;
+      height: 2px;
+      background-color: var(--gray-300);
+      z-index: 0;
+    }
+
+    .step.active:not(:last-child)::after {
+      background-color: var(--primary);
+    }
+
+    .step.completed:not(:last-child)::after {
+      background-color: var(--secondary);
+    }
+
+    .step-number {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background-color: var(--gray-300);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step.active .step-number {
+      background-color: var(--primary);
+    }
+
+    .step.completed .step-number {
+      background-color: var(--secondary);
+    }
+
+    .step-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .step.active .step-label {
+      color: var(--primary);
+    }
+
+    .step.completed .step-label {
+      color: var(--secondary);
+    }
+
+    /* Card Container */
+    .card-container {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title i {
+      color: var(--primary);
+    }
+
+    .card-body {
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .card-footer {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius);
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-help {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 0.25rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--border-radius);
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-success {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: var(--secondary-dark);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--gray-100);
+    }
+
+    /* Alert */
+    .alert {
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .alert i {
+      margin-top: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-info {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .alert-info i {
+      color: var(--primary);
+    }
+
+    /* Details Display */
+    .details-item {
+      margin-bottom: 1.25rem;
+    }
+
+    .details-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 0.25rem;
+    }
+
+    .details-value {
+      font-weight: 500;
+      word-wrap: break-word;
+    }
+
+    /* Candidates List */
+    .candidates-list {
+      margin-top: 1.5rem;
+    }
+
+    .candidate-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .candidate-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .candidate-card.selected {
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .candidate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .candidate-info {
+      display: flex;
+      gap: 1rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .candidate-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .candidate-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .candidate-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-position {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .score-badge {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .candidate-body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .candidate-skills {
+      flex: 2;
+      min-width: 250px;
+    }
+
+    .candidate-metrics {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .skills-title, .metrics-title {
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      color: var(--gray-700);
+      font-size: 0.875rem;
+    }
+
+    .skill-item {
+      display: inline-block;
+      background-color: var(--gray-100);
+      color: var(--gray-700);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .metric-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-label {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+
+    .metric-value {
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background-color: var(--gray-200);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary);
+    }
+
+    .progress-fill.high {
+      background-color: var(--secondary);
+    }
+
+    .progress-fill.medium {
+      background-color: var(--orange);
+    }
+
+    .progress-fill.low {
+      background-color: var(--danger);
+    }
+
+    .candidate-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray-200);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .candidate-availability {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .availability-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .availability-badge.available {
+      background-color: var(--secondary-light);
+      color: var(--secondary);
+    }
+
+    .availability-badge.partial {
+      background-color: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .candidate-select {
+      margin-left: auto;
+    }
+
+    .radio-select {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    /* Summary Box */
+    .summary-box {
+      background-color: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .summary-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .summary-label {
+      color: var(--gray-600);
+    }
+
+    .summary-value {
+      font-weight: 500;
+    }
+
+    /* Workflow Preview */
+    .workflow-preview {
+      margin-top: 1.5rem;
+    }
+
+    .workflow-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .workflow-steps {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .workflow-steps::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0.75rem;
+      width: 2px;
+      background-color: var(--gray-200);
+    }
+
+    .workflow-step {
+      position: relative;
+      padding-bottom: 1.5rem;
+    }
+
+    .workflow-step:last-child {
+      padding-bottom: 0;
+    }
+
+    .workflow-step::before {
+      content: "";
+      position: absolute;
+      left: -2rem;
+      top: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background-color: var(--gray-300);
+      z-index: 1;
+    }
+
+    .workflow-step.active::before {
+      background-color: var(--primary);
+    }
+
+    .workflow-step.completed::before {
+      background-color: var(--secondary);
+    }
+
+    .workflow-step-title {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .workflow-step-description {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 1200px) {
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 992px) {
+      .main-content {
+        padding: 1.25rem;
+      }
+      
+      .candidate-card {
+        padding: 1rem;
+      }
+      
+      .candidate-body {
+        gap: 1rem;
+      }
+      
+      .score-badge {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-menu-toggle {
+        display: flex;
+      }
+      
+      .sidebar {
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-md);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 1rem;
+        padding-top: 4rem;
+      }
+      
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .user-menu {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .card-header > div,
+      .card-footer {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+      }
+      
+      .card-footer .btn {
+        flex: 1;
+        justify-content: center;
+        text-align: center;
+        padding: 0.625rem 0.5rem;
+      }
+      
+      .logo-container img {
+        max-width: 150px;
+      }
+      
+      .candidate-info {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .stepper {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+      
+      .step {
+        text-align: center;
+      }
+      
+      .step-label {
+        font-size: 0.75rem;
+      }
+      
+      .workflow-steps {
+        padding-left: 1.5rem;
+      }
+      
+      .workflow-step::before {
+        left: -1.5rem;
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .candidate-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .candidate-score {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      
+      .score-badge {
+        margin-bottom: 0;
+      }
+      
+      .card-body {
+        padding: 1rem;
+      }
+      
+      .card-header, .card-footer {
+        padding: 1rem;
+      }
+      
+      .radio-select {
+        top: 1rem;
+        right: 1rem;
+      }
+      
+      .stepper {
+        overflow-x: auto;
+        justify-content: flex-start;
+        width: 100%;
+      }
+      
+      .step {
+        min-width: 80px;
+      }
+      
+      .step:not(:last-child)::after {
+        width: 50px;
+      }
+      
+      .page-title {
+        font-size: 1.25rem;
+      }
+      
+      .candidate-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .candidate-select {
+        margin-left: 0;
+        width: 100%;
+      }
+      
+      .candidate-select .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .workflow-step-description {
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .card-footer .btn {
+        width: 100%;
+      }
+      
+      .candidate-body {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      
+      .candidate-skills, .candidate-metrics {
+        min-width: 100%;
+      }
+      
+      .details-item {
+        margin-bottom: 1rem;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: var(--gray-900);
+        color: var(--gray-200);
+      }
+      
+      .sidebar,
+      .card-container,
+      .mobile-menu-toggle {
+        background-color: var(--gray-800);
+        border-color: var(--gray-700);
+      }
+      
+      .card-title,
+      .summary-title,
+      .page-title,
+      .workflow-step-title,
+      .step-label.active,
+      .metrics-title,
+      .skills-title,
+      .candidate-name,
+      .details-label,
+      .form-label {
+        color: var(--gray-200);
+      }
+      
+      .card-header,
+      .card-footer {
+        border-color: var(--gray-700);
+      }
+      
+      .summary-box {
+        background-color: var(--gray-800);
+        border-color: var(--gray-700);
+      }
+      
+      .candidate-card {
+        border-color: var(--gray-700);
+        background-color: var(--gray-800);
+      }
+      
+      .candidate-card.selected {
+        background-color: rgba(37, 99, 235, 0.2);
+        border-color: var(--primary);
+      }
+      
+      .candidate-position,
+      .metric-label,
+      .workflow-step-description,
+      .candidate-availability,
+      .details-label,
+      .summary-label {
+        color: var(--gray-400);
+      }
+      
+      .skill-item {
+        background-color: var(--gray-700);
+        color: var(--gray-300);
+      }
+      
+      .candidate-footer {
+        border-color: var(--gray-700);
+      }
+      
+      .progress-bar {
+        background-color: var(--gray-700);
+      }
+      
+      .form-input,
+      .form-select,
+      .form-textarea {
+        background-color: var(--gray-800);
+        border-color: var(--gray-700);
+        color: var(--gray-200);
+      }
+      
+      .btn-outline {
+        border-color: var(--gray-600);
+        color: var(--gray-300);
+      }
+      
+      .btn-outline:hover {
+        background-color: var(--gray-700);
+      }
+      
+      .workflow-steps::before {
+        background-color: var(--gray-700);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <div class="logo"><a href="{% url 'index' %}">I365</a></div>
+    <a href="{% url 'index' %}" class="nav-item">
+      <i class="fas fa-home"></i>
+    </a>
+    <a href="{% url 'interim_demande' %}" class="nav-item active">
+      <i class="fas fa-plus-circle"></i>
+    </a>
+    <a href="{% url 'liste_interim_validation' %}" class="nav-item">
+      <i class="fas fa-tasks"></i>
+    </a>
+    <a href="{% url 'historique_interim' %}" class="nav-item">
+      <i class="fas fa-calendar-alt"></i>
+    </a>
+    <a href="{% url 'interim_stats' %}" class="nav-item">
+      <i class="fas fa-chart-pie"></i>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-cog"></i>
+    </a>
+    <div class="divider"></div>
+    <a href="#" class="nav-item">
+      <i class="fas fa-bell"></i>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-question-circle"></i>
+    </a>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Logo Container (Centered) -->
+    <div class="logo-container">
+      <a href="{% url 'index' %}">
+        <img src="{% static 'img/i365.png' %}" alt="Logo">
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <h1 class="page-title">Nouvelle demande de remplacement</h1>
+      <div class="user-menu">
+        <button class="icon-btn">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="icon-btn">
+          <i class="fas fa-bell"></i>
+        </button>
+        <div class="user-avatar">TS</div>
+      </div>
+    </div>
+
+    <!-- Progress Stepper -->
+    <div class="stepper">
+      <div class="step completed">
+        <div class="step-number">
+          <i class="fas fa-check"></i>
+        </div>
+        <div class="step-label">Informations</div>
+      </div>
+      <div class="step active">
+        <div class="step-number">2</div>
+        <div class="step-label">Candidats</div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-label">Validation</div>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-label">Confirmation</div>
+      </div>
+    </div>
+    
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle fa-lg"></i>
+      <div class="alert-content">
+        <div class="alert-title">Sélection intelligente des candidats</div>
+        <p>Le système a analysé votre demande et trouvé 5 candidats potentiels, classés selon leur score de compatibilité. Veuillez sélectionner un candidat ou demander une nouvelle recherche avec des critères différents.</p>
+      </div>
+    </div>
+
+    <!-- Demande Summary -->
+    <div class="card-container">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-info-circle"></i>
+          Récapitulatif de la demande
+        </h2>
+        <button class="btn btn-outline">
+          <i class="fas fa-pen"></i>
+          Modifier
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="summary-box">
+          <h3 class="summary-title">Informations générales</h3>
+          <div class="form-grid">
+            <div class="details-item">
+              <div class="details-label">Poste à remplacer</div>
+              <div class="details-value">Conseiller clientèle</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Département</div>
+              <div class="details-value">Service Client</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Localisation</div>
+              <div class="details-value">Agence Plateau - Abidjan</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Date de début</div>
+              <div class="details-value">01/06/2025</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Date de fin</div>
+              <div class="details-value">30/06/2025</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Urgence</div>
+              <div class="details-value">Normale</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Motif d'absence</div>
+              <div class="details-value">Congé maternité</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Personne à remplacer</div>
+              <div class="details-value">Kouamé Aya</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="summary-box">
+          <h3 class="summary-title">Compétences requises</h3>
+          <div class="form-grid">
+            <div class="details-item">
+              <div class="details-label">Compétences essentielles</div>
+              <div class="details-value">
+                <div class="skill-item">Relation client</div>
+                <div class="skill-item">Gestion des comptes</div>
+                <div class="skill-item">Communication</div>
+              </div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Compétences souhaitées</div>
+              <div class="details-value">
+                <div class="skill-item">Gestion des plaintes</div>
+                <div class="skill-item">Vente de produits bancaires</div>
+              </div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Niveau d'études minimum</div>
+              <div class="details-value">Bac+2 Finance/Banque</div>
+            </div>
+            <div class="details-item">
+              <div class="details-label">Expérience minimale</div>
+              <div class="details-value">1 an dans un poste similaire</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="summary-box">
+          <h3 class="summary-title">Informations complémentaires</h3>
+          <div class="details-item">
+            <div class="details-label">Description du poste</div>
+            <div class="details-value">
+              Le conseiller clientèle sera chargé d'accueillir et orienter les clients, traiter leurs opérations courantes, proposer des produits et services bancaires adaptés, et assurer le suivi administratif des dossiers clients.
+            </div>
+          </div>
+          <div class="details-item">
+            <div class="details-label">Instructions particulières</div>
+            <div class="details-value">
+              Une formation de 2 jours sera proposée avant la prise de poste pour familiariser le remplaçant avec nos procédures spécifiques.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Candidates List -->
+    <div class="card-container">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-users"></i>
+          Candidats proposés
+        </h2>
+        <div>
+          <button class="btn btn-outline">
+            <i class="fas fa-filter"></i>
+            Filtrer
+          </button>
+          <button class="btn btn-outline">
+            <i class="fas fa-sync-alt"></i>
+            Actualiser
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="candidates-list">
+          <!-- Candidate 1 -->
+          <div class="candidate-card selected">
+            <input type="radio" name="candidate-select" class="radio-select" checked>
+            <div class="candidate-header">
+              <div class="candidate-info">
+                <div class="candidate-avatar">KK</div>
+                <div class="candidate-details">
+                  <div class="candidate-name">Konan Kouassi</div>
+                  <div class="candidate-position">Conseiller clientèle - Service Client</div>
+                </div>
+              </div>
+              <div class="candidate-score">
+                <div class="score-badge">92</div>
+                <div class="score-label">Score de compatibilité</div>
+              </div>
+            </div>
+            <div class="candidate-body">
+              <div class="candidate-skills">
+                <div class="skills-title">Compétences et qualifications</div>
+                <div class="skill-item">Relation client</div>
+                <div class="skill-item">Gestion des comptes</div>
+                <div class="skill-item">Communication</div>
+                <div class="skill-item">Gestion des plaintes</div>
+                <div class="skill-item">Vente de produits bancaires</div>
+                <div class="skill-item">Conseil financier</div>
+                <div class="skill-item">Logiciel bancaire</div>
+              </div>
+              <div class="candidate-metrics">
+                <div class="metrics-title">Critères d'évaluation</div>
+                <div class="metric-item">
+                  <div class="metric-label">Similarité de poste</div>
+                  <div class="metric-value">95%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 95%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Compétences requises</div>
+                  <div class="metric-value">90%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 90%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Disponibilité</div>
+                  <div class="metric-value">100%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 100%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Proximité géographique</div>
+                  <div class="metric-value">100%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 100%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Ancienneté</div>
+                  <div class="metric-value">85%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 85%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="candidate-footer">
+              <div class="candidate-availability">
+                Disponibilité:
+                <span class="availability-badge available">Entièrement disponible</span>
+              </div>
+              <div class="candidate-select">
+                <button class="btn btn-outline">
+                  <i class="fas fa-user"></i>
+                  Voir profil complet
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Candidate 2 -->
+          <div class="candidate-card">
+            <input type="radio" name="candidate-select" class="radio-select">
+            <div class="candidate-header">
+              <div class="candidate-info">
+                <div class="candidate-avatar">BA</div>
+                <div class="candidate-details">
+                  <div class="candidate-name">Bakayoko Aminata</div>
+                  <div class="candidate-position">Assistant commercial - Commercial</div>
+                </div>
+              </div>
+              <div class="candidate-score">
+                <div class="score-badge">86</div>
+                <div class="score-label">Score de compatibilité</div>
+              </div>
+            </div>
+            <div class="candidate-body">
+              <div class="candidate-skills">
+                <div class="skills-title">Compétences et qualifications</div>
+                <div class="skill-item">Relation client</div>
+                <div class="skill-item">Communication</div>
+                <div class="skill-item">Gestion administrative</div>
+                <div class="skill-item">Vente de produits bancaires</div>
+                <div class="skill-item">Prospection</div>
+                <div class="skill-item">Organisation</div>
+              </div>
+              <div class="candidate-metrics">
+                <div class="metrics-title">Critères d'évaluation</div>
+                <div class="metric-item">
+                  <div class="metric-label">Similarité de poste</div>
+                  <div class="metric-value">80%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 80%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Compétences requises</div>
+                  <div class="metric-value">95%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 95%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Disponibilité</div>
+                  <div class="metric-value">90%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 90%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Proximité géographique</div>
+                  <div class="metric-value">80%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 80%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Ancienneté</div>
+                  <div class="metric-value">90%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 90%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="candidate-footer">
+              <div class="candidate-availability">
+                Disponibilité:
+                <span class="availability-badge partial">Partiellement disponible</span>
+              </div>
+              <div class="candidate-select">
+                <button class="btn btn-outline">
+                  <i class="fas fa-user"></i>
+                  Voir profil complet
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Candidate 3 -->
+          <div class="candidate-card">
+            <input type="radio" name="candidate-select" class="radio-select">
+            <div class="candidate-header">
+              <div class="candidate-info">
+                <div class="candidate-avatar">DM</div>
+                <div class="candidate-details">
+                  <div class="candidate-name">Diallo Mariam</div>
+                  <div class="candidate-position">Conseiller clientèle stagiaire - Service Client</div>
+                </div>
+              </div>
+              <div class="candidate-score">
+                <div class="score-badge">73</div>
+                <div class="score-label">Score de compatibilité</div>
+              </div>
+            </div>
+            <div class="candidate-body">
+              <div class="candidate-skills">
+                <div class="skills-title">Compétences et qualifications</div>
+                <div class="skill-item">Relation client</div>
+                <div class="skill-item">Communication</div>
+                <div class="skill-item">Logiciel bancaire</div>
+                <div class="skill-item">Accueil client</div>
+                <div class="skill-item">Travail d'équipe</div>
+              </div>
+              <div class="candidate-metrics">
+                <div class="metrics-title">Critères d'évaluation</div>
+                <div class="metric-item">
+                  <div class="metric-label">Similarité de poste</div>
+                  <div class="metric-value">85%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 85%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Compétences requises</div>
+                  <div class="metric-value">70%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill medium" style="width: 70%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Disponibilité</div>
+                  <div class="metric-value">100%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 100%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Proximité géographique</div>
+                  <div class="metric-value">100%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill high" style="width: 100%"></div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Ancienneté</div>
+                  <div class="metric-value">40%</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill low" style="width: 40%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="candidate-footer">
+              <div class="candidate-availability">
+                Disponibilité:
+                <span class="availability-badge available">Entièrement disponible</span>
+              </div>
+              <div class="candidate-select">
+                <button class="btn btn-outline">
+                  <i class="fas fa-user"></i>
+                  Voir profil complet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-outline">
+          <i class="fas fa-user-plus"></i>
+          Suggérer un autre candidat
+        </button>
+        <button class="btn btn-outline">
+          <i class="fas fa-search"></i>
+          Nouvelle recherche
+        </button>
+      </div>
+    </div>
+
+    <!-- Workflow Preview -->
+    <div class="card-container">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-sitemap"></i>
+          Circuit de validation
+        </h2>
+      </div>
+      <div class="card-body">
+        <div class="workflow-preview">
+          <div class="workflow-steps">
+            <div class="workflow-step completed">
+              <div class="workflow-step-title">Demandeur (Vous)</div>
+              <div class="workflow-step-description">Touré Souleymane - Responsable Service Client</div>
+            </div>
+            <div class="workflow-step active">
+              <div class="workflow-step-title">Responsable N+1</div>
+              <div class="workflow-step-description">Koné Fatoumata - Directrice Agence Plateau</div>
+            </div>
+            <div class="workflow-step">
+              <div class="workflow-step-title">Responsable N+2</div>
+              <div class="workflow-step-description">Traoré Ibrahim - Directeur Régional</div>
+            </div>
+            <div class="workflow-step">
+              <div class="workflow-step-title">Validation RH</div>
+              <div class="workflow-step-description">Département Ressources Humaines</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card-footer" style="text-align: right; padding: 1.5rem 0;">
+      <button class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i>
+        Étape précédente
+      </button>
+      <button class="btn btn-primary">
+        <i class="fas fa-arrow-right"></i>
+        Étape suivante
+      </button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle candidate selection
+      document.querySelectorAll('.candidate-card').forEach(card => {
+        card.addEventListener('click', function() {
+          // Remove selected class from all cards
+          document.querySelectorAll('.candidate-card').forEach(c => {
+            c.classList.remove('selected');
+          });
+          
+          // Add selected class to clicked card
+          this.classList.add('selected');
+          
+          // Check the radio button
+          this.querySelector('.radio-select').checked = true;
+        });
+      });
+      
+      // Mobile menu toggle
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      
+      mobileMenuToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+        
+        // Change icon based on sidebar state
+        const icon = mobileMenuToggle.querySelector('i');
+        if (sidebar.classList.contains('active')) {
+          icon.classList.remove('fa-bars');
+          icon.classList.add('fa-times');
+        } else {
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+      
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(event) {
+        if (
+          window.innerWidth <= 768 &&
+          sidebar.classList.contains('active') &&
+          !sidebar.contains(event.target) && 
+          event.target !== mobileMenuToggle && 
+          !mobileMenuToggle.contains(event.target)
+        ) {
+          sidebar.classList.remove('active');
+          const icon = mobileMenuToggle.querySelector('i');
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+      
+      // Handle window resize
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('active');
+          const icon = mobileMenuToggle.querySelector('i');
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+      
+      // Week navigation in mobile calendar view
+      const prevWeekBtn = document.querySelector('.week-header .nav-btn:first-child');
+      const nextWeekBtn = document.querySelector('.week-header .nav-btn:last-child');
+      
+      if (prevWeekBtn) {
+        prevWeekBtn.addEventListener('click', function() {
+          // In a real implementation, this would navigate to the previous week
+          alert('Navigation vers la semaine précédente');
+        });
+      }
+      
+      if (nextWeekBtn) {
+        nextWeekBtn.addEventListener('click', function() {
+          // In a real implementation, this would navigate to the next week
+          alert('Navigation vers la semaine suivante');
+        });
+      }
+      
+      // Month navigation in desktop calendar view
+      const prevMonthBtn = document.querySelector('.calendar-navigation .nav-btn:first-child');
+      const nextMonthBtn = document.querySelector('.calendar-navigation .nav-btn:last-child');
+      
+      if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', function() {
+          // In a real implementation, this would navigate to the previous month
+          alert('Navigation vers le mois précédent');
+        });
+      }
+      
+      if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', function() {
+          // In a real implementation, this would navigate to the next month
+          alert('Navigation vers le mois suivant');
+        });
+      }
+      
+      // Search functionality
+      const searchInput = document.querySelector('.search-box input');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          // In a real implementation, this would filter the missions based on the search term
+          console.log('Recherche: ' + this.value);
+        });
+      }
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('active');
+          const icon = mobileMenuToggle.querySelector('i');
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

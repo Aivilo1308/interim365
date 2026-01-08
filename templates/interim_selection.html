@@ -1,0 +1,1270 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interim365 - BNI | Sélection des candidats pour intérim</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --secondary: #10b981;
+      --secondary-dark: #059669;
+      --secondary-light: #d1fae5;
+      --orange: #f97316;
+      --orange-light: #ffedd5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #eab308;
+      --warning-light: #fef3c7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 0.5rem;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --sidebar-width: 60px;
+      --sidebar-width-expanded: 220px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      position: relative;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #fff;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 0;
+      position: fixed;
+      height: 100%;
+      z-index: 20;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar .logo a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .sidebar .nav-item {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem 0;
+      color: var(--gray-500);
+      position: relative;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .sidebar .nav-item.active {
+      color: var(--primary);
+    }
+
+    .sidebar .nav-item:hover {
+      color: var(--primary-dark);
+      background-color: var(--gray-100);
+    }
+
+    .sidebar .nav-item.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: var(--primary);
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .sidebar .divider {
+      width: 30px;
+      height: 1px;
+      background-color: var(--gray-200);
+      margin: 0.5rem 0;
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 30;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: white;
+      box-shadow: var(--shadow);
+      justify-content: center;
+      align-items: center;
+      color: var(--gray-700);
+      cursor: pointer;
+      border: none;
+      font-size: 1.25rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 1.5rem 2rem;
+      max-width: 1600px;
+      width: calc(100% - var(--sidebar-width));
+      transition: all 0.3s ease;
+    }
+
+    /* Logo Container */
+    .logo-container {
+      display: flex;
+      justify-content: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo-container img {
+      max-width: 200px;
+      width: 25%;
+      height: auto;
+    }
+
+    /* Page Header */
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--gray-900);
+    }
+
+    .page-subtitle {
+      display: flex;
+      align-items: center;
+      color: var(--gray-600);
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .page-subtitle-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Search and Add */
+    .search-add-container {
+      display: flex;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-container {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius);
+      font-size: 0.875rem;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+    }
+
+    .add-button {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      white-space: nowrap;
+    }
+
+    .add-button:hover {
+      background-color: var(--primary-dark);
+    }
+
+    /* Main Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    /* Candidate Cards */
+    .candidates-section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--gray-800);
+    }
+
+    .candidates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .candidate-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .candidate-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .candidate-card.selected {
+      border: 2px solid var(--primary);
+    }
+
+    .candidate-content {
+      padding: 1rem;
+    }
+
+    .candidate-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .candidate-avatar {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .candidate-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .candidate-name-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .candidate-name {
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--gray-800);
+    }
+
+    .candidate-tag {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      background-color: var(--gray-100);
+      color: var(--gray-700);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .candidate-position {
+      color: var(--gray-600);
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-location {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .candidate-score-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-left: 1rem;
+      flex-shrink: 0;
+    }
+
+    .score-badge {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 0.25rem;
+    }
+
+    .candidate-details {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .metric-score {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+    }
+
+    .candidate-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    /* Validation Card */
+    .validation-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      height: fit-content;
+    }
+
+    .validation-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .validation-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .validation-content {
+      padding: 1rem 1.5rem;
+    }
+
+    .validation-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .vertical-line {
+      width: 0.125rem;
+      height: 1.5rem;
+      background-color: var(--gray-300);
+      margin-left: 1.25rem;
+    }
+
+    .validation-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .step-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-info {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 500;
+      margin-bottom: 0.125rem;
+    }
+
+    .step-subtitle {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .active-step .step-icon {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .completed-step .step-icon {
+      background-color: var(--secondary-light);
+      color: var(--secondary-dark);
+    }
+
+    .inactive-step .step-icon {
+      background-color: var(--gray-100);
+      color: var(--gray-400);
+    }
+
+    .inactive-step .step-title {
+      color: var(--gray-400);
+    }
+
+    .comment-section {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .comment-title {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--gray-700);
+    }
+
+    .comment-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius);
+      resize: vertical;
+      min-height: 5rem;
+      font-size: 0.875rem;
+    }
+
+    .comment-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    /* Status Cards */
+    .status-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-content {
+      padding: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .status-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .status-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: var(--gray-800);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background-color: var(--orange-light);
+      color: var(--orange);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      border: none;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-success {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: var(--secondary-dark);
+    }
+
+    .btn-outline {
+      background-color: var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--gray-300);
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 1200px) {
+      .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .main-content {
+        padding: 1.25rem;
+      }
+      
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-menu-toggle {
+        display: flex;
+      }
+      
+      .sidebar {
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-md);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 1rem;
+        padding-top: 4rem;
+      }
+      
+      .logo-container img {
+        max-width: 150px;
+      }
+      
+      .page-subtitle {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      
+      .search-add-container {
+        flex-direction: column;
+      }
+      
+      .add-button {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .candidate-header {
+        flex-wrap: wrap;
+      }
+      
+      .candidate-score-container {
+        width: 100%;
+        flex-direction: row;
+        margin-left: 0;
+        margin-top: 0.5rem;
+        justify-content: flex-end;
+        align-items: center;
+      }
+      
+      .candidate-actions {
+        flex-direction: column;
+      }
+      
+      .candidate-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .comment-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .comment-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .validation-step {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .page-title {
+        font-size: 1.25rem;
+      }
+      
+      .status-content {
+        flex-direction: column;
+      }
+      
+      .status-icon {
+        margin: 0 auto 0.5rem;
+      }
+      
+      .status-badge {
+        display: table;
+        margin: 0.5rem auto 0;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .candidate-name-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .candidate-tag {
+        margin-top: 0.25rem;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: var(--gray-900);
+        color: var(--gray-200);
+      }
+      
+      .sidebar,
+      .candidate-card,
+      .validation-card,
+      .status-card,
+      .mobile-menu-toggle {
+        background-color: var(--gray-800);
+        border-color: var(--gray-700);
+      }
+      
+      .validation-header,
+      .comment-section {
+        border-color: var(--gray-700);
+      }
+      
+      .page-title,
+      .candidates-section-title,
+      .validation-title,
+      .candidate-name,
+      .status-title,
+      .comment-title {
+        color: var(--gray-200);
+      }
+      
+      .search-input,
+      .comment-textarea {
+        background-color: var(--gray-800);
+        border-color: var(--gray-700);
+        color: var(--gray-200);
+      }
+      
+      .candidate-tag {
+        background-color: var(--gray-700);
+        color: var(--gray-300);
+      }
+      
+      .candidate-position,
+      .step-subtitle {
+        color: var(--gray-400);
+      }
+      
+      .vertical-line {
+        background-color: var(--gray-700);
+      }
+      
+      .candidate-details {
+        border-color: var(--gray-700);
+      }
+      
+      .btn-outline {
+        background-color: var(--gray-700);
+        color: var(--gray-300);
+      }
+      
+      .btn-outline:hover {
+        background-color: var(--gray-600);
+      }
+      
+      .inactive-step .step-icon {
+        background-color: var(--gray-700);
+        color: var(--gray-500);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <div class="logo"><a href="{% url 'index' %}">I365</a></div>
+    <a href="{% url 'index' %}" class="nav-item">
+      <i class="fas fa-home"></i>
+    </a>
+    <a href="{% url 'interim_demande' %}" class="nav-item">
+      <i class="fas fa-plus-circle"></i>
+    </a>
+    <a href="{% url 'liste_interim_validation' %}" class="nav-item">
+      <i class="fas fa-tasks"></i>
+    </a>
+    <a href="{% url 'historique_interim' %}" class="nav-item">
+      <i class="fas fa-calendar-alt"></i>
+    </a>
+    <a href="{% url 'interim_stats' %}" class="nav-item">
+      <i class="fas fa-chart-pie"></i>
+    </a>
+    <a href="{% url 'interim_selection' %}" class="nav-item active">
+      <i class="fas fa-user-plus"></i>
+    </a>
+    <div class="divider"></div>
+    <a href="#" class="nav-item">
+      <i class="fas fa-bell"></i>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-question-circle"></i>
+    </a>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content" id="mainContent">
+    <!-- Logo Container -->
+    <div class="logo-container">
+      <a href="{% url 'index' %}">
+        <img src="{% static 'img/i365.png' %}" alt="Logo">
+      </a>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Remplacement temporaire - Conseiller clientèle</h1>
+      <div class="page-subtitle">
+        <div class="page-subtitle-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Période: 15/04/2025 - 30/04/2025 (15 jours)</span>
+        </div>
+        <div class="page-subtitle-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Agence Plateau</span>
+        </div>
+      </div>
+      
+      <!-- Status Card -->
+      <div class="status-card">
+        <div class="status-content">
+          <div class="status-icon">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <div class="status-info">
+            <h3 class="status-title">Motif d'absence</h3>
+            <p>Congé maternité - Kouamé Aya - Responsable validation: Touré Souleymane</p>
+          </div>
+          <span class="status-badge">
+            En attente de validation
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Add Container -->
+    <div class="search-add-container">
+      <div class="search-container">
+        <input 
+          type="text" 
+          placeholder="Rechercher un candidat..." 
+          class="search-input"
+          id="searchInput"
+        />
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <button class="add-button">
+        <i class="fas fa-user-plus"></i>
+        Suggérer un candidat
+      </button>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Candidates List -->
+      <div>
+        <h2 class="candidates-section-title">Candidats recommandés</h2>
+        <div id="candidates-list" class="candidates-list">
+          <!-- Les candidats seront ajoutés ici par JavaScript -->
+        </div>
+      </div>
+      
+      <!-- Validation Card -->
+      <div class="validation-card">
+        <div class="validation-header">
+          <h3 class="validation-title">Circuit de validation</h3>
+        </div>
+        <div class="validation-content">
+          <div class="validation-flow">
+            <div class="validation-step completed-step">
+              <div class="step-icon">
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="step-info">
+                <p class="step-title">Demandeur</p>
+                <p class="step-subtitle">Touré Souleymane</p>
+              </div>
+            </div>
+            
+            <div class="vertical-line"></div>
+            
+            <div class="validation-step active-step">
+              <div class="step-icon">
+                <i class="fas fa-hourglass-half"></i>
+              </div>
+              <div class="step-info">
+                <p class="step-title">Responsable N+1</p>
+                <p class="step-subtitle">Koné Fatoumata</p>
+              </div>
+            </div>
+            
+            <div class="vertical-line"></div>
+            
+            <div class="validation-step inactive-step">
+              <div class="step-icon">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <div class="step-info">
+                <p class="step-title">Directeur d'agence</p>
+                <p class="step-subtitle">Traoré Ibrahim</p>
+              </div>
+            </div>
+            
+            <div class="vertical-line"></div>
+            
+            <div class="validation-step inactive-step">
+              <div class="step-icon">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <div class="step-info">
+                <p class="step-title">RH</p>
+                <p class="step-subtitle">Département RH</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="comment-section">
+            <h3 class="comment-title">Commentaire</h3>
+            <textarea 
+              class="comment-textarea" 
+              rows="4"
+              placeholder="Ajouter un commentaire pour justifier votre choix..."
+            ></textarea>
+            
+            <div class="comment-actions">
+              <button class="btn btn-outline">
+                Annuler
+              </button>
+              <button class="btn btn-primary">
+                Soumettre
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Données des candidats
+    const candidates = [
+      {
+        id: 1,
+        name: "Konan Kouassi",
+        position: "Conseiller clientèle",
+        department: "Service Client",
+        location: "Agence Plateau",
+        score: 92,
+        matchDetails: {
+          positionMatch: 95,
+          skills: 90,
+          availability: 100,
+          location: 100,
+          seniority: 85
+        },
+        photo: "https://via.placeholder.com/48"
+      },
+      {
+        id: 2,
+        name: "Bakayoko Aminata",
+        position: "Assistant commercial",
+        department: "Commercial",
+        location: "Agence Cocody",
+        score: 86,
+        matchDetails: {
+          positionMatch: 80,
+          skills: 95,
+          availability: 90,
+          location: 80,
+          seniority: 90
+        },
+        photo: "https://via.placeholder.com/48"
+      },
+      {
+        id: 3,
+        name: "Touré Ibrahim",
+        position: "Assistant RH",
+        department: "Ressources Humaines",
+        location: "Siège Abidjan",
+        score: 78,
+        matchDetails: {
+          positionMatch: 70,
+          skills: 85,
+          availability: 100,
+          location: 70,
+          seniority: 75
+        },
+        photo: "https://via.placeholder.com/48"
+      },
+      {
+        id: 4,
+        name: "Diallo Mariam",
+        position: "Conseiller clientèle stagiaire",
+        department: "Service Client",
+        location: "Agence Plateau",
+        score: 73,
+        matchDetails: {
+          positionMatch: 85,
+          skills: 70,
+          availability: 100,
+          location: 100,
+          seniority: 40
+        },
+        candidateType: "Stagiaire",
+        photo: "https://via.placeholder.com/48"
+      },
+      {
+        id: 5,
+        name: "Koffi Jean",
+        position: "Ancien conseiller",
+        department: "Service Client",
+        location: "Agence Plateau",
+        score: 68,
+        matchDetails: {
+          positionMatch: 90,
+          skills: 85,
+          availability: 60,
+          location: 90,
+          seniority: 0
+        },
+        candidateType: "Ancien CDD",
+        photo: "https://via.placeholder.com/48"
+      }
+    ];
+
+    let selectedCandidate = null;
+    let filteredCandidates = [...candidates];
+
+    // Fonction pour générer le HTML d'un candidat
+    function generateCandidateHTML(candidate) {
+      const isSelected = selectedCandidate === candidate.id;
+      const detailsHTML = isSelected ? `
+        <div class="candidate-details">
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-score">${candidate.matchDetails.positionMatch}</div>
+              <span class="metric-label">Poste</span>
+            </div>
+            <div class="metric-item">
+              <div class="metric-score">${candidate.matchDetails.skills}</div>
+              <span class="metric-label">Compétences</span>
+            </div>
+            <div class="metric-item">
+              <div class="metric-score">${candidate.matchDetails.availability}</div>
+              <span class="metric-label">Disponibilité</span>
+            </div>
+            <div class="metric-item">
+              <div class="metric-score">${candidate.matchDetails.location}</div>
+              <span class="metric-label">Localisation</span>
+            </div>
+            <div class="metric-item">
+              <div class="metric-score">${candidate.matchDetails.seniority}</div>
+              <span class="metric-label">Ancienneté</span>
+            </div>
+          </div>
+          
+          <div class="candidate-actions">
+            <button class="btn btn-outline">
+              <i class="fas fa-user"></i>
+              Voir profil complet
+            </button>
+            <button class="btn btn-success">
+              <i class="fas fa-check"></i>
+              Sélectionner
+            </button>
+          </div>
+        </div>
+      ` : '';
+
+      return `
+        <div class="candidate-card ${isSelected ? 'selected' : ''}" data-id="${candidate.id}">
+          <div class="candidate-content">
+            <div class="candidate-header">
+              <img 
+                src="${candidate.photo}" 
+                alt="${candidate.name}" 
+                class="candidate-avatar"
+              />
+              <div class="candidate-info">
+                <div class="candidate-name-container">
+                  <h3 class="candidate-name">${candidate.name}</h3>
+                  ${candidate.candidateType ? `
+                    <span class="candidate-tag">
+                      ${candidate.candidateType}
+                    </span>
+                  ` : ''}
+                </div>
+                <p class="candidate-position">${candidate.position} - ${candidate.department}</p>
+                <p class="candidate-location">${candidate.location}</p>
+              </div>
+              <div class="candidate-score-container">
+                <div class="score-badge">
+                  ${candidate.score}
+                </div>
+                <span class="score-label">Score</span>
+              </div>
+            </div>
+            
+            ${detailsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // Fonction pour afficher tous les candidats
+    function renderCandidates() {
+      const candidatesContainer = document.getElementById('candidates-list');
+      candidatesContainer.innerHTML = filteredCandidates.map(candidate => generateCandidateHTML(candidate)).join('');
+      
+      // Ajouter les écouteurs d'événements
+      document.querySelectorAll('#candidates-list .candidate-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const id = parseInt(card.getAttribute('data-id'));
+          selectedCandidate = selectedCandidate === id ? null : id;
+          renderCandidates();
+        });
+      });
+      
+      // Ajouter des écouteurs pour les boutons dans les cartes
+      document.querySelectorAll('.candidate-actions .btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.stopPropagation(); // Empêche la carte de se fermer/ouvrir quand on clique sur le bouton
+        });
+      });
+    }
+
+    // Fonction de recherche
+    function filterCandidates(searchTerm) {
+      if (!searchTerm.trim()) {
+        filteredCandidates = [...candidates];
+      } else {
+        const term = searchTerm.toLowerCase();
+        filteredCandidates = candidates.filter(candidate => 
+          candidate.name.toLowerCase().includes(term) ||
+          candidate.position.toLowerCase().includes(term) ||
+          candidate.department.toLowerCase().includes(term) ||
+          candidate.location.toLowerCase().includes(term)
+        );
+      }
+      renderCandidates();
+    }
+
+    // Initialiser la page
+    document.addEventListener('DOMContentLoaded', function() {
+      // Afficher les candidats
+      renderCandidates();
+      
+      // Configurer la recherche
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('input', (e) => {
+        filterCandidates(e.target.value);
+      });
+      
+      // Mobile menu toggle
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      
+      mobileMenuToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+        
+        // Change icon based on sidebar state
+        const icon = mobileMenuToggle.querySelector('i');
+        if (sidebar.classList.contains('active')) {
+          icon.classList.remove('fa-bars');
+          icon.classList.add('fa-times');
+        } else {
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+      
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(event) {
+        if (
+          window.innerWidth <= 768 &&
+          sidebar.classList.contains('active') &&
+          !sidebar.contains(event.target) && 
+          event.target !== mobileMenuToggle && 
+          !mobileMenuToggle.contains(event.target)
+        ) {
+          sidebar.classList.remove('active');
+          const icon = mobileMenuToggle.querySelector('i');
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+      
+      // Handle window resize
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('active');
+          const icon = mobileMenuToggle.querySelector('i');
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

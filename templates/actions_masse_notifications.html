@@ -1,0 +1,1136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Actions en masse - Notifications{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-card {
+        border-left: 4px solid #007bff;
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+    }
+    .notification-card.urgent { border-left-color: #dc3545; }
+    .notification-card.critique { border-left-color: #fd7e14; }
+    .notification-card.non-lue { background-color: #f8f9fa; font-weight: 600; }
+    .notification-card.traitee { opacity: 0.7; }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+    }
+    
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .action-buttons {
+        position: sticky;
+        top: 70px;
+        background: white;
+        z-index: 100;
+        padding: 15px 0;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .notification-checkbox {
+        transform: scale(1.2);
+    }
+    
+    .select-all-section {
+        background-color: #e9ecef;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .select-all-section.highlight {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+        animation: pulse 0.5s ease-in-out;
+    }
+    
+    .notification-icon {
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+    
+    .icon-validation { background-color: #28a745; color: white; }
+    .icon-proposition { background-color: #17a2b8; color: white; }
+    .icon-candidat { background-color: #ffc107; color: black; }
+    .icon-mission { background-color: #6f42c1; color: white; }
+    .icon-rappel { background-color: #fd7e14; color: white; }
+    .icon-default { background-color: #6c757d; color: white; }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-badge.non_lue {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .status-badge.lue {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+    
+    .status-badge.traitee {
+        background-color: #d1fae5;
+        color: #059669;
+    }
+    
+    .status-badge.archivee {
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .urgence-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .urgence-badge.normale { background-color: #f3f4f6; color: #6b7280; }
+    .urgence-badge.basse { background-color: #f3f4f6; color: #6b7280; }
+    .urgence-badge.haute { background-color: #fef3c7; color: #d97706; }
+    .urgence-badge.critique { background-color: #fee2e2; color: #dc2626; }
+
+    .notification-item {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .notification-item:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .notification-item.selected {
+        border-color: #10b981;
+        background-color: #ecfdf5;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .notification-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .notification-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+    }
+
+    .notification-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+
+    .notification-message {
+        color: #6b7280;
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    .notification-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+
+    .btn-action {
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .btn-action:not(:disabled):hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .debug-info {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 15px;
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .action-counter {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+    }
+
+    .form-check-input:checked {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Messages système (cachés pour conversion en notifications) -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}" style="display: none;" 
+                 data-message="{{ message }}" data-type="{{ message.tags|default:'info' }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header avec statistiques -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>
+                    <i class="fas fa-tasks text-primary"></i> Actions en masse - Notifications
+                </h2>
+                <div class="btn-group">
+                    <a href="{% url 'notifications' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                    <button type="button" class="btn btn-info" onclick="window.location.reload()">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques visuelles -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{ stats.total }}</h3>
+                    <small>Total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card" style="border-left: 4px solid #dc3545;">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-danger">{{ stats.non_lues }}</h3>
+                    <small>Non lues</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card" style="border-left: 4px solid #ffc107;">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-warning">{{ stats.lues }}</h3>
+                    <small>Lues</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card" style="border-left: 4px solid #28a745;">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-success">{{ stats.traitees }}</h3>
+                    <small>Traitées</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card" style="border-left: 4px solid #fd7e14;">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" style="color: #fd7e14;">{{ stats.critiques }}</h3>
+                    <small>Critiques</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card" style="border-left: 4px solid #6f42c1;">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" style="color: #6f42c1;">{{ notifications.paginator.count }}</h3>
+                    <small>Filtrées</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section de filtrage -->
+    <div class="filter-section">
+        <h4 class="mb-3">
+            <i class="fas fa-filter text-primary"></i> Filtres de recherche
+        </h4>
+        <form method="GET" class="row g-3" id="filterForm">
+            <div class="col-md-2">
+                <label for="statut" class="form-label fw-bold">Statut</label>
+                <select name="statut" id="statut" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in choix_filtres.statuts %}
+                        <option value="{{ value }}" {% if filtres.statut == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="urgence" class="form-label fw-bold">Urgence</label>
+                <select name="urgence" id="urgence" class="form-select">
+                    <option value="">Toutes urgences</option>
+                    {% for value, label in choix_filtres.urgences %}
+                        <option value="{{ value }}" {% if filtres.urgence == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="type" class="form-label fw-bold">Type</label>
+                <select name="type" id="type" class="form-select">
+                    <option value="">Tous types</option>
+                    {% for value, label in choix_filtres.types_notification %}
+                        <option value="{{ value }}" {% if filtres.type_notification == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="date_debut" class="form-label fw-bold">Date début</label>
+                <input type="date" name="date_debut" id="date_debut" class="form-control" value="{{ filtres.date_debut }}">
+            </div>
+
+            <div class="col-md-2">
+                <label for="date_fin" class="form-label fw-bold">Date fin</label>
+                <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ filtres.date_fin }}">
+            </div>
+
+            <div class="col-md-2">
+                <label for="destinataire" class="form-label fw-bold">Destinataire</label>
+                <input type="text" name="destinataire" id="destinataire" class="form-control" 
+                       placeholder="Nom, prénom..." value="{{ filtres.destinataire }}">
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Appliquer filtres
+                </button>
+                <a href="{% url 'actions_masse_notifications' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Réinitialiser
+                </a>
+                <small class="text-muted ms-3">
+                    <i class="fas fa-keyboard"></i> Raccourcis : Ctrl+F (focus filtres), Ctrl+A (tout sélectionner), Esc (annuler sélection)
+                </small>
+            </div>
+        </form>
+    </div>
+
+    <!-- SECTION ACTIONS EN MASSE - STRUCTURE ENTIÈREMENT CORRIGÉE -->
+    <div class="action-buttons">
+        <!-- FORMULAIRE PRINCIPAL AVEC TOUTES LES CHECKBOXES ET ACTIONS -->
+        <form method="POST" id="actionForm" action="{% url 'actions_masse_notifications' %}">
+            {% csrf_token %}
+            
+            <!-- Section de sélection -->
+            <div class="select-all-section" id="selectAllSection">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                            <label class="form-check-label fw-bold" for="selectAll">
+                                <i class="fas fa-check-square text-primary"></i> Tout sélectionner / Tout désélectionner
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="action-counter" id="selectedCount">
+                            <i class="fas fa-list-check"></i> 0 notification(s) sélectionnée(s)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHECKBOXES CACHÉES POUR CHAQUE NOTIFICATION (DANS LE FORMULAIRE) -->
+            {% for notification in notifications %}
+                <input type="checkbox" 
+                       name="notifications_ids" 
+                       value="{{ notification.id }}" 
+                       class="hidden-notification-checkbox d-none" 
+                       id="hidden_notif_{{ notification.id }}">
+            {% endfor %}
+
+            <!-- Actions disponibles -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex gap-2 flex-wrap justify-content-center">
+                        <button type="submit" name="action" value="marquer_lues" 
+                                class="btn btn-info btn-action" disabled id="btnMarquerLues">
+                            <i class="fas fa-eye"></i> Marquer comme lues
+                        </button>
+                        
+                        <button type="submit" name="action" value="marquer_traitees" 
+                                class="btn btn-success btn-action" disabled id="btnMarquerTraitees">
+                            <i class="fas fa-check"></i> Marquer comme traitées
+                        </button>
+                        
+                        <button type="submit" name="action" value="archiver" 
+                                class="btn btn-warning btn-action" disabled id="btnArchiver">
+                            <i class="fas fa-archive"></i> Archiver
+                        </button>
+                        
+                        {% if peut_supprimer %}
+                        <button type="submit" name="action" value="supprimer" 
+                                class="btn btn-danger btn-action" disabled id="btnSupprimer">
+                            <i class="fas fa-trash"></i> Supprimer définitivement
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-bell text-primary"></i> 
+                    Notifications à traiter
+                </span>
+                <span class="badge bg-secondary fs-6">{{ notifications.paginator.count }} résultat(s)</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if notifications %}
+                {% for notification in notifications %}
+                    <div class="notification-item" data-id="{{ notification.id }}">
+                        <div class="notification-header">
+                            <div class="form-check">
+                                <!-- CHECKBOX VISIBLE LIÉE À LA CHECKBOX CACHÉE -->
+                                <input class="form-check-input notification-checkbox-display" 
+                                       type="checkbox" 
+                                       data-target="hidden_notif_{{ notification.id }}"
+                                       id="display_notif_{{ notification.id }}">
+                                <label class="form-check-label" for="display_notif_{{ notification.id }}">
+                                    <small class="text-muted">ID: {{ notification.id }}</small>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-meta">
+                                <span class="status-badge {{ notification.statut|lower }}">
+                                    {% if notification.statut_lecture == 'NON_LUE' %}
+                                        <i class="fas fa-circle"></i> Non lue
+                                    {% elif notification.statut_lecture == 'LUE' %}
+                                        <i class="fas fa-eye"></i> Lue
+                                    {% elif notification.statut == 'TRAITEE' %}
+                                        <i class="fas fa-check"></i> Traitée
+                                    {% elif notification.statut == 'ARCHIVEE' %}
+                                        <i class="fas fa-archive"></i> Archivée
+                                    {% endif %}
+                                </span>
+                                
+                                <span class="urgence-badge {{ notification.urgence|lower }}">
+                                    {% if notification.urgence == 'CRITIQUE' %}
+                                        <i class="fas fa-fire"></i> Critique
+                                    {% elif notification.urgence == 'HAUTE' %}
+                                        <i class="fas fa-exclamation-triangle"></i> Haute
+                                    {% else %}
+                                        <i class="fas fa-info"></i> {{ notification.get_urgence_display }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="notification-content">
+                            <div class="notification-icon {% if 'VALIDATION' in notification.type_notification %}icon-validation{% elif 'PROPOSITION' in notification.type_notification %}icon-proposition{% elif 'CANDIDAT' in notification.type_notification %}icon-candidat{% elif 'MISSION' in notification.type_notification %}icon-mission{% elif 'RAPPEL' in notification.type_notification %}icon-rappel{% else %}icon-default{% endif %}">
+                                {% if 'VALIDATION' in notification.type_notification %}
+                                    <i class="fas fa-check"></i>
+                                {% elif 'PROPOSITION' in notification.type_notification %}
+                                    <i class="fas fa-user-plus"></i>
+                                {% elif 'CANDIDAT' in notification.type_notification %}
+                                    <i class="fas fa-user"></i>
+                                {% elif 'MISSION' in notification.type_notification %}
+                                    <i class="fas fa-briefcase"></i>
+                                {% elif 'RAPPEL' in notification.type_notification %}
+                                    <i class="fas fa-bell"></i>
+                                {% else %}
+                                    <i class="fas fa-info"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <div class="notification-title">{{ notification.titre }}</div>
+                                <div class="notification-message">{{ notification.message|truncatechars:150 }}</div>
+                                
+                                <div class="notification-footer">
+                                    <div>
+                                        <i class="fas fa-user text-muted"></i> 
+                                        <strong>{{ notification.destinataire.nom_complet }}</strong>
+                                        {% if notification.demande %}
+                                            | <i class="fas fa-folder text-muted"></i> {{ notification.demande.numero_demande }}
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-calendar text-muted"></i> {{ notification.created_at|date:"d/m/Y H:i" }}
+                                        {% if notification.date_lecture %}
+                                            | <i class="fas fa-eye text-success"></i> {{ notification.date_lecture|date:"d/m/Y H:i" }}
+                                        {% endif %}
+                                        {% if notification.date_traitement %}
+                                            | <i class="fas fa-check text-success"></i> {{ notification.date_traitement|date:"d/m/Y H:i" }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <h5>Aucune notification sur cette page</h5>
+                        <p>
+                            {% if notifications.paginator.count > 0 %}
+                                Il y a {{ notifications.paginator.count }} notification(s) au total, mais aucune sur la page {{ notifications.number }}.
+                                <br>
+                                <a href="?page=1" class="btn btn-sm btn-primary mt-2">
+                                    <i class="fas fa-arrow-left"></i> Retour à la première page
+                                </a>
+                            {% else %}
+                                Modifiez vos filtres ou vérifiez plus tard.
+                            {% endif %}
+                        </p>
+                        
+                        <!-- Debug informatif -->
+                        <div class="debug-info">
+                            <strong>Informations :</strong><br>
+                            - Notifications totales : {{ stats.total }}<br>
+                            - Notifications filtrées : {{ notifications.paginator.count }}<br>
+                            - Page actuelle : {{ request.GET.page|default:"1" }}<br>
+                            - Utilisateur : {{ profil_utilisateur.nom_complet }} ({{ profil_utilisateur.type_profil }})
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h5>Aucune notification disponible</h5>
+                    <p>Il n'y a actuellement aucune notification dans le système.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagination améliorée -->
+    {% if notifications.has_other_pages %}
+    <nav aria-label="Navigation des notifications" class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <small class="text-muted">
+                    Affichage {{ notifications.start_index }} à {{ notifications.end_index }} 
+                    sur {{ notifications.paginator.count }} notifications
+                </small>
+            </div>
+            <div>
+                <small class="text-muted">
+                    Page {{ notifications.number }} sur {{ notifications.paginator.num_pages }}
+                </small>
+            </div>
+        </div>
+        
+        <ul class="pagination justify-content-center">
+            {% if notifications.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ notifications.previous_page_number }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for num in notifications.paginator.page_range %}
+                {% if notifications.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if notifications.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ notifications.next_page_number }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ notifications.paginator.num_pages }}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initialisation des actions en masse - Version finale');
+
+    // === ÉLÉMENTS DE L'INTERFACE ===
+    const actionForm = document.getElementById('actionForm');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const selectAllSection = document.getElementById('selectAllSection');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const actionButtons = document.querySelectorAll('.btn-action');
+    
+    // === CHECKBOXES ===
+    const hiddenCheckboxes = document.querySelectorAll('.hidden-notification-checkbox');
+    const displayCheckboxes = document.querySelectorAll('.notification-checkbox-display');
+    
+    console.log('🔍 DEBUG - Configuration détectée:');
+    console.log('- Formulaire principal:', actionForm ? '✅' : '❌');
+    console.log('- Checkboxes cachées:', hiddenCheckboxes.length);
+    console.log('- Checkboxes d\'affichage:', displayCheckboxes.length);
+    console.log('- Boutons d\'action:', actionButtons.length);
+
+    // === VÉRIFICATIONS INITIALES ===
+    if (!actionForm) {
+        console.error('❌ ERREUR CRITIQUE: Formulaire d\'action manquant');
+        showNotification('Erreur système: Formulaire d\'action non trouvé', 'error');
+        return;
+    }
+
+    if (hiddenCheckboxes.length === 0) {
+        console.warn('⚠️ Aucune notification disponible pour sélection');
+        showNotification('Aucune notification disponible pour les actions en masse', 'info');
+    }
+
+    // === SYNCHRONISATION DES CHECKBOXES ===
+    displayCheckboxes.forEach((displayCheckbox, index) => {
+        displayCheckbox.addEventListener('change', function() {
+            const targetId = this.dataset.target;
+            const hiddenCheckbox = document.getElementById(targetId);
+            
+            if (hiddenCheckbox) {
+                hiddenCheckbox.checked = this.checked;
+                console.log(`🔗 Sync ${index + 1}: ${targetId} ${this.checked ? 'cochée' : 'décochée'}`);
+                updateSelectionStatus();
+            } else {
+                console.error(`❌ Checkbox cachée introuvable: ${targetId}`);
+            }
+        });
+    });
+
+    // === FONCTION DE MISE À JOUR DU STATUT ===
+    function updateSelectionStatus() {
+        const checkedHiddenBoxes = document.querySelectorAll('.hidden-notification-checkbox:checked');
+        const count = checkedHiddenBoxes.length;
+        
+        console.log(`📊 Mise à jour: ${count} notifications sélectionnées`);
+        
+        // Mettre à jour le compteur
+        if (selectedCountSpan) {
+            selectedCountSpan.innerHTML = `
+                <i class="fas fa-list-check"></i> ${count} notification(s) sélectionnée(s)
+            `;
+        }
+        
+        // Activer/désactiver les boutons
+        actionButtons.forEach(button => {
+            button.disabled = count === 0;
+            if (count > 0) {
+                button.classList.add('btn-ready');
+            } else {
+                button.classList.remove('btn-ready');
+            }
+        });
+        
+        // État du sélecteur global
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === hiddenCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+
+        // États visuels des notifications
+        displayCheckboxes.forEach(displayCheckbox => {
+            const targetId = displayCheckbox.dataset.target;
+            const hiddenCheckbox = document.getElementById(targetId);
+            const notificationItem = displayCheckbox.closest('.notification-item');
+            
+            if (notificationItem && hiddenCheckbox) {
+                notificationItem.classList.toggle('selected', hiddenCheckbox.checked);
+            }
+        });
+
+        // Animation du compteur
+        if (selectedCountSpan && count > 0) {
+            selectedCountSpan.style.animation = 'pulse 0.3s ease-in-out';
+            setTimeout(() => {
+                selectedCountSpan.style.animation = '';
+            }, 300);
+        }
+    }
+
+    // === GESTIONNAIRE "TOUT SÉLECTIONNER" ===
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            console.log(`🎯 Sélection globale: ${isChecked ? 'TOUT' : 'RIEN'}`);
+            
+            // Synchroniser toutes les checkboxes
+            hiddenCheckboxes.forEach(hiddenCheckbox => {
+                hiddenCheckbox.checked = isChecked;
+            });
+            
+            displayCheckboxes.forEach(displayCheckbox => {
+                displayCheckbox.checked = isChecked;
+            });
+            
+            updateSelectionStatus();
+            
+            // Notification utilisateur
+            showNotification(
+                isChecked ? 
+                `✅ ${hiddenCheckboxes.length} notifications sélectionnées` : 
+                '❌ Toutes les sélections annulées', 
+                'info'
+            );
+        });
+    }
+
+    // === GESTIONNAIRE DE SOUMISSION PRINCIPAL ===
+    if (actionForm) {
+        actionForm.addEventListener('submit', function(e) {
+            console.log('📤 SOUMISSION DÉCLENCHÉE');
+            
+            // === VÉRIFICATIONS PRÉLIMINAIRES ===
+            const checkedHiddenBoxes = document.querySelectorAll('.hidden-notification-checkbox:checked');
+            const selectedValues = Array.from(checkedHiddenBoxes).map(cb => cb.value);
+            
+            console.log('📋 État de la soumission:');
+            console.log('- Notifications sélectionnées:', checkedHiddenBoxes.length);
+            console.log('- IDs sélectionnés:', selectedValues);
+            console.log('- Bouton soumis:', e.submitter);
+            
+            // === VÉRIFICATION DE L'ACTION ===
+            if (!e.submitter || !e.submitter.value) {
+                e.preventDefault();
+                console.error('❌ ERREUR: Aucune action définie');
+                showNotification('❌ Erreur: Action non définie', 'error');
+                return false;
+            }
+            
+            const actionValue = e.submitter.value;
+            const actionName = e.submitter.name;
+            
+            console.log('🎬 Action détectée:', { name: actionName, value: actionValue });
+            
+            // === VÉRIFICATION DES SÉLECTIONS ===
+            if (checkedHiddenBoxes.length === 0) {
+                e.preventDefault();
+                console.warn('⚠️ Aucune notification sélectionnée');
+                
+                // Animation d'alerte
+                if (selectAllSection) {
+                    selectAllSection.classList.add('highlight');
+                    setTimeout(() => {
+                        selectAllSection.classList.remove('highlight');
+                    }, 2000);
+                }
+                
+                showNotification('⚠️ Veuillez sélectionner au moins une notification', 'warning');
+                return false;
+            }
+
+            // === VALIDATION DES IDS ===
+            const invalidIds = selectedValues.filter(id => !id || isNaN(parseInt(id)));
+            if (invalidIds.length > 0) {
+                e.preventDefault();
+                console.error('❌ IDs invalides:', invalidIds);
+                showNotification(`❌ IDs invalides détectés: ${invalidIds.join(', ')}`, 'error');
+                return false;
+            }
+
+            // === DEMANDES DE CONFIRMATION ===
+            const actionText = e.submitter.textContent.trim();
+            let confirmationNeeded = false;
+            let confirmMessage = '';
+            
+            switch(actionValue) {
+                case 'supprimer':
+                    confirmationNeeded = true;
+                    confirmMessage = `🗑️ Confirmer la suppression définitive de ${checkedHiddenBoxes.length} notification(s) ?\n\n⚠️ Cette action est irréversible !`;
+                    break;
+                case 'archiver':
+                    confirmationNeeded = true;
+                    confirmMessage = `📦 Confirmer l'archivage de ${checkedHiddenBoxes.length} notification(s) ?\n\nElles ne seront plus visibles dans la liste principale.`;
+                    break;
+                default:
+                    if (checkedHiddenBoxes.length > 10) {
+                        confirmationNeeded = true;
+                        confirmMessage = `📊 Confirmer l'action "${actionText}" sur ${checkedHiddenBoxes.length} notifications ?`;
+                    }
+            }
+            
+            if (confirmationNeeded && !confirm(confirmMessage)) {
+                e.preventDefault();
+                console.log('🚫 Action annulée par l\'utilisateur');
+                return false;
+            }
+
+            // === PRÉPARATION DE LA SOUMISSION ===
+            
+            // Ajouter un champ action caché pour garantir la transmission
+            let hiddenActionInput = document.querySelector('input[name="action"][type="hidden"]');
+            if (hiddenActionInput) {
+                hiddenActionInput.remove();
+            }
+            
+            hiddenActionInput = document.createElement('input');
+            hiddenActionInput.type = 'hidden';
+            hiddenActionInput.name = 'action';
+            hiddenActionInput.value = actionValue;
+            actionForm.appendChild(hiddenActionInput);
+            
+            console.log('🔒 Champ action caché ajouté:', hiddenActionInput.value);
+
+            // === INDICATEUR DE CHARGEMENT ===
+            const originalContent = e.submitter.innerHTML;
+            e.submitter.disabled = true;
+            e.submitter.innerHTML = '<span class="loading-spinner"></span> Traitement...';
+            
+            // Désactiver tous les autres boutons
+            actionButtons.forEach(btn => {
+                if (btn !== e.submitter) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.3';
+                }
+            });
+            
+            // Sauvegarde pour restauration
+            window.originalButtonContent = originalContent;
+            window.submitButton = e.submitter;
+            
+            // === DEBUG FINAL ===
+            console.log('📊 SOUMISSION FINALE:');
+            console.log('- Action:', actionValue);
+            console.log('- Notifications:', selectedValues.length);
+            console.log('- FormData preview:');
+            
+            const formData = new FormData(actionForm);
+            for (let [key, value] of formData.entries()) {
+                if (key === 'notifications_ids') {
+                    console.log(`  - ${key}: [${Array.from(formData.getAll(key)).length} éléments]`);
+                } else {
+                    console.log(`  - ${key}: ${value}`);
+                }
+            }
+            
+            console.log('✅ Soumission autorisée');
+            
+            // Notification de traitement
+            showNotification(`🔄 Traitement de ${checkedHiddenBoxes.length} notifications...`, 'info');
+            
+            return true;
+        });
+    }
+
+    // === RACCOURCIS CLAVIER ===
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key.toLowerCase()) {
+                case 'a':
+                    e.preventDefault();
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = !selectAllCheckbox.checked;
+                        selectAllCheckbox.dispatchEvent(new Event('change'));
+                    }
+                    break;
+                case 'r':
+                    e.preventDefault();
+                    window.location.reload();
+                    break;
+                case 'f':
+                    e.preventDefault();
+                    document.getElementById('destinataire')?.focus();
+                    break;
+            }
+        } else if (e.key === 'Escape') {
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+
+    // === AUTO-REFRESH INTELLIGENT ===
+    let autoRefreshInterval = setInterval(() => {
+        if (document.hidden) return; // Ne pas rafraîchir si l'onglet n'est pas visible
+        
+        const url = new URL(window.location);
+        url.searchParams.set('check_updates', '1');
+        
+        fetch(url, { method: 'HEAD' })
+        .then(response => {
+            const newCount = response.headers.get('X-Notification-Count');
+            const currentCount = document.querySelector('.stats-card h3')?.textContent.trim();
+            
+            if (newCount && currentCount && newCount !== currentCount) {
+                const refreshBtn = document.querySelector('button[onclick="window.location.reload()"]');
+                if (refreshBtn && !refreshBtn.querySelector('.badge')) {
+                    refreshBtn.innerHTML += ' <span class="badge bg-danger ms-1">Nouveau</span>';
+                }
+                showNotification('🔔 Nouvelles notifications disponibles', 'info');
+            }
+        })
+        .catch(error => {
+            console.log('Auto-refresh error:', error);
+        });
+    }, 120000); // 2 minutes
+
+    // === NETTOYAGE À LA FERMETURE ===
+    window.addEventListener('beforeunload', function() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+    });
+
+    // === INITIALISATION FINALE ===
+    updateSelectionStatus();
+    convertDjangoMessages();
+    
+    console.log('✅ Actions en masse entièrement initialisées');
+    showNotification('✅ Interface prête pour les actions en masse', 'success');
+});
+
+// === FONCTIONS UTILITAIRES ===
+
+function showNotification(message, type = 'info') {
+    const icons = {
+        'success': 'fas fa-check-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'error': 'fas fa-times-circle',
+        'info': 'fas fa-info-circle'
+    };
+    
+    const colors = {
+        'success': { bg: '#d1fae5', text: '#065f46', border: '#10b981' },
+        'warning': { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
+        'error': { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' },
+        'info': { bg: '#dbeafe', text: '#1e40af', border: '#3b82f6' }
+    };
+    
+    // Supprimer les notifications existantes du même type
+    document.querySelectorAll(`.toast-notification[data-type="${type}"]`).forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = 'toast-notification';
+    notification.setAttribute('data-type', type);
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        max-width: 400px;
+        min-width: 320px;
+        background: ${colors[type].bg};
+        color: ${colors[type].text};
+        border: 2px solid ${colors[type].border};
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+        line-height: 1.5;
+        animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    `;
+    
+    notification.innerHTML = `
+        <i class="${icons[type]}" style="margin-top: 2px; font-size: 18px;"></i>
+        <div style="flex: 1;">${message}</div>
+        <button onclick="this.parentElement.remove()" style="
+            background: none;
+            border: none;
+            color: ${colors[type].text};
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        " onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove avec délai adaptatif
+    const delays = { 'success': 4000, 'info': 5000, 'warning': 7000, 'error': 10000 };
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, delays[type] || 5000);
+}
+
+function convertDjangoMessages() {
+    const djangoAlerts = document.querySelectorAll('.alert[data-message]');
+    djangoAlerts.forEach(alert => {
+        const messageText = alert.dataset.message;
+        const messageType = alert.dataset.type;
+        
+        let type = 'info';
+        if (messageType === 'success') type = 'success';
+        else if (messageType === 'warning') type = 'warning';
+        else if (['error', 'danger'].includes(messageType)) type = 'error';
+        
+        alert.style.display = 'none';
+        setTimeout(() => showNotification(messageText, type), 100);
+    });
+}
+
+// === GESTION D'ERREURS GLOBALE ===
+window.addEventListener('error', function(e) {
+    console.error('❌ Erreur JavaScript:', e.error);
+    showNotification('Une erreur inattendue s\'est produite. Rechargez la page.', 'error');
+});
+
+// === RESTAURATION EN CAS D'ERREUR ===
+window.addEventListener('pageshow', function() {
+    if (window.submitButton && window.originalButtonContent) {
+        window.submitButton.disabled = false;
+        window.submitButton.innerHTML = window.originalButtonContent;
+        
+        // Réactiver tous les boutons
+        document.querySelectorAll('.btn-action').forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '';
+        });
+    }
+});
+</script>
+{% endblock %}

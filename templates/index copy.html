@@ -1,0 +1,1740 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Interim365 - BNI | Tableau de bord{% if profil_utilisateur %} - {{ profil_utilisateur.nom_complet }}{% endif %}{% endblock %}</title>
+  
+  <!-- Icônes et polices -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CSS de base -->
+  {% block base_css %}
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --secondary: #10b981;
+      --secondary-dark: #059669;
+      --secondary-light: #d1fae5;
+      --orange: #f97316;
+      --orange-light: #ffedd5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #eab308;
+      --warning-light: #fef3c7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 0.5rem;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --sidebar-width: 100px;
+      --sidebar-width-expanded: 220px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Notifications */
+    .notifications-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+      max-width: 400px;
+    }
+
+    .notification {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-md);
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border-left: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .notification.warning { border-left-color: var(--orange); }
+    .notification.error { border-left-color: var(--danger); }
+    .notification.success { border-left-color: var(--secondary); }
+
+    .notification .icon {
+      flex-shrink: 0;
+      width: 24px;
+      text-align: center;
+    }
+
+    .notification .content {
+      flex: 1;
+    }
+
+    .notification .message {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .notification .action {
+      font-size: 0.875rem;
+    }
+
+    .notification .action a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .notification .close {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    {% endblock %}
+
+    {% block layout_styles %}
+    /* Layout */
+    .content-wrapper {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      max-width: 1600px;
+      transition: all 0.3s ease;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #fff;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 0;
+      z-index: 20;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: 100vh;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-400);
+    }
+
+    .sidebar {
+      scrollbar-width: thin;
+      scrollbar-color: var(--gray-300) var(--gray-100);
+    }
+
+    .sidebar .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      font-size: 1.2rem;
+    }
+
+    .sidebar .logo a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .sidebar .nav-item {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem 0;
+      color: var(--gray-500);
+      position: relative;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .sidebar .nav-item.active {
+      color: var(--primary);
+    }
+
+    .sidebar .nav-item:hover {
+      color: var(--primary-dark);
+      background-color: var(--gray-100);
+    }
+
+    .sidebar .nav-item.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: var(--primary);
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .sidebar .nav-item i {
+      font-size: 1.25rem;
+    }
+
+    .sidebar .divider {
+      width: 30px;
+      height: 1px;
+      background-color: var(--gray-200);
+      margin: 0.5rem 0;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: var(--danger);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 30;
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      background-color: white;
+      box-shadow: var(--shadow-md);
+      justify-content: center;
+      align-items: center;
+      color: var(--gray-700);
+      cursor: pointer;
+      border: none;
+      font-size: 1.4rem;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-menu-toggle:hover {
+      background-color: var(--gray-50);
+      transform: scale(1.05);
+    }
+
+    .mobile-menu-toggle:active {
+      transform: scale(0.95);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .logo-container img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .page-subtitle {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-top: 0.25rem;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-menu .icon-btn {
+      background: none;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      text-decoration: none;
+    }
+
+    .user-menu .icon-btn:hover {
+      background-color: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .user-menu .icon-btn .badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: var(--danger);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Styles spéciaux pour les liens de sécurité */
+    .user-menu .icon-btn.security-btn {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .user-menu .icon-btn.security-btn:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .user-menu .icon-btn.logout-btn {
+      background-color: var(--danger-light);
+      color: var(--danger);
+      border: 2px solid var(--danger);
+    }
+
+    .user-menu .icon-btn.logout-btn:hover {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .user-avatar:hover {
+      border-color: var(--primary);
+    }
+
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: var(--gray-500);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background-color: var(--gray-100);
+      color: var(--primary);
+    }
+
+    .refresh-btn.spinning {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    {% endblock %}
+
+    {% block card_styles %}
+    /* Cards and Components */
+    .stat-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.primary {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .stat-icon.secondary {
+      background-color: var(--secondary-light);
+      color: var(--secondary);
+    }
+
+    .stat-icon.orange {
+      background-color: var(--orange-light);
+      color: var(--orange);
+    }
+
+    .stat-icon.danger {
+      background-color: #fee2e2;
+      color: var(--danger);
+    }
+
+    .stat-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .feature-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      height: 250px;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .feature-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .feature-title a {
+      color: inherit;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .feature-title i {
+      color: var(--primary);
+      font-size: 1.25rem;
+    }
+
+    .feature-content {
+      padding: 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .feature-description {
+      color: var(--gray-600);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .feature-action {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--gray-100);
+    }
+
+    /* Tables */
+    .recent-interims {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-top: 2rem;
+      overflow-x: auto;
+    }
+
+    .section-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .section-title {
+      font-weight: 600;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title i {
+      color: var(--primary);
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+
+    th {
+      text-align: left;
+      padding: 1rem 1.5rem;
+      color: var(--gray-500);
+      font-weight: 500;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--gray-200);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .status-pending { background-color: var(--orange-light); color: var(--orange); }
+    .status-approved { background-color: var(--secondary-light); color: var(--secondary); }
+    .status-completed { background-color: var(--gray-100); color: var(--gray-700); }
+    .status-validation { background-color: var(--primary-light); color: var(--primary); }
+    .status-soumise { background-color: var(--orange-light); color: var(--orange); }
+    .status-en-validation { background-color: var(--primary-light); color: var(--primary); }
+    .status-en-proposition { background-color: #e0e7ff; color: #6366f1; }
+    .status-candidat-propose { background-color: #fef3c7; color: #d97706; }
+    .status-validee { background-color: var(--secondary-light); color: var(--secondary); }
+    .status-en-cours { background-color: #dcfdf7; color: #059669; }
+    .status-terminee { background-color: var(--gray-100); color: var(--gray-700); }
+    .status-refusee { background-color: #fee2e2; color: var(--danger); }
+    .status-annulee { background-color: #f3f4f6; color: var(--gray-600); }
+
+    .candidate-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .candidate-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .candidate-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .candidate-name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-position {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--gray-500);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      color: var(--gray-300);
+      margin-bottom: 1rem;
+    }
+    {% endblock %}
+
+    {% block responsive_styles %}
+    /* Responsive Styles */
+    @media (max-width: 1200px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 992px) {
+      .main-content {
+        padding: 1.25rem;
+      }
+      
+      .feature-title {
+        font-size: 0.9rem;
+      }
+      
+      .feature-card {
+        height: auto;
+        min-height: 230px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-menu-toggle {
+        display: flex !important;
+      }
+      
+      .content-wrapper {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        position: fixed;
+        height: 100vh;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-md);
+        z-index: 30;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        padding: 1rem;
+        padding-top: 4rem;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .user-menu {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .candidate-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      
+      .logo-container img {
+        max-width: 150px;
+      }
+
+      .notifications-container {
+        top: 4rem;
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mobile-menu-toggle {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+      }
+      
+      .sidebar {
+        width: 85vw;
+        max-width: 300px;
+      }
+      
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+      }
+      
+      .stat-value {
+        font-size: 1.2rem;
+      }
+      
+      .page-title {
+        font-size: 1.2rem;
+      }
+      
+      .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+      }
+      
+      .section-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .section-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .user-menu {
+        gap: 0.5rem;
+      }
+
+      .user-menu .icon-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+      }
+    }
+
+  </style>
+  {% endblock %}
+  
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% block body_content %}
+  
+  <!-- Notifications -->
+  {% block notifications %}
+  {% if notifications %}
+  <div class="notifications-container" id="notificationsContainer">
+    {% for notification in notifications %}
+    <div class="notification {{ notification.type }}" data-id="{{ notification.id|default:forloop.counter }}">
+      <div class="icon">
+        <i class="{{ notification.icon }}"></i>
+      </div>
+      <div class="content">
+        <div class="message">{{ notification.message }}</div>
+        {% if notification.action_url and notification.action_text %}
+        <div class="action">
+          <a href="{{ notification.action_url }}">{{ notification.action_text }}</a>
+        </div>
+        {% endif %}
+      </div>
+      <button class="close" onclick="closeNotification(this)">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endblock %}
+
+  <!-- Mobile Menu Toggle -->
+  {% block mobile_menu %}
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+  {% endblock %}
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    
+    <!-- Sidebar Navigation -->
+    {% block sidebar %}
+    <div class="sidebar" id="sidebar">
+      <div class="logo">
+        <a href="{% url 'index' %}">I365</a>
+      </div>
+      
+      <!-- TABLEAU DE BORD -->
+      <a href="{% url 'index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}" title="Accueil">
+        <i class="fas fa-home"></i>
+      </a>
+      
+      {% if profil_utilisateur.type_profil in 'CHEF_EQUIPE,RESPONSABLE,DIRECTEUR,RH' %}
+      <a href="{% url 'index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}" title="Mon Dashboard">
+        <i class="fas fa-tachometer-alt"></i>
+        {% if mes_validations_stats.a_valider > 0 %}
+        <span class="notification-badge">{{ mes_validations_stats.a_valider }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+      
+      <a href="{% url 'historique_mes_propositions' %}" class="nav-item {% if request.resolver_match.url_name == 'historique_mes_propositions' %}active{% endif %}" title="Mes propositions">
+        <i class="fas fa-chart-line"></i>
+        {% if mes_propositions_stats.soumises > 0 %}
+        <span class="notification-badge">{{ mes_propositions_stats.soumises }}</span>
+        {% endif %}
+      </a>
+      
+      <div class="divider"></div>
+      
+      <!-- DEMANDES -->
+      <a href="{% url 'interim_demande' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_demande' %}active{% endif %}" title="Nouvelle demande">
+        <i class="fas fa-plus-circle"></i>
+      </a>
+      
+      <a href="{% url 'historique_interim' %}" class="nav-item {% if request.resolver_match.url_name == 'historique_interim' %}active{% endif %}" title="Mes demandes">
+        <i class="fas fa-folder-open"></i>
+        {% if mes_demandes_stats.en_attente > 0 %}
+        <span class="notification-badge">{{ mes_demandes_stats.en_attente }}</span>
+        {% endif %}
+      </a>
+      
+      <a href="{% url 'interim_recherche' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_recherche' %}active{% endif %}" title="Rechercher">
+        <i class="fas fa-search"></i>
+      </a>
+      
+      <a href="{% url 'interim_stats' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_stats' %}active{% endif %}" title="Suivi">
+        <i class="fas fa-chart-bar"></i>
+      </a>
+      
+      <div class="divider"></div>
+      
+      <!-- ÉQUIPE & CANDIDATS -->
+      <a href="{% url 'employes_liste' %}" class="nav-item {% if request.resolver_match.url_name == 'employes_liste' %}active{% endif %}" title="Employés">
+        <i class="fas fa-users"></i>
+      </a>
+      
+      <a href="{% url 'agenda' %}" class="nav-item" title="Agenda interims">
+        <i class="fas fa-calendar-alt"></i>
+      </a>
+      
+<!--       
+      <a href="#" class="nav-item" title="Disponibilités">
+        <i class="fas fa-clock"></i>
+      </a>
+ -->      
+      <div class="divider"></div>
+      
+      <!-- VALIDATION -->
+      {% if profil_utilisateur and profil_utilisateur.user and profil_utilisateur.user.username %}
+      <a href="{% url 'liste_interim_validation' %}" class="nav-item {% if request.resolver_match.url_name == 'liste_interim_validation' %}active{% endif %}" title="À valider">
+        <i class="fas fa-clipboard-check"></i>
+        {% if mes_validations_stats.a_valider > 0 %}
+        <span class="notification-badge">{{ mes_validations_stats.a_valider }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+      
+      <a href="{% url 'workflow_global' %}" class="nav-item" title="Workflow">
+        <i class="fas fa-project-diagram"></i>
+      </a>
+      
+      <a href="{% url 'notifications' %}" class="nav-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" title="Notifications">
+        <i class="fas fa-bell"></i>
+        {% if notifications|length > 0 %}
+        <span class="notification-badge">{{ notifications|length }}</span>
+        {% endif %}
+      </a>
+      
+      <a href="#" class="nav-item" title="Actions">
+        <i class="fas fa-tasks"></i>
+      </a>
+      
+      <div class="divider"></div>
+      
+      <!-- ANALYSES -->
+      <a href="{% url 'interim_stats' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_stats' %}active{% endif %}" title="Statistiques">
+        <i class="fas fa-chart-pie"></i>
+      </a>
+      
+      <a href="#" class="nav-item" title="Rapports">
+        <i class="fas fa-file-alt"></i>
+      </a>
+           
+      <!-- CONFIGURATION (si admin) -->
+      {% if profil_utilisateur.type_profil in 'ADMIN,RH' %}
+      <div class="divider"></div>
+      
+      <!-- url 'config_parametres' -->
+      <a href="#" class="nav-item" title="Système">
+        <i class="fas fa-cog"></i>
+      </a>
+      
+      <!-- url 'config_utilisateurs' -->
+      <a href="#" class="nav-item" title="Utilisateurs">
+        <i class="fas fa-users-cog"></i>
+      </a>
+      
+      <!-- url 'config_integrations' -->
+      <a href="#" class="nav-item" title="Intégrations">
+        <i class="fas fa-plug"></i>
+      </a>
+      
+      <!-- url url 'aide_documentation' -->
+      <a href="#" class="nav-item" title="Documentation">
+        <i class="fas fa-book"></i>
+      </a>
+      {% endif %}
+      
+      <div class="divider"></div>
+      
+      <a href="#" class="nav-item" title="Aide">
+        <i class="fas fa-question-circle"></i>
+      </a>
+    </div>
+    {% endblock %}
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      
+      <!-- Logo Container -->
+      {% block logo_container %}
+      <div class="logo-container">
+        <a href="{% url 'index' %}">
+          <img src="{% static 'img/i365.png' %}" alt="Logo I365" loading="lazy">
+        </a>
+      </div>
+      {% endblock %}
+      
+      <!-- Header -->
+      {% block header %}
+      <div class="header">
+        {% block header_content %}
+        <div>
+          <h1 class="page-title">{% block page_title %}Tableau de bord{% endblock %}</h1>
+          {% if profil_utilisateur %}
+          <p class="page-subtitle">
+            {% block page_subtitle %}
+            Bienvenue {{ profil_utilisateur.nom_complet }} - {{ profil_utilisateur.type_profil_display }}
+            {% if profil_utilisateur.departement %}- {{ profil_utilisateur.departement.nom }}{% endif %}
+            {% endblock %}
+          </p>
+          {% endif %}
+        </div>
+        <div class="user-menu">
+          {% block user_menu %}
+          <button class="refresh-btn" onclick="refreshDashboard()" title="Actualiser" id="refreshBtn">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button class="icon-btn" title="Recherche">
+            <i class="fas fa-search"></i>
+          </button>
+          <button class="icon-btn" title="Notifications" onclick="loadNotifications()">
+            <i class="fas fa-bell"></i>
+            {% if notifications|length > 0 %}
+            <span class="badge">{{ notifications|length }}</span>
+            {% endif %}
+          </button>
+          <a href="{% url 'password_change' %}" class="icon-btn security-btn" title="Changer mot de passe">
+            <i class="fas fa-key"></i>
+          </a>
+          <a href="{% url 'deconnexion' %}" class="icon-btn logout-btn" title="Se déconnecter">
+            <i class="fas fa-sign-out-alt"></i>
+          </a>
+          <div class="user-avatar" title="{% if profil_utilisateur %}{{ profil_utilisateur.nom_complet }}{% else %}{{ user.username }}{% endif %}">
+            {{ user_initials }}
+          </div>
+          {% endblock %}
+        </div>
+        {% endblock %}
+      </div>
+      {% endblock %}
+
+      <!-- Main Content Block -->
+      {% block main_content %}
+      
+      <!-- Stats Row -->
+      {% block stats_row %}
+      <div class="stats-row">
+        {% block stats_content %}
+        <div class="stat-card" onclick="location.href='{% url 'historique_interim' %}'">
+          <div class="stat-icon primary">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" id="interims-en-cours">{{ stats.interims_en_cours }}</div>
+            <div class="stat-label">Intérims en cours</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon secondary">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" id="taux-validation">{{ stats.taux_validation }}%</div>
+            <div class="stat-label">Taux de validation</div>
+          </div>
+        </div>
+        <div class="stat-card" onclick="location.href='{% url 'liste_interim_validation' %}'">
+          <div class="stat-icon orange">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" id="demandes-en-attente">{{ stats.demandes_en_attente }}</div>
+            <div class="stat-label">Demandes en attente</div>
+          </div>
+        </div>
+        <div class="stat-card" onclick="location.href='{% url 'liste_interim_validation' %}'">
+          <div class="stat-icon danger">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" id="remplacements-urgents">{{ stats.remplacements_urgents }}</div>
+            <div class="stat-label">Remplacements urgents</div>
+          </div>
+        </div>
+        {% endblock %}
+      </div>
+      {% endblock %}
+
+      <!-- Features Grid -->
+      {% block features_grid %}
+      <div class="features-grid">
+        {% block features_content %}
+        <div class="feature-card">
+          <div class="feature-header">
+            <h3 class="feature-title">
+              <a href="{% url 'interim_demande' %}">
+                <i class="fas fa-plus-circle"></i>
+                Créer une demande d'intérim
+              </a>
+            </h3>
+          </div>
+          <div class="feature-content">
+            <p class="feature-description">
+              Créez une nouvelle demande de remplacement temporaire et laissez le système vous proposer les meilleurs candidats selon vos critères.
+            </p>
+            <div class="feature-action">
+              <a class="btn btn-primary" href="{% url 'interim_demande' %}">
+                <i class="fas fa-plus"></i>
+                Nouvelle demande
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <h3 class="feature-title">
+              <a href="{% url 'liste_interim_validation' %}">
+                <i class="fas fa-tasks"></i>
+                Gérer mes validations
+              </a>
+            </h3>
+          </div>
+          <div class="feature-content">
+            <p class="feature-description">
+              Consultez et traitez les demandes de validation qui vous ont été assignées dans le cadre du workflow d'approbation.
+              {% if mes_validations_stats.a_valider %}
+              <strong>{{ mes_validations_stats.a_valider }} validation(s) en attente.</strong>
+              {% endif %}
+            </p>
+            <div class="feature-action">
+              <a class="btn btn-primary" href="{% url 'liste_interim_validation' %}">
+                <i class="fas fa-arrow-right"></i>
+                Voir mes tâches
+                {% if mes_validations_stats.a_valider %}
+                <span class="badge">{{ mes_validations_stats.a_valider }}</span>
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <h3 class="feature-title">
+              <a href="{% url 'historique_interim' %}">
+                <i class="fas fa-user-clock"></i>
+                Planning de l'intérim
+              </a>
+            </h3>
+          </div>
+          <div class="feature-content">
+            <p class="feature-description">
+              Suivez les missions d'intérim actuelles et passées, consultez votre planning et gérez les disponibilités.
+              {% if mes_missions_stats.en_cours %}
+              <strong>{{ mes_missions_stats.en_cours }} mission(s) en cours.</strong>
+              {% endif %}
+            </p>
+            <div class="feature-action">
+              <a class="btn btn-primary" href="{% url 'historique_interim' %}">
+                <i class="fas fa-calendar"></i>
+                Voir le planning
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <h3 class="feature-title">
+              <a href="{% url 'interim_recherche' %}">
+                <i class="fas fa-search"></i>
+                Recherche de candidats
+              </a>
+            </h3>
+          </div>
+          <div class="feature-content">
+            <p class="feature-description">
+              Lancez une recherche avancée de candidats potentiels en fonction des compétences, de la disponibilité et de la proximité géographique.
+            </p>
+            <div class="feature-action">
+              <a class="btn btn-primary" href="{% url 'interim_recherche' %}">
+                <i class="fas fa-search"></i>
+                Rechercher
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <h3 class="feature-title">
+              <a href="{% url 'interim_stats' %}">
+                <i class="fas fa-chart-bar"></i>
+                Statistiques et rapports
+              </a>
+            </h3>
+          </div>
+          <div class="feature-content">
+            <p class="feature-description">
+              Analysez les données d'intérim pour optimiser la gestion des remplacements et suivre les performances du système.
+            </p>
+            <div class="feature-action">
+              <a class="btn btn-primary" href="{% url 'interim_stats' %}">
+                <i class="fas fa-chart-line"></i>
+                Voir les rapports
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-header">
+            <h3 class="feature-title">
+              <a href="{% url 'interim_notes' %}">
+                <i class="fas fa-file-alt"></i>
+                Notes de service
+              </a>
+            </h3>
+          </div>
+          <div class="feature-content">
+            <p class="feature-description">
+              Générez et consultez les notes de service relatives aux missions d'intérim, avec suivi des validations.
+            </p>
+            <div class="feature-action">
+              <a class="btn btn-primary" href="{% url 'interim_notes' %}">
+                <i class="fas fa-file-download"></i>
+                Générer une note
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endblock %}
+      </div>
+      {% endblock %}
+
+      <!-- Data Table -->
+      {% block data_table %}
+      <div class="recent-interims">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="fas fa-history"></i>
+            {% block table_title %}Demandes récentes{% endblock %}
+          </h3>
+          <div class="section-actions">
+            {% block table_actions %}
+            <button class="btn btn-outline" onclick="filterTable()">
+              <i class="fas fa-filter"></i>
+              Filtrer
+            </button>
+            <button class="btn btn-outline" onclick="exportData()">
+              <i class="fas fa-file-export"></i>
+              Exporter
+            </button>
+            {% endblock %}
+          </div>
+        </div>
+        
+        {% block table_content %}
+        {% if demandes_recentes %}
+        <table>
+          <thead>
+            <tr>
+              {% block table_headers %}
+              <th>Poste</th>
+              <th>Période</th>
+              <th>Remplaçant</th>
+              <th>Statut</th>
+              <th>Actions</th>
+              {% endblock %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for demande in demandes_recentes %}
+            <tr>
+              {% block table_row %}
+              <td>
+                <div class="candidate-details">
+                  <div class="candidate-name">{{ demande.poste.titre }}</div>
+                  <div class="candidate-position">{{ demande.poste.site.nom }} - {{ demande.poste.departement.nom }}</div>
+                </div>
+              </td>
+              <td>
+                <div class="candidate-details">
+                  <div class="candidate-name">{{ demande.periode_display }}</div>
+                  <div class="candidate-position">{{ demande.duree_mission_display }}</div>
+                </div>
+              </td>
+              <td>
+                {% if demande.candidat_selectionne %}
+                <div class="candidate-info">
+                  <div class="candidate-avatar">{{ demande.candidat_selectionne.initiales }}</div>
+                  <div class="candidate-details">
+                    <div class="candidate-name">{{ demande.candidat_selectionne.nom_complet }}</div>
+                    <div class="candidate-position">
+                      {% if demande.candidat_selectionne.poste %}{{ demande.candidat_selectionne.poste.titre }}{% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% else %}
+                <span class="candidate-position">Candidat non sélectionné</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if demande.statut == 'SOUMISE' %}
+                  <span class="status-badge status-soumise">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'EN_VALIDATION' %}
+                  <span class="status-badge status-en-validation">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'EN_PROPOSITION' %}
+                  <span class="status-badge status-en-proposition">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'CANDIDAT_PROPOSE' %}
+                  <span class="status-badge status-candidat-propose">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'VALIDEE' %}
+                  <span class="status-badge status-validee">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'EN_COURS' %}
+                  <span class="status-badge status-en-cours">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'TERMINEE' %}
+                  <span class="status-badge status-terminee">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'REFUSEE' %}
+                  <span class="status-badge status-refusee">{{ demande.statut_display }}</span>
+                {% elif demande.statut == 'ANNULEE' %}
+                  <span class="status-badge status-annulee">{{ demande.statut_display }}</span>
+                {% else %}
+                  <span class="status-badge">{{ demande.statut_display }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'demande_detail' demande.id %}" class="btn btn-outline">
+                  <i class="fas fa-eye"></i>
+                  Détails
+                </a>
+              </td>
+              {% endblock %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <p>{% block empty_message %}Aucune demande récente trouvée{% endblock %}</p>
+          <a href="{% url 'interim_demande' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Créer une demande
+          </a>
+        </div>
+        {% endif %}
+        {% endblock %}
+      </div>
+      {% endblock %}
+      
+      {% endblock %}
+    </div>
+  </div>
+  
+  {% endblock %}
+
+  <!-- JavaScript -->
+  {% block base_javascript %}
+  <script>
+    // Configuration globale adaptée
+    const dashboardConfig = {
+      refreshInterval: 300000, // 5 minutes
+      apiBaseUrl: '{% url "index" %}',
+      csrfToken: '{{ csrf_token }}'
+    };
+
+    // Données dynamiques du dashboard depuis la vue Python
+    const dashboardData = {{ dashboard_data|safe }};
+
+    // Menu mobile et dropdowns
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      const sidebar = document.getElementById('sidebar');
+      let isMobile = window.innerWidth <= 768;
+
+      // Détection du changement de taille d'écran
+      window.addEventListener('resize', function() {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth <= 768;
+        
+        if (wasMobile !== isMobile) {
+          // Fermer le menu mobile si on passe en desktop
+          if (!isMobile && sidebar.classList.contains('active')) {
+            closeMobileMenu();
+          }
+        }
+      });
+
+      // Fonction simple de toggle
+      function toggleMobileMenu() {
+        const isActive = sidebar.classList.contains('active');
+        
+        if (isActive) {
+          closeMobileMenu();
+        } else {
+          // Ouvrir le menu
+          sidebar.classList.add('active');
+          mobileMenuToggle.innerHTML = '<i class="fas fa-times"></i>';
+          document.body.style.overflow = 'hidden';
+        }
+      }
+
+      // Gestion du menu mobile
+      if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleMobileMenu();
+        });
+
+        // Support tactile
+        mobileMenuToggle.addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          toggleMobileMenu();
+        });
+      }
+
+      // Fermer le menu en cliquant ailleurs sur mobile
+      document.addEventListener('click', function(event) {
+        if (
+          isMobile &&
+          sidebar.classList.contains('active') &&
+          !sidebar.contains(event.target) && 
+          event.target !== mobileMenuToggle && 
+          !mobileMenuToggle.contains(event.target)
+        ) {
+          closeMobileMenu();
+        }
+      });
+
+      // Fermer avec Escape
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (isMobile && sidebar.classList.contains('active')) {
+            closeMobileMenu();
+          }
+        }
+      });
+
+      function closeMobileMenu() {
+        sidebar.classList.remove('active');
+        mobileMenuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        document.body.style.overflow = '';
+      }
+
+      // Auto-refresh si configuré et services disponibles
+      if (dashboardConfig.refreshInterval > 0 && dashboardData.services_available) {
+        setInterval(refreshDashboard, dashboardConfig.refreshInterval);
+      }
+    });
+
+    // Fonctions de gestion des notifications
+    function closeNotification(button) {
+      const notification = button.closest('.notification');
+      notification.style.transform = 'translateX(100%)';
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }
+
+    function showNotification(message, type = 'info', action = null) {
+      const container = document.getElementById('notificationsContainer') || createNotificationContainer();
+      
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      
+      const iconClass = {
+        'info': 'fas fa-info-circle',
+        'success': 'fas fa-check-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'error': 'fas fa-exclamation-circle'
+      }[type] || 'fas fa-info-circle';
+      
+      notification.innerHTML = `
+        <div class="icon">
+          <i class="${iconClass}"></i>
+        </div>
+        <div class="content">
+          <div class="message">${message}</div>
+          ${action ? `<div class="action"><a href="${action.url}">${action.text}</a></div>` : ''}
+        </div>
+        <button class="close" onclick="closeNotification(this)">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      
+      container.appendChild(notification);
+      
+      // Auto-fermeture après 5 secondes
+      setTimeout(() => {
+        if (notification.parentNode) {
+          closeNotification(notification.querySelector('.close'));
+        }
+      }, 5000);
+    }
+
+    function createNotificationContainer() {
+      const container = document.createElement('div');
+      container.className = 'notifications-container';
+      container.id = 'notificationsContainer';
+      document.body.appendChild(container);
+      return container;
+    }
+
+    // Fonctions de rafraîchissement
+    async function refreshDashboard() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      refreshBtn.classList.add('spinning');
+      
+      try {
+        const response = await fetch('#', {
+          method: 'GET',
+          headers: {
+            'X-CSRFToken': dashboardConfig.csrfToken,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            updateStats(data.stats);
+            showNotification('Données mises à jour', 'success');
+          } else {
+            throw new Error(data.error || 'Erreur lors du rafraîchissement');
+          }
+        } else {
+          throw new Error('Erreur lors du rafraîchissement');
+        }
+      } catch (error) {
+        console.error('Erreur refresh:', error);
+        showNotification('Erreur lors de la mise à jour', 'error');
+      } finally {
+        refreshBtn.classList.remove('spinning');
+      }
+    }
+
+    function updateStats(stats) {
+      if (stats) {
+        const elements = {
+          'interims-en-cours': stats.interims_en_cours || 0,
+          'taux-validation': (stats.taux_validation || 0) + '%',
+          'demandes-en-attente': stats.demandes_en_attente || 0,
+          'remplacements-urgents': stats.remplacements_urgents || 0
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.textContent = value;
+          }
+        });
+      }
+    }
+
+    async function loadNotifications() {
+      try {
+        const response = await fetch('#', {
+          method: 'GET',
+          headers: {
+            'X-CSRFToken': dashboardConfig.csrfToken,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Effacer les notifications existantes
+          const container = document.getElementById('notificationsContainer');
+          if (container) {
+            container.innerHTML = '';
+          }
+          
+          // Afficher les nouvelles notifications
+          if (data.notifications && data.notifications.length > 0) {
+            data.notifications.forEach(notification => {
+              showNotification(
+                notification.message, 
+                notification.type,
+                notification.action_url ? {
+                  url: notification.action_url,
+                  text: notification.action_text || 'Voir'
+                } : null
+              );
+            });
+          } else {
+            showNotification('Aucune nouvelle notification', 'info');
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement notifications:', error);
+        showNotification('Erreur lors du chargement des notifications', 'error');
+      }
+    }
+
+    // Fonctions utilitaires
+    function filterTable() {
+      showNotification('Fonction de filtrage en développement', 'info');
+    }
+
+    function exportData() {
+      showNotification('Fonction d\'export en développement', 'info');
+    }
+
+    // Initialisation finale
+    document.addEventListener('DOMContentLoaded', function() {
+      // Ajouter des gestionnaires d'événements pour les cartes statistiques
+      const statCards = document.querySelectorAll('.stat-card[onclick]');
+      statCards.forEach(card => {
+        card.style.cursor = 'pointer';
+      });
+
+      // Initialiser le tri des tableaux
+      const tableHeaders = document.querySelectorAll('th');
+      tableHeaders.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', function() {
+          showNotification('Tri en cours de développement', 'info');
+        });
+      });
+
+      // Afficher un message de bienvenue si c'est la première visite
+      if (dashboardData.user_role === 'UTILISATEUR' && !localStorage.getItem('welcome_shown')) {
+        setTimeout(() => {
+          showNotification('Bienvenue dans le système d\'intérim Interim365 - BNI', 'success');
+          localStorage.setItem('welcome_shown', 'true');
+        }, 1000);
+      }
+    });
+
+    // Gestion des erreurs globales
+    window.addEventListener('error', function(event) {
+      console.error('Erreur JavaScript:', event.error);
+      showNotification('Une erreur est survenue', 'error');
+    });
+
+    window.addEventListener('unhandledrejection', function(event) {
+      console.error('Erreur de promesse non gérée:', event.reason);
+      showNotification('Erreur de connexion', 'error');
+    });
+  </script>
+  {% endblock %}
+
+  <!-- Custom JavaScript Block -->
+  {% block extra_js %}
+  {% endblock %}
+</body>
+</html>

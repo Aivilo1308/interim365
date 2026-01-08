@@ -1,0 +1,1524 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Disponibilité - {{ employe.nom_complet }}{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header disponibilité -->
+<div class="disponibilite-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-0">
+          <i class="fas fa-calendar-check"></i>
+          Disponibilité - {{ employe.nom_complet }}
+        </h1>
+        <p class="mb-0 mt-2">
+          <span class="matricule-badge">{{ employe.matricule }}</span>
+          <span class="periode-badge">
+            {{ periode_debut|date:"d/m/Y" }} - {{ periode_fin|date:"d/m/Y" }}
+          </span>
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'employe_detail' employe.matricule %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour au profil
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations de l'employé -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-user"></i>
+      Informations employé
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-card">
+        <div class="info-label">👤 Employé</div>
+        <div class="info-value">{{ employe.nom_complet }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">💼 Poste</div>
+        <div class="info-value">{{ employe.poste.titre|default:"Non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏢 Département</div>
+        <div class="info-value">{{ employe.departement.nom|default:"Non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏗️ Site</div>
+        <div class="info-value">{{ employe.site.nom|default:"Non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📊 Statut</div>
+        <div class="info-value">
+          <span class="statut-badge {{ employe.statut_employe|lower }}">
+            {% if employe.statut_employe == 'ACTIF' %}
+              ✅ {{ employe.get_statut_employe_display }}
+            {% elif employe.statut_employe == 'CONGE' %}
+              🏖️ {{ employe.get_statut_employe_display }}
+            {% elif employe.statut_employe == 'FORMATION' %}
+              📚 {{ employe.get_statut_employe_display }}
+            {% else %}
+              ⚠️ {{ employe.get_statut_employe_display }}
+            {% endif %}
+          </span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🔄 Intérim</div>
+        <div class="info-value">
+          {% if employe.extended_data.disponible_interim %}
+            <span class="disponibilite-badge disponible">Disponible</span>
+          {% else %}
+            <span class="disponibilite-badge indisponible">Non disponible</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calendrier de disponibilité -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-calendar"></i>
+      Planning de disponibilité
+      <span class="periode-info">{{ periode_debut|date:"d/m/Y" }} - {{ periode_fin|date:"d/m/Y" }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="calendrier-container">
+      <!-- Légende -->
+      <div class="calendrier-legende">
+        <div class="legende-item disponible">
+          <div class="legende-color"></div>
+          <span>Disponible</span>
+        </div>
+        <div class="legende-item absence">
+          <div class="legende-color"></div>
+          <span>Absence</span>
+        </div>
+        <div class="legende-item mission">
+          <div class="legende-color"></div>
+          <span>Mission d'intérim</span>
+        </div>
+        <div class="legende-item weekend">
+          <div class="legende-color"></div>
+          <span>Week-end</span>
+        </div>
+      </div>
+      
+      <!-- Calendrier mensuel -->
+      <div class="calendrier-grid" id="calendrier-grid">
+        <!-- Le calendrier sera généré par JavaScript -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Absences planifiées -->
+{% if absences %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-calendar-times"></i>
+      Absences planifiées
+      <span class="count-badge">{{ absences.count }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="absences-timeline">
+      {% for absence in absences %}
+      <div class="absence-timeline-item {% if absence.est_en_cours %}en-cours{% endif %}">
+        <div class="absence-marker">
+          <div class="absence-date">{{ absence.date_debut|date:"d/m" }}</div>
+        </div>
+        <div class="absence-content">
+          <div class="absence-header">
+            <div class="absence-type">{{ absence.type_absence }}</div>
+            <div class="absence-duree">
+              {{ absence.duree_jours }} jour{{ absence.duree_jours|pluralize }}
+              {% if absence.est_en_cours %}
+                <span class="en-cours-badge">🔴 En cours</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="absence-periode">
+            📅 {{ absence.date_debut|date:"d/m/Y" }} - {{ absence.date_fin|date:"d/m/Y" }}
+          </div>
+          {% if absence.commentaire %}
+          <div class="absence-commentaire">
+            💬 {{ absence.commentaire|truncatewords:20 }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Missions d'intérim planifiées -->
+{% if missions %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-briefcase"></i>
+      Missions d'intérim planifiées
+      <span class="count-badge">{{ missions.count }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="missions-timeline">
+      {% for mission in missions %}
+      <div class="mission-timeline-item">
+        <div class="mission-marker">
+          <div class="mission-date">{{ mission.demande_interim.date_debut|date:"d/m" }}</div>
+        </div>
+        <div class="mission-content">
+          <div class="mission-header">
+            <div class="mission-poste">{{ mission.demande_interim.poste.titre }}</div>
+            <div class="mission-statut">
+              <span class="statut-mission-badge {{ mission.statut|lower }}">
+                {% if mission.statut == 'EN_COURS' %}
+                  🟢 En cours
+                {% elif mission.statut == 'PLANIFIEE' %}
+                  📅 Planifiée
+                {% else %}
+                  ❓ {{ mission.get_statut_display }}
+                {% endif %}
+              </span>
+            </div>
+          </div>
+          
+          <div class="mission-details">
+            <div class="detail-row">
+              <strong>Demande :</strong> {{ mission.demande_interim.numero_demande }}
+            </div>
+            <div class="detail-row">
+              <strong>Site :</strong> {{ mission.demande_interim.poste.site.nom }}
+            </div>
+            {% if mission.demande_interim.date_debut and mission.demande_interim.date_fin %}
+            <div class="detail-row">
+              <strong>Période :</strong> 
+              {{ mission.demande_interim.date_debut|date:"d/m/Y" }} - {{ mission.demande_interim.date_fin|date:"d/m/Y" }}
+              ({{ mission.demande_interim.duree_mission }} jour{{ mission.demande_interim.duree_mission|pluralize }})
+            </div>
+            {% endif %}
+            {% if mission.demande_interim.urgence != 'NORMALE' %}
+            <div class="detail-row">
+              <strong>Urgence :</strong>
+              <span class="urgence-badge {{ mission.demande_interim.urgence|lower }}">
+                {{ mission.demande_interim.get_urgence_display }}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+          
+          <div class="mission-actions">
+            <a href="#" class="btn btn-sm btn-outline">
+              <i class="fas fa-eye"></i>
+              Voir détails
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Statistiques de disponibilité -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-pie"></i>
+      Statistiques de disponibilité
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" data-jours-disponibles="{{ jours_disponibles|default:0 }}">{{ jours_disponibles|default:0 }}</div>
+          <div class="stat-label">Jours disponibles</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-times"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" data-jours-absences="{{ jours_absences|default:0 }}">{{ jours_absences|default:0 }}</div>
+          <div class="stat-label">Jours d'absence</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-briefcase"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" data-jours-missions="{{ jours_missions|default:0 }}">{{ jours_missions|default:0 }}</div>
+          <div class="stat-label">Jours en mission</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" data-taux-disponibilite="{{ taux_disponibilite|default:0 }}">{{ taux_disponibilite|default:0 }}%</div>
+          <div class="stat-label">Taux de disponibilité</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions disponibles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      <a href="{% url 'employe_detail' employe.matricule %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Profil employé</div>
+          <div class="action-description">
+            Retour au profil complet
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'employes_liste' %}" class="action-card secondary">
+        <div class="action-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Liste des employés</div>
+          <div class="action-description">
+            Retour à la liste complète
+          </div>
+        </div>
+      </a>
+      
+<!--       <button type="button" class="action-card info" onclick="imprimerPlanning()">
+        <div class="action-icon">
+          <i class="fas fa-print"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Imprimer le planning</div>
+          <div class="action-description">
+            Imprimer la disponibilité
+          </div>
+        </div>
+      </button>
+      
+      <button type="button" class="action-card export" onclick="exporterPlanning()">
+        <div class="action-icon">
+          <i class="fas fa-file-export"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Exporter</div>
+          <div class="action-description">
+            Exporter en Excel
+          </div>
+        </div>
+      </button>
+ -->    
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles spécifiques à la disponibilité - couleur bleue pour le planning */
+.disponibilite-header {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.matricule-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.periode-badge {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.periode-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: normal;
+  margin-left: 1rem;
+}
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  transition: all 0.2s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #212529;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: #007bff;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* Statuts avec couleurs */
+.statut-badge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statut-badge.actif {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.statut-badge.conge {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.statut-badge.formation {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.statut-badge.arret {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.disponibilite-badge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.disponibilite-badge.disponible {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.disponibilite-badge.indisponible {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Calendrier */
+.calendrier-container {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.calendrier-legende {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.legende-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.legende-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.legende-item.disponible .legende-color {
+  background-color: #28a745;
+}
+
+.legende-item.absence .legende-color {
+  background-color: #dc3545;
+}
+
+.legende-item.mission .legende-color {
+  background-color: #007bff;
+}
+
+.legende-item.weekend .legende-color {
+  background-color: #6c757d;
+}
+
+.calendrier-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calendrier-header {
+  background: #007bff;
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.calendrier-jour {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.calendrier-jour:hover {
+  transform: scale(1.1);
+  z-index: 2;
+}
+
+.calendrier-jour.disponible {
+  background-color: #28a745;
+  color: white;
+}
+
+.calendrier-jour.absence {
+  background-color: #dc3545;
+  color: white;
+}
+
+.calendrier-jour.mission {
+  background-color: #007bff;
+  color: white;
+}
+
+.calendrier-jour.weekend {
+  background-color: #6c757d;
+  color: white;
+}
+
+.calendrier-jour.autre-mois {
+  background-color: #e9ecef;
+  color: #6c757d;
+}
+
+.calendrier-jour.aujourd-hui {
+  border: 3px solid #ffc107;
+  font-weight: bold;
+}
+
+/* Timeline des absences */
+.absences-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.absences-timeline::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #dc3545, #dee2e6);
+}
+
+.absence-timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 3rem;
+}
+
+.absence-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc3545;
+  border: 4px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+.absence-timeline-item.en-cours .absence-marker {
+  background: #ffc107;
+  animation: pulse 2s infinite;
+}
+
+.absence-date {
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.absence-content {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.absence-content:hover {
+  border-color: #dc3545;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
+}
+
+.absence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.absence-type {
+  font-weight: 600;
+  color: #495057;
+  font-size: 1.1rem;
+}
+
+.absence-duree {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.en-cours-badge {
+  background: #ffc107;
+  color: #212529;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.absence-periode {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.absence-commentaire {
+  color: #495057;
+  font-style: italic;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Timeline des missions */
+.missions-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.missions-timeline::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #007bff, #dee2e6);
+}
+
+.mission-timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 3rem;
+}
+
+.mission-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #007bff;
+  border: 4px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+.mission-date {
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.mission-content {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.mission-content:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mission-poste {
+  font-weight: 600;
+  color: #495057;
+  font-size: 1.1rem;
+  flex: 1;
+}
+
+.statut-mission-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statut-mission-badge.en_cours {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statut-mission-badge.planifiee {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.mission-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.urgence-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.mission-actions {
+  text-align: right;
+}
+
+/* Statistiques */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #007bff;
+  min-width: 50px;
+  text-align: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #212529;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.primary {
+  border-color: #007bff;
+  color: #004085;
+}
+
+.action-card.primary:hover {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.action-card.secondary {
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.action-card.secondary:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.action-card.info {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.action-card.export {
+  border-color: #fd7e14;
+  color: #8b4513;
+}
+
+.action-card.export:hover {
+  background-color: #ffeaa7;
+  color: #8b4513;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-container {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.card-container:nth-child(even) {
+  animation-delay: 0.1s;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .disponibilite-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .calendrier-legende {
+    gap: 1rem;
+  }
+  
+  .calendrier-grid {
+    font-size: 0.8rem;
+  }
+  
+  .absence-timeline-item,
+  .mission-timeline-item {
+    padding-left: 2rem;
+  }
+  
+  .absence-marker,
+  .mission-marker {
+    left: -1.25rem;
+    width: 30px;
+    height: 30px;
+  }
+  
+  .absence-date,
+  .mission-date {
+    font-size: 0.7rem;
+  }
+  
+  .absence-header,
+  .mission-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📅 Page disponibilité employé initialisée pour:', '{{ employe.nom_complet }}');
+  
+  // Génération du calendrier
+  genererCalendrier();
+  
+  // Animation d'entrée progressive pour les sections
+  const cardContainers = document.querySelectorAll('.card-container');
+  cardContainers.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 150);
+  });
+  
+  // Animation des statistiques
+  animerStatistiques();
+  
+  console.log('✅ Interactions disponibilité initialisées');
+});
+
+// Génération du calendrier
+function genererCalendrier() {
+  const calendrierGrid = document.getElementById('calendrier-grid');
+  if (!calendrierGrid) return;
+  
+  // Données simulées - à remplacer par les vraies données du backend
+  const periodeDebut = new Date('{{ periode_debut|date:"Y-m-d" }}');
+  const periodeFin = new Date('{{ periode_fin|date:"Y-m-d" }}');
+  
+  // Headers des jours
+  const joursNoms = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  joursNoms.forEach(jour => {
+    const header = document.createElement('div');
+    header.className = 'calendrier-header';
+    header.textContent = jour;
+    calendrierGrid.appendChild(header);
+  });
+  
+  // Générer les jours du calendrier
+  const premierJour = new Date(periodeDebut.getFullYear(), periodeDebut.getMonth(), 1);
+  const dernierJour = new Date(periodeFin.getFullYear(), periodeFin.getMonth() + 1, 0);
+  
+  // Ajuster au début de la semaine
+  const debutCalendrier = new Date(premierJour);
+  debutCalendrier.setDate(debutCalendrier.getDate() - (debutCalendrier.getDay() || 7) + 1);
+  
+  // Ajuster à la fin de la semaine
+  const finCalendrier = new Date(dernierJour);
+  finCalendrier.setDate(finCalendrier.getDate() + (7 - (finCalendrier.getDay() || 7)));
+  
+  const jourActuel = new Date(debutCalendrier);
+  const aujourd_hui = new Date();
+  
+  // Données d'exemple des absences et missions (à remplacer par les vraies données)
+  const absencesData = [
+    {% for absence in absences %}
+    {
+      debut: new Date('{{ absence.date_debut|date:"Y-m-d" }}'),
+      fin: new Date('{{ absence.date_fin|date:"Y-m-d" }}'),
+      type: '{{ absence.type_absence|escapejs }}'
+    },
+    {% endfor %}
+  ];
+  
+  const missionsData = [
+    {% for mission in missions %}
+    {
+      debut: new Date('{{ mission.demande_interim.date_debut|date:"Y-m-d"|default:"1970-01-01" }}'),
+      fin: new Date('{{ mission.demande_interim.date_fin|date:"Y-m-d"|default:"1970-01-01" }}'),
+      poste: '{{ mission.demande_interim.poste.titre|escapejs }}'
+    },
+    {% endfor %}
+  ];
+  
+  while (jourActuel <= finCalendrier) {
+    const jourElement = document.createElement('div');
+    jourElement.className = 'calendrier-jour';
+    jourElement.textContent = jourActuel.getDate();
+    
+    // Déterminer le statut du jour
+    let statut = 'disponible';
+    let details = '';
+    
+    // Vérifier si c'est un week-end
+    if (jourActuel.getDay() === 0 || jourActuel.getDay() === 6) {
+      statut = 'weekend';
+      details = 'Week-end';
+    }
+    
+    // Vérifier les absences
+    for (const absence of absencesData) {
+      if (jourActuel >= absence.debut && jourActuel <= absence.fin) {
+        statut = 'absence';
+        details = `Absence: ${absence.type}`;
+        break;
+      }
+    }
+    
+    // Vérifier les missions (priorité sur les absences)
+    for (const mission of missionsData) {
+      if (jourActuel >= mission.debut && jourActuel <= mission.fin) {
+        statut = 'mission';
+        details = `Mission: ${mission.poste}`;
+        break;
+      }
+    }
+    
+    // Vérifier si c'est aujourd'hui
+    if (jourActuel.toDateString() === aujourd_hui.toDateString()) {
+      jourElement.classList.add('aujourd-hui');
+    }
+    
+    // Vérifier si c'est dans un autre mois
+    if (jourActuel.getMonth() !== periodeDebut.getMonth() && 
+        jourActuel.getMonth() !== periodeFin.getMonth()) {
+      jourElement.classList.add('autre-mois');
+    }
+    
+    jourElement.classList.add(statut);
+    jourElement.title = `${jourActuel.toLocaleDateString('fr-FR')} - ${details}`;
+    
+    // Événement de clic pour plus de détails
+    jourElement.addEventListener('click', function() {
+      afficherDetailsJour(jourActuel, statut, details);
+    });
+    
+    calendrierGrid.appendChild(jourElement);
+    
+    // Passer au jour suivant
+    jourActuel.setDate(jourActuel.getDate() + 1);
+  }
+}
+
+// Animation des statistiques
+function animerStatistiques() {
+  const statNumbers = document.querySelectorAll('.stat-number');
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const element = entry.target;
+        const finalValue = parseInt(element.textContent) || 0;
+        
+        if (finalValue > 0) {
+          animerCompteur(element, finalValue);
+        }
+        
+        observer.unobserve(element);
+      }
+    });
+  });
+  
+  statNumbers.forEach(number => observer.observe(number));
+}
+
+// Animation du compteur
+function animerCompteur(element, finalValue) {
+  const suffix = element.textContent.replace(finalValue.toString(), '');
+  let currentValue = 0;
+  const increment = Math.ceil(finalValue / 30);
+  
+  const timer = setInterval(() => {
+    currentValue += increment;
+    if (currentValue >= finalValue) {
+      currentValue = finalValue;
+      clearInterval(timer);
+    }
+    
+    element.textContent = currentValue + suffix;
+  }, 50);
+}
+
+// Afficher les détails d'un jour
+function afficherDetailsJour(date, statut, details) {
+  console.log('Détails pour le', date.toLocaleDateString('fr-FR'), ':', statut, details);
+  
+  // Créer une modal simple
+  const modal = document.createElement('div');
+  modal.className = 'jour-modal';
+  modal.innerHTML = `
+    <div class="jour-modal-content">
+      <div class="jour-modal-header">
+        <h3>${date.toLocaleDateString('fr-FR', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}</h3>
+        <button onclick="fermerModalJour()" class="btn-close">&times;</button>
+      </div>
+      <div class="jour-modal-body">
+        <div class="statut-jour ${statut}">
+          <i class="fas fa-${getStatutIcon(statut)}"></i>
+          ${details}
+        </div>
+        <div class="actions-jour">
+          <button onclick="fermerModalJour()" class="btn btn-outline">Fermer</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Styles de la modal
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+  `;
+  
+  const content = modal.querySelector('.jour-modal-content');
+  content.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Fermer en cliquant sur le fond
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      fermerModalJour();
+    }
+  });
+}
+
+// Fermer la modal du jour
+function fermerModalJour() {
+  const modal = document.querySelector('.jour-modal');
+  if (modal) {
+    modal.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(() => modal.remove(), 300);
+  }
+}
+
+// Icône selon le statut
+function getStatutIcon(statut) {
+  const icons = {
+    'disponible': 'check-circle',
+    'absence': 'times-circle',
+    'mission': 'briefcase',
+    'weekend': 'calendar'
+  };
+  return icons[statut] || 'question-circle';
+}
+
+// Fonction d'impression du planning
+function imprimerPlanning() {
+  console.log('Impression du planning de disponibilité');
+  
+  // Masquer les éléments non nécessaires à l'impression
+  const elementsToHide = document.querySelectorAll('.disponibilite-header .btn, .actions-grid, .card-header .btn');
+  elementsToHide.forEach(el => {
+    el.style.display = 'none';
+  });
+  
+  // Styles spécifiques pour l'impression
+  const printStyles = document.createElement('style');
+  printStyles.innerHTML = `
+    @media print {
+      body { font-size: 12pt; }
+      .card-container { break-inside: avoid; margin-bottom: 1rem; }
+      .calendrier-grid { grid-template-columns: repeat(7, 1fr); gap: 1px; }
+      .calendrier-jour { padding: 0.5rem; font-size: 10pt; }
+      .timeline-item { break-inside: avoid; }
+    }
+  `;
+  document.head.appendChild(printStyles);
+  
+  // Lancer l'impression
+  window.print();
+  
+  // Restaurer les éléments après impression
+  setTimeout(() => {
+    elementsToHide.forEach(el => {
+      el.style.display = '';
+    });
+    printStyles.remove();
+  }, 1000);
+}
+
+// Fonction d'export du planning
+function exporterPlanning() {
+  const exportBtn = document.querySelector('[onclick="exporterPlanning()"]');
+  if (exportBtn) {
+    const icon = exportBtn.querySelector('i');
+    const originalClass = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    exportBtn.disabled = true;
+  }
+  
+  // Simuler l'export (à remplacer par l'appel réel)
+  setTimeout(() => {
+    // Restaurer le bouton
+    if (exportBtn) {
+      const icon = exportBtn.querySelector('i');
+      icon.className = 'fas fa-file-export';
+      exportBtn.disabled = false;
+    }
+    
+    // Notification de succès
+    const notification = document.createElement('div');
+    notification.className = 'export-notification';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      animation: slideInRight 0.3s ease;
+    `;
+    notification.innerHTML = '<i class="fas fa-check-circle"></i> Planning exporté avec succès !';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+    
+  }, 2000);
+}
+
+// Fonction pour naviguer entre les mois
+function changerMois(direction) {
+  console.log('Navigation calendrier:', direction);
+  // Implémentation future : navigation entre les mois
+}
+
+// Fonction pour aller à une date spécifique
+function allerADate(date) {
+  console.log('Navigation vers la date:', date);
+  // Implémentation future : navigation vers une date spécifique
+}
+
+// Gestion des raccourcis clavier
+document.addEventListener('keydown', function(e) {
+  // Échap pour fermer les modals
+  if (e.key === 'Escape') {
+    fermerModalJour();
+  }
+  
+  // Ctrl+P pour imprimer
+  if (e.ctrlKey && e.key === 'p') {
+    e.preventDefault();
+    imprimerPlanning();
+  }
+});
+
+// Ajout des styles d'animation
+const styleSheet = document.createElement('style');
+styleSheet.innerHTML = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.9); }
+  }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(styleSheet);
+</script>
+{% endblock extra_js %}

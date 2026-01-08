@@ -1,0 +1,1107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Liste des employés{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header employés -->
+<div class="employes-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8" style="margin-left: 20px;">
+        <h1 class="mb-0">
+          <i class="fas fa-users"></i>
+          Liste des employés
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-user"></i> {{ profil_utilisateur.nom_complet }}
+          - {{ profil_utilisateur.get_type_profil_display }}
+          {% if is_superuser %}
+            <span class="niveau-acces-badge">🦸‍♂️ Superutilisateur</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="col-md-4 text-end" style="margin-left: 20px;margin-top: 15px;">
+        <a href="{% url 'index' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour au tableau de bord
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations sur le périmètre -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Périmètre d'accès
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-card">
+        <div class="info-label">👤 Utilisateur</div>
+        <div class="info-value">{{ profil_utilisateur.nom_complet }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏢 Département</div>
+        <div class="info-value">{{ profil_utilisateur.departement.nom|default:"Tous départements" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🎯 Niveau d'accès</div>
+        <div class="info-value">
+          <span class="niveau-badge">
+            {% if is_superuser %}
+              🌍 Accès global (Superutilisateur)
+            {% elif profil_utilisateur.type_profil == 'RH' %}
+              👨‍💼 Accès RH global
+            {% elif profil_utilisateur.type_profil == 'ADMIN' %}
+              ⚙️ Accès administrateur
+            {% else %}
+              👥 Département : {{ profil_utilisateur.departement.nom|default:"Non défini" }}
+            {% endif %}
+          </span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📊 Total employés</div>
+        <div class="info-value">
+          <span class="count-badge">{{ employes.paginator.count }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Filtres et recherche
+    </h2>
+  </div>
+  <div class="card-body">
+    <form method="get" class="filter-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="statut" class="form-label">Statut employé</label>
+          <select name="statut" id="statut" class="form-select">
+            <option value="ACTIF" {% if statut_filtre == 'ACTIF' %}selected{% endif %}>Employés actifs</option>
+            <option value="CONGE" {% if statut_filtre == 'CONGE' %}selected{% endif %}>En congé</option>
+            <option value="FORMATION" {% if statut_filtre == 'FORMATION' %}selected{% endif %}>En formation</option>
+            <option value="ARRET" {% if statut_filtre == 'ARRET' %}selected{% endif %}>Arrêt maladie</option>
+            <option value="SUSPENDU" {% if statut_filtre == 'SUSPENDU' %}selected{% endif %}>Suspendu</option>
+            <option value="" {% if not statut_filtre %}selected{% endif %}>Tous les statuts</option>
+          </select>
+        </div>
+        
+        {% if departements %}
+        <div class="form-group">
+          <label for="departement" class="form-label">Département</label>
+          <select name="departement" id="departement" class="form-select">
+            <option value="">Tous les départements</option>
+            {% for dept in departements %}
+            <option value="{{ dept.id }}" {% if departement_id == dept.id|stringformat:"s" %}selected{% endif %}>
+              {{ dept.nom }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        
+        {% if sites %}
+        <div class="form-group">
+          <label for="site" class="form-label">Site</label>
+          <select name="site" id="site" class="form-select">
+            <option value="">Tous les sites</option>
+            {% for site in sites %}
+            <option value="{{ site.id }}" {% if site_id == site.id|stringformat:"s" %}selected{% endif %}>
+              {{ site.nom }} - {{ site.ville }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+          <label for="recherche" class="form-label">Recherche</label>
+          <input type="text" name="recherche" id="recherche" class="form-input" 
+                 placeholder="Nom, matricule, poste..." 
+                 value="{{ request.GET.recherche|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="ordre" class="form-label">Tri</label>
+          <select name="ordre" id="ordre" class="form-select">
+            <option value="user__last_name" {% if request.GET.ordre == 'user__last_name' %}selected{% endif %}>Nom A-Z</option>
+            <option value="-user__last_name" {% if request.GET.ordre == '-user__last_name' %}selected{% endif %}>Nom Z-A</option>
+            <option value="matricule" {% if request.GET.ordre == 'matricule' %}selected{% endif %}>Matricule croissant</option>
+            <option value="-matricule" {% if request.GET.ordre == '-matricule' %}selected{% endif %}>Matricule décroissant</option>
+            <option value="departement__nom" {% if request.GET.ordre == 'departement__nom' %}selected{% endif %}>Département A-Z</option>
+            <option value="poste__titre" {% if request.GET.ordre == 'poste__titre' %}selected{% endif %}>Poste A-Z</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              Filtrer
+            </button>
+            <a href="?" class="btn btn-outline">
+              <i class="fas fa-undo"></i>
+              Réinitialiser
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Liste des employés -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-list"></i>
+      Employés
+      {% if employes.paginator.count %}
+        <span class="count-badge">{{ employes.paginator.count }}</span>
+      {% endif %}
+    </h2>
+  </div>
+  <div class="card-body">
+    {% if employes %}
+      <div class="employes-container">
+        {% for employe in employes %}
+        <div class="employe-card">
+          <div class="employe-header">
+            <div class="employe-main-info">
+              <div class="employe-nom">
+                <strong>{{ employe.nom_complet }}</strong>
+                <span class="employe-matricule">({{ employe.matricule }})</span>
+              </div>
+              <div class="employe-statut">
+                <span class="statut-badge {{ employe.statut_employe|lower }}">
+                  {% if employe.statut_employe == 'ACTIF' %}
+                    ✅ {{ employe.get_statut_employe_display }}
+                  {% elif employe.statut_employe == 'CONGE' %}
+                    🏖️ {{ employe.get_statut_employe_display }}
+                  {% elif employe.statut_employe == 'FORMATION' %}
+                    📚 {{ employe.get_statut_employe_display }}
+                  {% elif employe.statut_employe == 'ARRET' %}
+                    🏥 {{ employe.get_statut_employe_display }}
+                  {% else %}
+                    ⚠️ {{ employe.get_statut_employe_display }}
+                  {% endif %}
+                </span>
+                <span class="type-profil-badge">{{ employe.get_type_profil_display }}</span>
+              </div>
+            </div>
+            <div class="employe-actions">
+              <a href="{% url 'employe_detail' employe.matricule %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-eye"></i>
+                Voir détails
+              </a>
+              <a href="{% url 'employe_hierarchie' employe.matricule %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-project-diagram"></i>
+                Voir hiérarchie
+              </a>
+              {% if employe.statut_employe == 'ACTIF' %}
+              <a href="{% url 'employe_disponibilite' employe.matricule %}" class="btn btn-sm btn-outline">
+                <i class="fas fa-calendar-check"></i>
+                Disponibilité
+              </a>              
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="employe-details">
+            <div class="detail-row">
+              <strong>Poste :</strong> {{ employe.poste.titre|default:"Non défini" }}
+            </div>
+            <div class="detail-row">
+              <strong>Département :</strong> {{ employe.departement.nom|default:"Non défini" }}
+            </div>
+            <div class="detail-row">
+              <strong>Site :</strong> {{ employe.site.nom|default:"Non défini" }}
+              {% if employe.site.ville %}- {{ employe.site.ville }}{% endif %}
+            </div>
+            {% if employe.manager %}
+            <div class="detail-row">
+              <strong>Manager :</strong> {{ employe.manager.nom_complet }}
+            </div>
+            {% endif %}
+            {% if employe.date_embauche %}
+            <div class="detail-row">
+              <strong>Date d'embauche :</strong> {{ employe.date_embauche|date:"d/m/Y" }}
+            </div>
+            {% endif %}
+            {% if employe.extended_data.disponible_interim %}
+            <div class="detail-row">
+              <span class="disponibilite-badge disponible">
+                🔄 Disponible pour l'intérim
+              </span>
+            </div>
+            {% endif %}
+          </div>
+          
+          <!-- Compétences clés -->
+          {% if employe.competences.all %}
+          <div class="employe-competences">
+            <strong>Compétences :</strong>
+            <div class="competences-list">
+              {% for competence_utilisateur in employe.competences.all|slice:":5" %}
+              <span class="competence-tag">
+                {{ competence_utilisateur.competence.nom }}
+                <span class="niveau-competence niveau-{{ competence_utilisateur.niveau_maitrise }}">
+                  {% if competence_utilisateur.niveau_maitrise == 1 %}Débutant
+                  {% elif competence_utilisateur.niveau_maitrise == 2 %}Intermédiaire
+                  {% elif competence_utilisateur.niveau_maitrise == 3 %}Confirmé
+                  {% elif competence_utilisateur.niveau_maitrise == 4 %}Expert
+                  {% endif %}
+                </span>
+              </span>
+              {% endfor %}
+              {% if employe.competences.count > 5 %}
+              <span class="competences-more">
+                +{{ employe.competences.count|add:"-5" }} autre{{ employe.competences.count|add:"-5"|pluralize }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if employes.paginator.num_pages > 1 %}
+      <div class="pagination-container">
+        <div class="pagination-info">
+          Page {{ employes.number }} sur {{ employes.paginator.num_pages }} 
+          ({{ employes.start_index }}-{{ employes.end_index }} sur {{ employes.paginator.count }} employé{{ employes.paginator.count|pluralize }})
+        </div>
+        <div class="pagination-controls">
+          {% if employes.has_previous %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ employes.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          {% endif %}
+          
+          <span class="pagination-current">{{ employes.number }}</span>
+          
+          {% if employes.has_next %}
+            <a href="?page={{ employes.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ employes.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+        <h4>Aucun employé trouvé</h4>
+        <p class="text-muted">
+          {% if request.GET.recherche or request.GET.statut or request.GET.departement or request.GET.site %}
+            Aucun employé ne correspond à vos critères de recherche.
+            <br>Essayez de modifier vos filtres.
+          {% else %}
+            Aucun employé n'a été trouvé dans votre périmètre.
+          {% endif %}
+        </p>
+        {% if request.GET.recherche or request.GET.statut or request.GET.departement or request.GET.site %}
+        <a href="?" class="btn btn-primary">
+          <i class="fas fa-undo"></i>
+          Effacer les filtres
+        </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Actions disponibles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      <a href="{% url 'index' %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Tableau de bord</div>
+          <div class="action-description">
+            Retour au tableau de bord principal
+          </div>
+        </div>
+      </a>
+      
+      <button type="button" class="action-card refresh" onclick="window.location.reload()">
+        <div class="action-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Actualiser</div>
+          <div class="action-description">
+            Recharger la liste des employés
+          </div>
+        </div>
+      </button>
+      
+      <button type="button" class="action-card export" onclick="exporterEmployes()">
+        <div class="action-icon">
+          <i class="fas fa-file-export"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Exporter</div>
+          <div class="action-description">
+            Exporter la liste en Excel
+          </div>
+        </div>
+      </button>
+      
+      {% if profil_utilisateur.type_profil in 'RH,ADMIN' or is_superuser %}
+      <a href="#" class="action-card info">
+        <div class="action-icon">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Statistiques</div>
+          <div class="action-description">
+            Statistiques des employés
+          </div>
+        </div>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles spécifiques aux employés - couleur verte pour différencier */
+.employes-header {
+  background: linear-gradient(135deg, #28a745, #155724);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.niveau-acces-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #212529;
+  font-size: 1.1rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: #28a745;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.niveau-badge {
+  background-color: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Container des employés */
+.employes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.employe-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.employe-card:hover {
+  border-color: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.1);
+  transform: translateY(-2px);
+}
+
+.employe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.employe-main-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.employe-nom {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.employe-matricule {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: normal;
+  margin-left: 0.5rem;
+}
+
+.employe-statut {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.statut-badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statut-badge.actif {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.statut-badge.conge {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.statut-badge.formation {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.statut-badge.arret {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.statut-badge.suspendu {
+  background-color: #dc3545;
+  color: white;
+}
+
+.type-profil-badge {
+  padding: 0.25rem 0.5rem;
+  background-color: #e9ecef;
+  color: #495057;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.employe-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.employe-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.disponibilite-badge {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.disponibilite-badge.disponible {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Compétences */
+.employe-competences {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.competences-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.competence-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #e9ecef;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  border-left: 3px solid #28a745;
+}
+
+.niveau-competence {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.niveau-competence.niveau-1 {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.niveau-competence.niveau-2 {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.niveau-competence.niveau-3 {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.niveau-competence.niveau-4 {
+  background: #d4edda;
+  color: #155724;
+}
+
+.competences-more {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-current {
+  padding: 0.5rem 0.75rem;
+  background: #28a745;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.primary {
+  border-color: #28a745;
+  color: #155724;
+}
+
+.action-card.primary:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.action-card.refresh {
+  border-color: #007bff;
+  color: #004085;
+}
+
+.action-card.refresh:hover {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.action-card.export {
+  border-color: #fd7e14;
+  color: #8b4513;
+}
+
+.action-card.export:hover {
+  background-color: #ffeaa7;
+  color: #8b4513;
+}
+
+.action-card.info {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Form styles */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-input, .form-select {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: 0;
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-primary:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+  color: white;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-state h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state .text-muted {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .employes-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .employe-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .employe-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .employe-statut {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .competences-list {
+    flex-direction: column;
+  }
+}
+
+/* Animations */
+@keyframes employeAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.employe-card {
+  animation: employeAppear 0.5s ease-out forwards;
+}
+
+.employe-card:nth-child(even) {
+  animation-delay: 0.1s;
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('👥 Page liste des employés initialisée');
+  
+  // Animation d'entrée progressive pour les cartes employés
+  const employeCards = document.querySelectorAll('.employe-card');
+  employeCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 100);
+  });
+  
+  // Auto-submit du formulaire de filtres avec debounce
+  let filterTimeout;
+  const filterInputs = document.querySelectorAll('#recherche, #statut, #departement, #site, #ordre');
+  
+  filterInputs.forEach(input => {
+    input.addEventListener('input', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 500);
+    });
+    
+    input.addEventListener('change', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 200);
+    });
+  });
+  
+  // Effet de hover amélioré pour les cartes employés
+  employeCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-4px)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+  
+  console.log('✅ Interactions employés initialisées');
+});
+
+// Fonction d'export des employés
+function exporterEmployes() {
+  const exportBtn = document.querySelector('[onclick="exporterEmployes()"]');
+  if (exportBtn) {
+    const icon = exportBtn.querySelector('i');
+    const originalClass = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    exportBtn.disabled = true;
+  }
+  
+  // Simuler l'export (à remplacer par l'appel réel)
+  setTimeout(() => {
+    // Restaurer le bouton
+    if (exportBtn) {
+      const icon = exportBtn.querySelector('i');
+      icon.className = 'fas fa-file-export';
+      exportBtn.disabled = false;
+    }
+    
+    // Notification de succès
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-success';
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.padding = '1rem';
+    notification.style.borderRadius = '8px';
+    notification.style.backgroundColor = '#d4edda';
+    notification.style.color = '#155724';
+    notification.style.border = '1px solid #c3e6cb';
+    notification.innerHTML = '<i class="fas fa-check-circle"></i> Export terminé avec succès !';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+    
+  }, 2000);
+}
+
+// Fonction pour filtrer rapidement par statut
+function filtrerParStatut(statut) {
+  const statutSelect = document.getElementById('statut');
+  if (statutSelect) {
+    statutSelect.value = statut;
+    statutSelect.form.submit();
+  }
+}
+
+// Fonction pour filtrer rapidement par département
+function filtrerParDepartement(departementId) {
+  const deptSelect = document.getElementById('departement');
+  if (deptSelect) {
+    deptSelect.value = departementId;
+    deptSelect.form.submit();
+  }
+}
+</script>
+{% endblock extra_js %}

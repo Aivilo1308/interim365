@@ -1,0 +1,736 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Vérification d'escalade{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header de vérification -->
+<div class="verification-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-0">
+          <i class="fas fa-search"></i>
+          Vérification d'escalade
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-file-alt"></i> Demande {{ demande.numero_demande|default:"N/A" }}
+          - {{ demande.poste.titre|default:"Poste non défini" }}
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'liste_interim_validation' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour à la liste
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations de la demande -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations de la demande
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-card">
+        <div class="info-label">📋 N° Demande</div>
+        <div class="info-value">{{ demande.numero_demande|default:"N/A" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">💼 Poste</div>
+        <div class="info-value">{{ demande.poste.titre|default:"Poste non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏢 Département</div>
+        <div class="info-value">{{ demande.poste.departement.nom|default:"Département N/A" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">👤 Demandeur</div>
+        <div class="info-value">{{ demande.demandeur.nom_complet|default:"Nom non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🔄 Personne remplacée</div>
+        <div class="info-value">{{ demande.personne_remplacee.nom_complet|default:"Nom non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📅 Période</div>
+        <div class="info-value">
+          {% if demande.date_debut and demande.date_fin %}
+            {{ demande.date_debut|date:"d/m/Y" }} - {{ demande.date_fin|date:"d/m/Y" }}
+          {% else %}
+            N/A
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">⚠️ Urgence</div>
+        <div class="info-value">
+          <span class="urgence-badge {{ urgence_classe|default:'normale' }}">
+            {{ demande.get_urgence_display|default:"N/A" }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📊 Niveau actuel</div>
+        <div class="info-value">
+          <span class="niveau-badge">
+            Niveau {{ demande.niveau_validation_actuel|default:"0" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Résultats de la vérification -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-check-double"></i>
+      Résultats de la vérification
+    </h2>
+  </div>
+  <div class="card-body">
+    {% if verification %}
+      <div class="verification-grid">
+        <!-- Statut général -->
+        <div class="verification-card main-result {{ verification.escalade_possible|yesno:'success,danger' }}">
+          <div class="verification-icon">
+            {% if verification.escalade_possible %}
+              <i class="fas fa-check-circle"></i>
+            {% else %}
+              <i class="fas fa-times-circle"></i>
+            {% endif %}
+          </div>
+          <div class="verification-content">
+            <div class="verification-title">Escalade possible</div>
+            <div class="verification-result">
+              {% if verification.escalade_possible %}
+                ✅ OUI - Cette demande peut être escaladée
+              {% else %}
+                ❌ NON - Cette demande ne peut pas être escaladée
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Permissions utilisateur -->
+        <div class="verification-card {{ verification.peut_escalader|yesno:'success,danger' }}">
+          <div class="verification-icon">
+            {% if verification.peut_escalader %}
+              <i class="fas fa-user-check"></i>
+            {% else %}
+              <i class="fas fa-user-times"></i>
+            {% endif %}
+          </div>
+          <div class="verification-content">
+            <div class="verification-title">Vos permissions</div>
+            <div class="verification-result">
+              {% if verification.peut_escalader %}
+                ✅ Autorisé à escalader
+              {% else %}
+                ❌ Non autorisé à escalader
+              {% endif %}
+            </div>
+            <div class="verification-details">{{ verification.raison_user }}</div>
+          </div>
+        </div>
+        
+        <!-- Statut de la demande -->
+        <div class="verification-card {{ verification.peut_etre_escaladee|yesno:'success,danger' }}">
+          <div class="verification-icon">
+            {% if verification.peut_etre_escaladee %}
+              <i class="fas fa-file-check"></i>
+            {% else %}
+              <i class="fas fa-file-times"></i>
+            {% endif %}
+          </div>
+          <div class="verification-content">
+            <div class="verification-title">Statut de la demande</div>
+            <div class="verification-result">
+              {% if verification.peut_etre_escaladee %}
+                ✅ Demande escaladable
+              {% else %}
+                ❌ Demande non escaladable
+              {% endif %}
+            </div>
+            <div class="verification-details">{{ verification.raison_demande }}</div>
+          </div>
+        </div>
+        
+        <!-- Niveaux de validation -->
+        <div class="verification-card info">
+          <div class="verification-icon">
+            <i class="fas fa-layer-group"></i>
+          </div>
+          <div class="verification-content">
+            <div class="verification-title">Niveaux de validation</div>
+            <div class="verification-result">
+              Actuel: <strong>Niveau {{ verification.niveau_actuel }}</strong>
+            </div>
+            <div class="verification-details">
+              {% if verification.niveau_cible %}
+                Cible: <strong>Niveau {{ verification.niveau_cible }}</strong> 
+                ({{ verification.type_validation_cible }})
+              {% else %}
+                Aucune cible définie
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Validateurs cibles -->
+      {% if verification.validateurs_cibles %}
+      <div class="mt-4">
+        <h4 class="mb-3">
+          <i class="fas fa-users"></i>
+          Validateurs qui seront notifiés ({{ verification.nb_validateurs_cibles }})
+        </h4>
+        <div class="validateurs-list">
+          {% for validateur in verification.validateurs_cibles %}
+          <div class="validateur-item">
+            <i class="fas fa-user-tie"></i>
+            <span>{{ validateur }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+    {% else %}
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div class="alert-content">
+          <strong>Erreur :</strong> Impossible de vérifier les conditions d'escalade pour cette demande.
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Actions disponibles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      {% if verification.escalade_possible and verification.peut_escalader %}
+        <a href="{% url 'escalader_demande' demande.id %}" class="action-card success">
+          <div class="action-icon">
+            <i class="fas fa-arrow-up"></i>
+          </div>
+          <div class="action-content">
+            <div class="action-title">Escalader la demande</div>
+            <div class="action-description">
+              Procéder à l'escalade vers le niveau {{ verification.niveau_cible }}
+            </div>
+          </div>
+        </a>
+      {% else %}
+        <div class="action-card disabled">
+          <div class="action-icon">
+            <i class="fas fa-ban"></i>
+          </div>
+          <div class="action-content">
+            <div class="action-title">Escalade impossible</div>
+            <div class="action-description">
+              Les conditions d'escalade ne sont pas remplies
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
+      <a href="{% url 'historique_escalades_demande' demande.id %}" class="action-card info">
+        <div class="action-icon">
+          <i class="fas fa-history"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Historique des escalades</div>
+          <div class="action-description">
+            Voir l'historique des escalades de cette demande
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'liste_interim_validation' %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-list"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Retour à la liste</div>
+          <div class="action-description">
+            Revenir à la liste des demandes à valider
+          </div>
+        </div>
+      </a>
+      
+      {% if demande %}
+      <a href="{% url 'interim_validation' demande.id %}" class="action-card secondary">
+        <div class="action-icon">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Voir la demande</div>
+          <div class="action-description">
+            Consulter le détail de la demande
+          </div>
+        </div>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Nouvelle vérification -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-refresh"></i>
+      Nouvelle vérification
+    </h2>
+  </div>
+  <div class="card-body">
+    <form method="get" class="verification-form">
+      <p class="mb-3">
+        <i class="fas fa-info-circle text-info"></i>
+        Les conditions d'escalade peuvent changer selon le statut de la demande et vos permissions.
+        Vous pouvez relancer une vérification à tout moment.
+      </p>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-info">
+          <i class="fas fa-search"></i>
+          Vérifier à nouveau
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles spécifiques pour la vérification */
+.verification-header {
+  background: linear-gradient(135deg, #17a2b8, #007bff);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #212529;
+  font-size: 1.1rem;
+}
+
+.verification-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.verification-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-radius: 8px;
+  gap: 1rem;
+  border: 2px solid;
+}
+
+.verification-card.main-result {
+  grid-column: 1 / -1;
+  font-size: 1.1rem;
+}
+
+.verification-card.success {
+  background-color: #d4edda;
+  border-color: #28a745;
+}
+
+.verification-card.danger {
+  background-color: #f8d7da;
+  border-color: #dc3545;
+}
+
+.verification-card.info {
+  background-color: #d1ecf1;
+  border-color: #17a2b8;
+}
+
+.verification-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.verification-card.success .verification-icon {
+  color: #28a745;
+}
+
+.verification-card.danger .verification-icon {
+  color: #dc3545;
+}
+
+.verification-card.info .verification-icon {
+  color: #17a2b8;
+}
+
+.verification-content {
+  flex: 1;
+}
+
+.verification-title {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.verification-result {
+  color: #212529;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.verification-details {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.validateurs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.validateur-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+.validateur-item i {
+  color: #007bff;
+  font-size: 1.2rem;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.success {
+  background-color: #d4edda;
+  border-color: #28a745;
+  color: #155724;
+}
+
+.action-card.success:hover {
+  background-color: #c3e6cb;
+  color: #155724;
+}
+
+.action-card.info {
+  background-color: #d1ecf1;
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #bee5eb;
+  color: #0c5460;
+}
+
+.action-card.primary {
+  background-color: #cce5ff;
+  border-color: #007bff;
+  color: #004085;
+}
+
+.action-card.primary:hover {
+  background-color: #b3d9ff;
+  color: #004085;
+}
+
+.action-card.secondary {
+  background-color: #e9ecef;
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.action-card.secondary:hover {
+  background-color: #dee2e6;
+  color: #495057;
+}
+
+.action-card.disabled {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.urgence-badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.urgence-badge.moyenne {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.urgence-badge.normale {
+  background-color: #6c757d;
+  color: white;
+}
+
+.niveau-badge {
+  background-color: #007bff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-info {
+  color: white;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  color: white;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .verification-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .verification-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .validateurs-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .verification-card.main-result {
+    grid-column: 1;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔍 Page de vérification d\'escalade initialisée');
+  
+  // Animation d'entrée pour les cartes de vérification
+  const cards = document.querySelectorAll('.verification-card, .action-card');
+  cards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 100);
+  });
+});
+</script>
+{% endblock extra_js %}

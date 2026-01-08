@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Jours Fériés - {{ annee }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- En-tête -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title">
+        <i class="fas fa-calendar-alt text-primary me-2"></i>
+        Gestion des Jours Fériés
+      </h1>
+      <p class="text-muted mb-0">Liste des jours fériés officiels et internes pour l'année {{ annee }}</p>
+    </div>
+    
+    {% if est_admin %}
+    <a href="{% url 'jourferie_creer' %}" class="btn btn-primary">
+      <i class="fas fa-plus me-2"></i>
+      Ajouter férié interne
+    </a>
+    {% endif %}
+  </div>
+  
+  <!-- Filtres -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="GET" class="row g-3 align-items-end">
+        <!-- Sélecteur d'année -->
+        <div class="col-md-3">
+          <label for="annee" class="form-label">
+            <i class="fas fa-calendar me-1"></i> Année
+          </label>
+          <select name="annee" id="annee" class="form-select" onchange="this.form.submit()">
+            {% for a in annees_disponibles %}
+            <option value="{{ a }}" {% if a == annee %}selected{% endif %}>
+              {{ a }}{% if a == annee_courante %} (en cours){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Filtre par type -->
+        <div class="col-md-3">
+          <label for="type" class="form-label">
+            <i class="fas fa-filter me-1"></i> Type de férié
+          </label>
+          <select name="type" id="type" class="form-select" onchange="this.form.submit()">
+            <option value="">Tous les types</option>
+            {% for code, nom in types_feries %}
+            <option value="{{ code }}" {% if type_filtre == code %}selected{% endif %}>
+              {{ nom }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Statistiques rapides -->
+        <div class="col-md-6">
+          <div class="d-flex flex-wrap gap-2 justify-content-end">
+            <span class="badge bg-primary rounded-pill px-3 py-2">
+              <i class="fas fa-list me-1"></i> Total: {{ stats.total }}
+            </span>
+            <span class="badge bg-info rounded-pill px-3 py-2">
+              <i class="fas fa-landmark me-1"></i> Civils: {{ stats.civil }}
+            </span>
+            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+              <i class="fas fa-cross me-1"></i> Chrétiens: {{ stats.chretien }}
+            </span>
+            <span class="badge bg-success rounded-pill px-3 py-2">
+              <i class="fas fa-moon me-1"></i> Musulmans: {{ stats.musulman }}
+            </span>
+            {% if stats.interne > 0 %}
+            <span class="badge bg-secondary rounded-pill px-3 py-2">
+              <i class="fas fa-building me-1"></i> Internes: {{ stats.interne }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Tableau des jours fériés -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" id="tableFeries">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 120px;">Date</th>
+              <th style="width: 100px;">Jour</th>
+              <th>Nom du jour férié</th>
+              <th style="width: 140px;">Type</th>
+              <th style="width: 100px;">Délai</th>
+              <th style="width: 80px;">Statut</th>
+              <th style="width: 140px;" class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ferie in feries %}
+            <tr class="{% if ferie.date_ferie < today %}table-secondary{% elif ferie.date_ferie == today %}table-warning{% endif %}">
+              <!-- Date -->
+              <td>
+                <span class="fw-semibold">{{ ferie.date_ferie|date:"d/m/Y" }}</span>
+              </td>
+              
+              <!-- Jour de la semaine -->
+              <td>
+                <span class="{% if ferie.est_weekend %}text-danger fw-semibold{% endif %}">
+                  {{ ferie.jour_semaine }}
+                </span>
+              </td>
+              
+              <!-- Nom -->
+              <td>
+                <a href="{% url 'jourferie_afficher' ferie.pk %}" class="text-decoration-none fw-semibold">
+                  {{ ferie.nom }}
+                </a>
+                {% if ferie.est_modifie %}
+                <span class="badge bg-warning text-dark ms-2" title="Date modifiée">
+                  <i class="fas fa-edit"></i>
+                </span>
+                {% endif %}
+                {% if ferie.est_personnalise %}
+                <span class="badge bg-secondary ms-1" title="Jour férié personnalisé">
+                  <i class="fas fa-user-edit"></i>
+                </span>
+                {% endif %}
+              </td>
+              
+              <!-- Type -->
+              <td>
+                {% if ferie.type_ferie == 'FERIE_CIVIL' %}
+                <span class="badge bg-info">
+                  <i class="fas fa-landmark me-1"></i> Civil
+                </span>
+                {% elif ferie.type_ferie == 'FERIE_CHRETIEN' %}
+                <span class="badge bg-warning text-dark">
+                  <i class="fas fa-cross me-1"></i> Chrétien
+                </span>
+                {% elif ferie.type_ferie == 'FERIE_MUSULMAN' %}
+                <span class="badge bg-success">
+                  <i class="fas fa-moon me-1"></i> Musulman
+                </span>
+                {% elif ferie.type_ferie == 'FERIE_INTERNE' %}
+                <span class="badge bg-secondary">
+                  <i class="fas fa-building me-1"></i> Interne
+                </span>
+                {% else %}
+                <span class="badge bg-dark">
+                  {{ ferie.get_type_ferie_display }}
+                </span>
+                {% endif %}
+              </td>
+              
+              <!-- Délai -->
+              <td>
+                {% if ferie.jours_avant < 0 %}
+                <span class="text-muted">Passé</span>
+                {% elif ferie.jours_avant == 0 %}
+                <span class="badge bg-danger">Aujourd'hui</span>
+                {% elif ferie.jours_avant == 1 %}
+                <span class="badge bg-warning text-dark">Demain</span>
+                {% elif ferie.jours_avant <= 7 %}
+                <span class="badge bg-info">{{ ferie.jours_avant }} jours</span>
+                {% else %}
+                <span class="text-muted">{{ ferie.jours_avant }} jours</span>
+                {% endif %}
+              </td>
+              
+              <!-- Statut -->
+              <td>
+                {% if ferie.est_paye %}
+                <span class="badge bg-success" title="Jour chômé payé">
+                  <i class="fas fa-check"></i> Payé
+                </span>
+                {% else %}
+                <span class="badge bg-secondary" title="Non payé">
+                  Non payé
+                </span>
+                {% endif %}
+              </td>
+              
+              <!-- Actions -->
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <!-- Voir -->
+                  <a href="{% url 'jourferie_afficher' ferie.pk %}" 
+                     class="btn btn-outline-primary" 
+                     title="Voir les détails">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  
+                  {% if est_admin %}
+                  <!-- Modifier (uniquement pour les fériés musulmans) -->
+                  {% if ferie.type_ferie == 'FERIE_MUSULMAN' and ferie.modele and ferie.modele.est_modifiable %}
+                  <a href="{% url 'jourferiemusulman_modifier' ferie.pk %}" 
+                     class="btn btn-outline-warning" 
+                     title="Modifier la date">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  {% else %}
+                  <button class="btn btn-outline-secondary" disabled title="Non modifiable">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  {% endif %}
+                  
+                  <!-- Supprimer (uniquement pour les fériés internes/personnalisés) -->
+                  {% if ferie.type_ferie == 'FERIE_INTERNE' or ferie.est_personnalise %}
+                  <button type="button" 
+                          class="btn btn-outline-danger btn-supprimer" 
+                          data-ferie-id="{{ ferie.pk }}"
+                          data-ferie-nom="{{ ferie.nom }}"
+                          title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                  {% else %}
+                  <button class="btn btn-outline-secondary" disabled title="Non supprimable">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                  {% endif %}
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                  <p class="mb-0">Aucun jour férié trouvé pour {{ annee }}</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Légende -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-body">
+      <h6 class="card-title mb-3">
+        <i class="fas fa-info-circle me-2"></i> Légende
+      </h6>
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <span class="badge bg-warning text-dark me-2"><i class="fas fa-edit"></i></span>
+              Date modifiée (différente de la date calculée)
+            </li>
+            <li class="mb-2">
+              <span class="badge bg-secondary me-2"><i class="fas fa-user-edit"></i></span>
+              Jour férié personnalisé/interne
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <i class="fas fa-edit text-warning me-2"></i>
+              Modification possible (fériés musulmans uniquement)
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-trash text-danger me-2"></i>
+              Suppression possible (fériés internes uniquement)
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="modalSupprimer" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Confirmer la suppression
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer le jour férié :</p>
+        <p class="fw-bold text-center fs-5" id="nomFerieSupprimer"></p>
+        <div class="mb-3">
+          <label for="motifSuppression" class="form-label">Motif de suppression (optionnel)</label>
+          <textarea class="form-control" id="motifSuppression" rows="2"></textarea>
+        </div>
+        <div class="alert alert-warning">
+          <i class="fas fa-info-circle me-2"></i>
+          Cette action désactivera le jour férié. Il pourra être réactivé depuis l'administration.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmerSupprimer">
+          <i class="fas fa-trash me-2"></i>
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.page-header {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.table th {
+  font-weight: 600;
+  color: #495057;
+  border-top: none;
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+.badge {
+  font-weight: 500;
+}
+
+/* Lignes passées */
+.table-secondary {
+  opacity: 0.7;
+}
+
+/* Ligne aujourd'hui */
+.table-warning {
+  background-color: rgba(255, 193, 7, 0.15) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .page-header .btn {
+    width: 100%;
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .btn-group-sm .btn {
+    padding: 0.2rem 0.4rem;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modalSupprimer = new bootstrap.Modal(document.getElementById('modalSupprimer'));
+  let ferieIdASupprimer = null;
+  
+  // Gestionnaire pour les boutons de suppression
+  document.querySelectorAll('.btn-supprimer').forEach(btn => {
+    btn.addEventListener('click', function() {
+      ferieIdASupprimer = this.dataset.ferieId;
+      document.getElementById('nomFerieSupprimer').textContent = this.dataset.ferieNom;
+      document.getElementById('motifSuppression').value = '';
+      modalSupprimer.show();
+    });
+  });
+  
+  // Confirmation de suppression
+  document.getElementById('btnConfirmerSupprimer').addEventListener('click', function() {
+    if (!ferieIdASupprimer) return;
+    
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Suppression...';
+    
+    const motif = document.getElementById('motifSuppression').value;
+    const formData = new FormData();
+    formData.append('motif', motif);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch(`{% url 'jourferie_supprimer' 0 %}`.replace('0', ferieIdASupprimer), {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        modalSupprimer.hide();
+        // Recharger la page pour voir les changements
+        window.location.reload();
+      } else {
+        alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash me-2"></i>Supprimer';
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la suppression');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-trash me-2"></i>Supprimer';
+    });
+  });
+});
+</script>
+{% endblock %}

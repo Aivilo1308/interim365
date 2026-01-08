@@ -1,0 +1,2268 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Dashboard Global des Workflows{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header workflow -->
+<div class="workflow-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8" style="margin-left: 20px;">
+        <h1 class="mb-0">
+          <i class="fas fa-chart-line"></i>
+          Dashboard Global des Workflows
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-user"></i> {{ profil_utilisateur.nom_complet }}
+          - {{ profil_utilisateur.get_type_profil_display }}
+          {% if niveau_acces %}
+            <span class="niveau-acces-badge">{{ niveau_acces }}</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="col-md-4 text-end" style="margin-left: 20px; margin-top:15px;">
+        <a href="{% url 'index' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour au tableau de bord
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations sur la période et filtres -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Période d'analyse et filtres
+    </h2>
+  </div>
+  <div class="card-body">
+    <!-- Période actuelle -->
+    <div class="periode-info mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="periode-display">
+            <i class="fas fa-calendar-alt"></i>
+            <strong>Période analysée :</strong>
+            <span class="periode-dates">{{ date_debut|date:"d/m/Y" }} - {{ date_fin|date:"d/m/Y" }}</span>
+            <small class="text-muted">({{ nombre_jours }} jour{{ nombre_jours|pluralize }})</small>
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+          <div class="periode-stats">
+            <span class="stat-badge total">{{ total_demandes_periode }} demande{{ total_demandes_periode|pluralize }}</span>
+            <span class="stat-badge pourcentage">{{ pourcentage_periode }}% du total</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Filtres avancés -->
+    <form method="get" class="filter-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="date_debut" class="form-label">Date début</label>
+          <input type="date" name="date_debut" id="date_debut" class="form-input" 
+                 value="{{ date_debut|date:'Y-m-d' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="date_fin" class="form-label">Date fin</label>
+          <input type="date" name="date_fin" id="date_fin" class="form-input" 
+                 value="{{ date_fin|date:'Y-m-d' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="periode" class="form-label">Période type</label>
+          <select name="periode" id="periode" class="form-select">
+            <option value="semaine" {% if periode_type == 'semaine' %}selected{% endif %}>Semaine</option>
+            <option value="mois" {% if periode_type == 'mois' %}selected{% endif %}>Mois</option>
+            <option value="trimestre" {% if periode_type == 'trimestre' %}selected{% endif %}>Trimestre</option>
+            <option value="semestre" {% if periode_type == 'semestre' %}selected{% endif %}>Semestre</option>
+            <option value="annee" {% if periode_type == 'annee' %}selected{% endif %}>Année</option>
+          </select>
+        </div>
+        
+        {% if departements_accessibles %}
+        <div class="form-group">
+          <label for="departement" class="form-label">Département</label>
+          <select name="departement" id="departement" class="form-select">
+            <option value="">Tous les départements</option>
+            {% for dept in departements_accessibles %}
+            <option value="{{ dept.id }}" {% if filtres.departement == dept.id|stringformat:"s" %}selected{% endif %}>
+              {{ dept.nom }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        
+        {% if sites_accessibles %}
+        <div class="form-group">
+          <label for="site" class="form-label">Site</label>
+          <select name="site" id="site" class="form-select">
+            <option value="">Tous les sites</option>
+            {% for site in sites_accessibles %}
+            <option value="{{ site.id }}" {% if filtres.site == site.id|stringformat:"s" %}selected{% endif %}>
+              {{ site.nom }} - {{ site.ville }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+          <label for="urgence" class="form-label">Urgence</label>
+          <select name="urgence" id="urgence" class="form-select">
+            <option value="">Toutes les urgences</option>
+            {% for urgence_key, urgence_label in urgences_choix %}
+            <option value="{{ urgence_key }}" {% if filtres.urgence == urgence_key %}selected{% endif %}>
+              {{ urgence_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="statut" class="form-label">Statut</label>
+          <select name="statut" id="statut" class="form-select">
+            <option value="">Tous les statuts</option>
+            {% for statut_key, statut_label in statuts_choix %}
+            <option value="{{ statut_key }}" {% if filtres.statut == statut_key %}selected{% endif %}>
+              {{ statut_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="niveau_validation" class="form-label">Niveau validation</label>
+          <select name="niveau_validation" id="niveau_validation" class="form-select">
+            <option value="">Tous les niveaux</option>
+            {% for niveau_key, niveau_label in niveaux_validation_choix %}
+            <option value="{{ niveau_key }}" {% if filtres.niveau_validation == niveau_key|stringformat:"s" %}selected{% endif %}>
+              {{ niveau_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Options</label>
+          <div class="form-check">
+            <input type="checkbox" name="avec_retard" id="avec_retard" class="form-check-input" 
+                   {% if filtres.avec_retard %}checked{% endif %}>
+            <label for="avec_retard" class="form-check-label">
+              Seulement les demandes en retard
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-chart-bar"></i>
+              Analyser
+            </button>
+            <a href="?" class="btn btn-outline">
+              <i class="fas fa-undo"></i>
+              Réinitialiser
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Vue d'ensemble - KPIs principaux -->
+{% if vue_ensemble.total_demandes > 0 %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-tachometer-alt"></i>
+      Vue d'ensemble des workflows
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="kpi-grid">
+      <div class="kpi-card total">
+        <div class="kpi-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-number">{{ vue_ensemble.total_demandes }}</div>
+          <div class="kpi-label">Demande{{ vue_ensemble.total_demandes|pluralize }}</div>
+          <div class="kpi-sublabel">{{ vue_ensemble.periode_jours }} jour{{ vue_ensemble.periode_jours|pluralize }}</div>
+        </div>
+      </div>
+      
+      <div class="kpi-card completion">
+        <div class="kpi-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-number">{{ vue_ensemble.taux_completion }}%</div>
+          <div class="kpi-label">Taux completion</div>
+          <div class="kpi-sublabel">Objectif: 85%</div>
+        </div>
+        <div class="kpi-progress">
+          <div class="progress">
+            <div class="progress-bar {% if vue_ensemble.taux_completion >= 85 %}bg-success{% elif vue_ensemble.taux_completion >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                 role="progressbar" style="width: {{ vue_ensemble.taux_completion }}%"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="kpi-card temps">
+        <div class="kpi-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-number">{{ vue_ensemble.temps_moyen_traitement }}</div>
+          <div class="kpi-label">Jours moyenne</div>
+          <div class="kpi-sublabel">Traitement complet</div>
+        </div>
+      </div>
+      
+      <div class="kpi-card retard">
+        <div class="kpi-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-number">{{ vue_ensemble.demandes_en_retard }}</div>
+          <div class="kpi-label">En retard</div>
+          <div class="kpi-sublabel">> 5 jours</div>
+        </div>
+      </div>
+      
+      <div class="kpi-card efficacite">
+        <div class="kpi-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-number">{{ vue_ensemble.efficacite_globale }}%</div>
+          <div class="kpi-label">Efficacité globale</div>
+          <div class="kpi-sublabel">Score composite</div>
+        </div>
+        <div class="kpi-progress">
+          <div class="progress">
+            <div class="progress-bar {% if vue_ensemble.efficacite_globale >= 80 %}bg-success{% elif vue_ensemble.efficacite_globale >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                 role="progressbar" style="width: {{ vue_ensemble.efficacite_globale }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Répartition par étapes -->
+    {% if vue_ensemble.repartition_etapes %}
+    <div class="repartition-etapes mt-4">
+      <h5><i class="fas fa-layer-group"></i> Répartition par étapes de workflow</h5>
+      <div class="etapes-grid">
+        {% for etape, data in vue_ensemble.repartition_etapes.items %}
+        <div class="etape-card">
+          <div class="etape-header">
+            <span class="etape-nom">{{ etape }}</span>
+            <span class="etape-pourcentage">{{ data.pourcentage }}%</span>
+          </div>
+          <div class="etape-count">{{ data.count }} demande{{ data.count|pluralize }}</div>
+          <div class="etape-progress">
+            <div class="progress">
+              <div class="progress-bar bg-info" role="progressbar" 
+                   style="width: {{ data.pourcentage }}%"></div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Goulots d'étranglement -->
+{% if goulots_etranglement %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-exclamation-circle text-warning"></i>
+      Goulots d'étranglement identifiés
+      <span class="count-badge warning">{{ goulots_etranglement|length }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="goulots-list">
+      {% for goulot in goulots_etranglement %}
+      <div class="goulot-item {% if goulot.severite >= 80 %}critique{% elif goulot.severite >= 50 %}important{% else %}normal{% endif %}">
+        <div class="goulot-header">
+          <div class="goulot-etape">
+            <i class="fas fa-layer-group"></i>
+            <strong>{{ goulot.etape }}</strong>
+          </div>
+          <div class="goulot-severite">
+            <span class="severite-badge {% if goulot.severite >= 80 %}critique{% elif goulot.severite >= 50 %}important{% else %}normal{% endif %}">
+              Sévérité: {{ goulot.severite }}/100
+            </span>
+          </div>
+        </div>
+        
+        <div class="goulot-stats">
+          <div class="stat-item">
+            <i class="fas fa-pause-circle"></i>
+            <span class="stat-value">{{ goulot.nb_demandes_bloquees }}</span>
+            <span class="stat-label">demande{{ goulot.nb_demandes_bloquees|pluralize }} bloquée{{ goulot.nb_demandes_bloquees|pluralize }}</span>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-clock"></i>
+            <span class="stat-value">{{ goulot.age_moyen_jours }}</span>
+            <span class="stat-label">jour{{ goulot.age_moyen_jours|pluralize }} en moyenne</span>
+          </div>
+        </div>
+        
+        {% if goulot.demandes_exemple %}
+        <div class="goulot-exemples">
+          <strong>Exemples de demandes bloquées :</strong>
+          <ul class="exemples-list">
+            {% for demande in goulot.demandes_exemple %}
+            <li>
+              <span class="demande-numero">{{ demande.numero_demande }}</span>
+              - {{ demande.poste.departement.nom }}
+              - {{ demande.demandeur.nom_complet }}
+              <small class="text-muted">({{ demande.created_at|timesince }})</small>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Graphiques et visualisations -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Analyses graphiques
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="charts-container">
+      
+      <!-- Évolution temporelle -->
+      <div class="chart-section">
+        <h5><i class="fas fa-chart-line"></i> Évolution temporelle des demandes</h5>
+        <div class="chart-wrapper">
+          <canvas id="evolutionChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+      
+      <!-- Répartition par étapes -->
+      <div class="chart-section">
+        <h5><i class="fas fa-chart-pie"></i> Répartition par étapes</h5>
+        <div class="chart-wrapper">
+          <canvas id="etapesChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+      
+      <!-- Temps par étape -->
+      <div class="chart-section">
+        <h5><i class="fas fa-chart-bar"></i> Temps moyen par étape (heures)</h5>
+        <div class="chart-wrapper">
+          <canvas id="tempsChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+      
+      <!-- Performance départements -->
+      {% if performance_entites.departements %}
+      <div class="chart-section">
+        <h5><i class="fas fa-building"></i> Performance par département</h5>
+        <div class="chart-wrapper">
+          <canvas id="departementChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+      {% endif %}
+      
+    </div>
+  </div>
+</div>
+
+<!-- Demandes critiques -->
+{% if demandes_critiques %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-ambulance text-danger"></i>
+      Demandes nécessitant une attention immédiate
+      <span class="count-badge danger">{{ demandes_critiques|length }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demandes-critiques-list">
+      {% for critique in demandes_critiques %}
+      <div class="critique-item {% if critique.severite >= 80 %}critique{% elif critique.severite >= 50 %}important{% else %}normal{% endif %}">
+        <div class="critique-header">
+          <div class="critique-demande">
+            <i class="fas fa-file-alt"></i>
+            <strong>{{ critique.demande.numero_demande }}</strong>
+            <span class="critique-type">{{ critique.type_critique }}</span>
+          </div>
+          <div class="critique-severite">
+            <span class="severite-badge {% if critique.severite >= 80 %}critique{% elif critique.severite >= 50 %}important{% else %}normal{% endif %}">
+              {{ critique.severite }}/100
+            </span>
+          </div>
+        </div>
+        
+        <div class="critique-details">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="detail-item">
+                <strong>Demandeur :</strong> {{ critique.demande.demandeur.nom_complet }}
+              </div>
+              <div class="detail-item">
+                <strong>Personne remplacée :</strong> {{ critique.demande.personne_remplacee.nom_complet }}
+              </div>
+              <div class="detail-item">
+                <strong>Département :</strong> {{ critique.demande.poste.departement.nom }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item">
+                <strong>Urgence :</strong> 
+                <span class="urgence-badge {{ critique.demande.urgence|lower }}">
+                  {{ critique.demande.get_urgence_display }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <strong>Statut :</strong> {{ critique.demande.get_statut_display }}
+              </div>
+              <div class="detail-item">
+                <strong>Créée :</strong> {{ critique.demande.created_at|date:"d/m/Y" }}
+                <small class="text-muted">({{ critique.demande.created_at|timesince }})</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="critique-description">
+          <i class="fas fa-info-circle"></i>
+          {{ critique.description }}
+        </div>
+        
+        {% if critique.actions_suggerees %}
+        <div class="critique-actions">
+          <strong>Actions suggérées :</strong>
+          <ul class="actions-list">
+            {% for action in critique.actions_suggerees %}
+            <li>{{ action }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        <div class="critique-footer">
+          <a href="{% url 'agenda_event' critique.demande.id %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-eye"></i> Voir détails
+          </a>
+          {% if critique.demande.statut in 'SOUMISE,EN_VALIDATION' %}
+          <button class="btn btn-sm btn-outline-success" onclick="traiterDemandeCritique({{ critique.demande.id }})">
+            <i class="fas fa-hand-paper"></i> Prendre en charge
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Tendances et prédictions -->
+{% if tendances %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-trending-up"></i>
+      Tendances et évolution
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="tendances-grid">
+      {% for metrique, data in tendances.items %}
+      <div class="tendance-card">
+        <div class="tendance-header">
+          <span class="tendance-metrique">
+            {% if metrique == 'total' %}Total demandes
+            {% elif metrique == 'terminees' %}Demandes terminées
+            {% elif metrique == 'temps_moyen' %}Temps moyen (jours)
+            {% elif metrique == 'taux_completion' %}Taux completion (%)
+            {% endif %}
+          </span>
+          <span class="tendance-icon {% if data.tendance == 'hausse' %}hausse{% elif data.tendance == 'baisse' %}baisse{% else %}stable{% endif %}">
+            {% if data.tendance == 'hausse' %}
+              <i class="fas fa-arrow-up"></i>
+            {% elif data.tendance == 'baisse' %}
+              <i class="fas fa-arrow-down"></i>
+            {% else %}
+              <i class="fas fa-minus"></i>
+            {% endif %}
+          </span>
+        </div>
+        
+        <div class="tendance-values">
+          <div class="valeur-actuelle">
+            <span class="valeur">{{ data.valeur_actuelle }}</span>
+            <span class="label">Période actuelle</span>
+          </div>
+          <div class="valeur-precedente">
+            <span class="valeur">{{ data.valeur_precedente }}</span>
+            <span class="label">Période précédente</span>
+          </div>
+        </div>
+        
+        <div class="tendance-evolution">
+          <span class="evolution-pourcentage {% if data.evolution_pourcentage > 0 %}positive{% elif data.evolution_pourcentage < 0 %}negative{% else %}neutre{% endif %}">
+            {% if data.evolution_pourcentage > 0 %}+{% endif %}{{ data.evolution_pourcentage }}%
+          </span>
+          <span class="evolution-label">d'évolution</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    <!-- Prédictions -->
+    {% if predictions %}
+    <div class="predictions-section mt-4">
+      <h5><i class="fas fa-crystal-ball"></i> Prédictions et recommandations</h5>
+      
+      {% if predictions.charge_travail_prevue %}
+      <div class="prediction-item">
+        <i class="fas fa-chart-line"></i>
+        <strong>Charge de travail :</strong> {{ predictions.charge_travail_prevue }}
+      </div>
+      {% endif %}
+      
+      {% if predictions.recommandations %}
+      <div class="recommandations">
+        <strong>Recommandations :</strong>
+        <ul>
+          {% for recommandation in predictions.recommandations %}
+          <li>{{ recommandation }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Performance par entités -->
+{% if performance_entites.departements or performance_entites.motifs_absence %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-medal"></i>
+      Performance par entités
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      
+      <!-- Performance départements -->
+      {% if performance_entites.departements %}
+      <div class="col-md-6">
+        <h5><i class="fas fa-building"></i> Performance par département</h5>
+        <div class="performance-list">
+          {% for dept in performance_entites.departements %}
+          <div class="performance-item">
+            <div class="performance-header">
+              <span class="entite-nom">{{ dept.nom }}</span>
+              <span class="performance-score {% if dept.taux_completion >= 80 %}excellent{% elif dept.taux_completion >= 60 %}bon{% else %}faible{% endif %}">
+                {{ dept.taux_completion }}%
+              </span>
+            </div>
+            <div class="performance-details">
+              <small>{{ dept.total_demandes }} demandes • {{ dept.temps_moyen }} jours moyenne</small>
+            </div>
+            <div class="performance-progress">
+              <div class="progress">
+                <div class="progress-bar {% if dept.taux_completion >= 80 %}bg-success{% elif dept.taux_completion >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                     role="progressbar" style="width: {{ dept.taux_completion }}%"></div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Performance motifs d'absence -->
+      {% if performance_entites.motifs_absence %}
+      <div class="col-md-6">
+        <h5><i class="fas fa-tags"></i> Performance par motif d'absence</h5>
+        <div class="performance-list">
+          {% for motif in performance_entites.motifs_absence %}
+          <div class="performance-item">
+            <div class="performance-header">
+              <span class="entite-nom">{{ motif.nom }}</span>
+              <span class="performance-score {% if motif.taux_completion >= 80 %}excellent{% elif motif.taux_completion >= 60 %}bon{% else %}faible{% endif %}">
+                {{ motif.taux_completion }}%
+              </span>
+            </div>
+            <div class="performance-details">
+              <small>{{ motif.total_demandes }} demandes</small>
+            </div>
+            <div class="performance-progress">
+              <div class="progress">
+                <div class="progress-bar {% if motif.taux_completion >= 80 %}bg-success{% elif motif.taux_completion >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                     role="progressbar" style="width: {{ motif.taux_completion }}%"></div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Actions et export -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      <a href="{% url 'index' %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Tableau de bord</div>
+          <div class="action-description">
+            Retour au tableau de bord principal
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'agenda' %}" class="action-card secondary">
+        <div class="action-icon">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Agenda</div>
+          <div class="action-description">
+            Voir l'agenda des demandes et missions
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'liste_interim_validation' %}" class="action-card info">
+        <div class="action-icon">
+          <i class="fas fa-list"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Demandes en cours</div>
+          <div class="action-description">
+            Voir les demandes d'intérim en cours
+          </div>
+        </div>
+      </a>
+      
+      <button type="button" class="action-card refresh" onclick="window.location.reload()">
+        <div class="action-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Actualiser</div>
+          <div class="action-description">
+            Recharger les données
+          </div>
+        </div>
+      </button>
+      
+    </div>
+  </div>
+</div>
+
+<!-- Message si aucune donnée -->
+{% if vue_ensemble.total_demandes == 0 %}
+<div class="empty-state-workflow">
+  <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
+  <h4>Aucune donnée pour cette période</h4>
+  <p class="text-muted">
+    Aucune demande d'intérim n'a été trouvée pour la période sélectionnée.
+    <br>Essayez de modifier la période ou les filtres appliqués.
+  </p>
+  <a href="?periode=mois" class="btn btn-primary">
+    <i class="fas fa-calendar"></i>
+    Voir ce mois
+  </a>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles inspirés de interim_agenda.html avec thème violet/bleu pour le workflow */
+.workflow-header {
+  background: linear-gradient(135deg, #6f42c1, #6610f2);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.niveau-acces-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* Période et filtres */
+.periode-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #6f42c1;
+}
+
+.periode-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.periode-dates {
+  color: #6f42c1;
+  font-weight: 600;
+}
+
+.periode-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.stat-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.stat-badge.total {
+  background-color: #6f42c1;
+  color: white;
+}
+
+.stat-badge.pourcentage {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+/* KPIs Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card.total {
+  border-left-color: #6f42c1;
+}
+
+.kpi-card.completion {
+  border-left-color: #28a745;
+}
+
+.kpi-card.temps {
+  border-left-color: #17a2b8;
+}
+
+.kpi-card.retard {
+  border-left-color: #dc3545;
+}
+
+.kpi-card.efficacite {
+  border-left-color: #ffc107;
+}
+
+.kpi-icon {
+  font-size: 2rem;
+  color: #6f42c1;
+  margin-bottom: 1rem;
+}
+
+.kpi-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #212529;
+  line-height: 1;
+}
+
+.kpi-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.kpi-sublabel {
+  color: #adb5bd;
+  font-size: 0.8rem;
+}
+
+.kpi-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.kpi-progress .progress {
+  height: 4px;
+  background-color: rgba(108, 117, 125, 0.2);
+  border-radius: 0;
+}
+
+/* Répartition étapes */
+.repartition-etapes {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.etapes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.etape-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.etape-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.etape-nom {
+  font-weight: 600;
+  color: #495057;
+}
+
+.etape-pourcentage {
+  color: #6f42c1;
+  font-weight: 600;
+}
+
+.etape-count {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.etape-progress .progress {
+  height: 6px;
+}
+
+/* Goulots d'étranglement */
+.goulots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.goulot-item {
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  background: white;
+}
+
+.goulot-item.critique {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.goulot-item.important {
+  border-color: #ffc107;
+  background: #fffbf0;
+}
+
+.goulot-item.normal {
+  border-color: #17a2b8;
+  background: #f0fdff;
+}
+
+.goulot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.goulot-etape {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.severite-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.severite-badge.critique {
+  background: #dc3545;
+  color: white;
+}
+
+.severite-badge.important {
+  background: #ffc107;
+  color: #212529;
+}
+
+.severite-badge.normal {
+  background: #17a2b8;
+  color: white;
+}
+
+.goulot-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #495057;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.goulot-exemples {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.exemples-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.exemples-list li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.demande-numero {
+  font-weight: 600;
+  color: #6f42c1;
+}
+
+/* Charts */
+.charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.chart-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #6f42c1;
+}
+
+.chart-section h5 {
+  margin-bottom: 1rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 300px;
+}
+
+/* Demandes critiques */
+.demandes-critiques-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.critique-item {
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  background: white;
+}
+
+.critique-item.critique {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.critique-item.important {
+  border-color: #ffc107;
+  background: #fffbf0;
+}
+
+.critique-item.normal {
+  border-color: #17a2b8;
+  background: #f0fdff;
+}
+
+.critique-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.critique-demande {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.critique-type {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.critique-details {
+  margin-bottom: 1rem;
+}
+
+.detail-item {
+  margin-bottom: 0.5rem;
+}
+
+.critique-description {
+  background: rgba(111, 66, 193, 0.1);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.critique-actions {
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.actions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.actions-list li {
+  padding: 0.25rem 0;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.actions-list li:before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #6f42c1;
+  font-weight: bold;
+}
+
+.critique-footer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Tendances */
+.tendances-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.tendance-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tendance-metrique {
+  font-weight: 600;
+  color: #495057;
+}
+
+.tendance-icon {
+  font-size: 1.2rem;
+}
+
+.tendance-icon.hausse {
+  color: #28a745;
+}
+
+.tendance-icon.baisse {
+  color: #dc3545;
+}
+
+.tendance-icon.stable {
+  color: #6c757d;
+}
+
+.tendance-values {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.valeur-actuelle, .valeur-precedente {
+  text-align: center;
+}
+
+.valeur-actuelle .valeur {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #495057;
+}
+
+.valeur-precedente .valeur {
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  color: #adb5bd;
+  margin-top: 0.25rem;
+}
+
+.tendance-evolution {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.evolution-pourcentage {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.evolution-pourcentage.positive {
+  color: #28a745;
+}
+
+.evolution-pourcentage.negative {
+  color: #dc3545;
+}
+
+.evolution-pourcentage.neutre {
+  color: #6c757d;
+}
+
+.evolution-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Prédictions */
+.predictions-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #6f42c1;
+}
+
+.prediction-item {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recommandations ul {
+  margin: 0.5rem 0 0 1.5rem;
+}
+
+/* Performance entités */
+.performance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.performance-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.performance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.entite-nom {
+  font-weight: 600;
+  color: #495057;
+}
+
+.performance-score {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.performance-score.excellent {
+  background: #d4edda;
+  color: #155724;
+}
+
+.performance-score.bon {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.performance-score.faible {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.performance-details {
+  margin-bottom: 0.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.performance-progress .progress {
+  height: 6px;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.primary {
+  border-color: #6f42c1;
+  color: #4c2a85;
+}
+
+.action-card.primary:hover {
+  background-color: #e8d6ff;
+  color: #4c2a85;
+}
+
+.action-card.secondary {
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.action-card.secondary:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.action-card.info {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.action-card.export {
+  border-color: #fd7e14;
+  color: #8b4513;
+}
+
+.action-card.export:hover {
+  background-color: #ffeaa7;
+  color: #8b4513;
+}
+
+.action-card.refresh {
+  border-color: #20c997;
+  color: #0f5132;
+}
+
+.action-card.refresh:hover {
+  background-color: #d1ecf1;
+  color: #0f5132;
+}
+
+.action-card.analyze {
+  border-color: #e83e8c;
+  color: #a02952;
+}
+
+.action-card.analyze:hover {
+  background-color: #f8d7e8;
+  color: #a02952;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Empty state */
+.empty-state-workflow {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.empty-state-workflow h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state-workflow .text-muted {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Count badges */
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.count-badge.warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.count-badge.danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Urgence badges */
+.urgence-badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.urgence-badge.moyenne {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.urgence-badge.normale {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* Form styles réutilisés */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-input, .form-select {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: 0;
+  border-color: #6f42c1;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-check-input {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.btn-primary:hover {
+  background-color: #5a359a;
+  border-color: #512e8c;
+  color: white;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-outline-primary {
+  color: #6f42c1;
+  background-color: transparent;
+  border-color: #6f42c1;
+}
+
+.btn-outline-primary:hover {
+  background-color: #6f42c1;
+  border-color: #6f42c1;
+  color: white;
+}
+
+.btn-outline-success {
+  color: #28a745;
+  background-color: transparent;
+  border-color: #28a745;
+}
+
+.btn-outline-success:hover {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+/* Progress bars */
+.progress {
+  height: 1rem;
+  background-color: #e9ecef;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  transition: width 0.6s ease;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: white;
+  text-align: center;
+}
+
+.bg-success {
+  background-color: #28a745 !important;
+}
+
+.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.bg-info {
+  background-color: #17a2b8 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .workflow-header {
+    padding: 1rem 0;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .etapes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-wrapper {
+    height: 250px;
+  }
+  
+  .tendances-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .periode-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .goulot-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .critique-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .critique-footer .btn {
+    width: 100%;
+  }
+}
+
+/* Animations */
+@keyframes workflowAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kpi-card, .goulot-item, .critique-item, .tendance-card {
+  animation: workflowAppear 0.5s ease-out;
+}
+
+.kpi-card:nth-child(2) { animation-delay: 0.1s; }
+.kpi-card:nth-child(3) { animation-delay: 0.2s; }
+.kpi-card:nth-child(4) { animation-delay: 0.3s; }
+.kpi-card:nth-child(5) { animation-delay: 0.4s; }
+
+/* Hover effects */
+.goulot-item:hover, .critique-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.performance-item:hover {
+  background: #f8f9fa;
+  transform: translateX(3px);
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📊 Page dashboard workflow initialisée');
+  
+  // ========================================
+  // INITIALISATION DES GRAPHIQUES
+  // ========================================
+  
+  // Données depuis le template Django
+  const donneesGraphiques = {{ donnees_graphiques|safe }};
+  
+  // Graphique d'évolution temporelle
+  if (document.getElementById('evolutionChart') && donneesGraphiques.evolution_temporelle) {
+    initEvolutionChart(donneesGraphiques.evolution_temporelle);
+  }
+  
+  // Graphique répartition par étapes
+  if (document.getElementById('etapesChart') && donneesGraphiques.repartition_etapes) {
+    initEtapesChart(donneesGraphiques.repartition_etapes);
+  }
+  
+  // Graphique temps par étape
+  if (document.getElementById('tempsChart') && donneesGraphiques.temps_par_etape) {
+    initTempsChart(donneesGraphiques.temps_par_etape);
+  }
+  
+  // Graphique performance départements
+  if (document.getElementById('departementChart') && donneesGraphiques.performance_departements) {
+    initDepartementChart(donneesGraphiques.performance_departements);
+  }
+  
+  // ========================================
+  // ANIMATIONS ET INTERACTIONS
+  // ========================================
+  
+  // Animation des KPIs au scroll
+  animateKPIs();
+  
+  // Auto-submit des filtres
+  setupFilterAutoSubmit();
+  
+  // Tooltips et interactions
+  setupTooltips();
+  
+  console.log('✅ Dashboard workflow initialisé avec succès');
+});
+
+// ========================================
+// FONCTIONS D'INITIALISATION DES GRAPHIQUES
+// ========================================
+
+function initEvolutionChart(data) {
+  const ctx = document.getElementById('evolutionChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Total demandes',
+          data: data.datasets.total,
+          borderColor: '#6f42c1',
+          backgroundColor: 'rgba(111, 66, 193, 0.1)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Terminées',
+          data: data.datasets.terminees,
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40, 167, 69, 0.1)',
+          tension: 0.4,
+          fill: false
+        },
+        {
+          label: 'En retard',
+          data: data.datasets.en_retard,
+          borderColor: '#dc3545',
+          backgroundColor: 'rgba(220, 53, 69, 0.1)',
+          tension: 0.4,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top'
+        },
+        title: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0,0,0,0.1)'
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  });
+}
+
+function initEtapesChart(data) {
+  const ctx = document.getElementById('etapesChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.data,
+        backgroundColor: data.colors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+}
+
+function initTempsChart(data) {
+  const ctx = document.getElementById('tempsChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Temps moyen (heures)',
+        data: data.data,
+        backgroundColor: [
+          'rgba(111, 66, 193, 0.8)',
+          'rgba(40, 167, 69, 0.8)',
+          'rgba(23, 162, 184, 0.8)'
+        ],
+        borderColor: [
+          '#6f42c1',
+          '#28a745',
+          '#17a2b8'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0,0,0,0.1)'
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+}
+
+function initDepartementChart(data) {
+  const ctx = document.getElementById('departementChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Total demandes',
+          data: data.datasets.total,
+          backgroundColor: 'rgba(111, 66, 193, 0.8)',
+          borderColor: '#6f42c1',
+          borderWidth: 1,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Taux completion (%)',
+          data: data.datasets.taux_completion,
+          backgroundColor: 'rgba(40, 167, 69, 0.8)',
+          borderColor: '#28a745',
+          borderWidth: 1,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Nombre de demandes'
+          }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          beginAtZero: true,
+          max: 100,
+          title: {
+            display: true,
+            text: 'Taux completion (%)'
+          },
+          grid: {
+            drawOnChartArea: false
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+}
+
+// ========================================
+// FONCTIONS D'ANIMATION ET INTERACTION
+// ========================================
+
+function animateKPIs() {
+  const kpiNumbers = document.querySelectorAll('.kpi-number');
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const target = entry.target;
+        const finalValue = parseFloat(target.textContent);
+        
+        if (!isNaN(finalValue)) {
+          animateNumber(target, 0, finalValue, 1000);
+        }
+        
+        observer.unobserve(target);
+      }
+    });
+  });
+  
+  kpiNumbers.forEach(number => {
+    observer.observe(number);
+  });
+}
+
+function animateNumber(element, start, end, duration) {
+  const range = end - start;
+  const increment = range / (duration / 16);
+  let current = start;
+  
+  const timer = setInterval(() => {
+    current += increment;
+    
+    if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+      current = end;
+      clearInterval(timer);
+    }
+    
+    // Formatter selon le type de nombre
+    if (element.parentElement.querySelector('.kpi-label').textContent.includes('%')) {
+      element.textContent = Math.round(current) + '%';
+    } else {
+      element.textContent = Math.round(current);
+    }
+  }, 16);
+}
+
+function setupFilterAutoSubmit() {
+  const filterInputs = document.querySelectorAll('#departement, #site, #urgence, #statut, #niveau_validation, #avec_retard');
+  let filterTimeout;
+  
+  filterInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 300);
+    });
+  });
+  
+  // Auto-submit pour les dates avec délai plus long
+  const dateInputs = document.querySelectorAll('#date_debut, #date_fin');
+  dateInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 1000);
+    });
+  });
+}
+
+function setupTooltips() {
+  // Initialiser les tooltips Bootstrap si disponible
+  if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+  
+  // Tooltips personnalisés pour les éléments spéciaux
+  const kpiCards = document.querySelectorAll('.kpi-card');
+  kpiCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-5px)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+}
+
+// ========================================
+// FONCTIONS D'ACTION
+// ========================================
+
+function traiterDemandeCritique(demandeId) {
+  // Rediriger vers la page de traitement de la demande
+  window.location.href = `/interim/demande/${demandeId}/traiter/`;
+}
+
+function exporterDashboard() {
+  const exportBtn = document.querySelector('[onclick="exporterDashboard()"]');
+  if (exportBtn) {
+    const icon = exportBtn.querySelector('i');
+    const originalClass = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    exportBtn.disabled = true;
+    
+    // Simuler l'export
+    setTimeout(() => {
+      icon.className = originalClass;
+      exportBtn.disabled = false;
+      
+      showNotification('Export du dashboard terminé avec succès !', 'success');
+    }, 3000);
+  }
+}
+
+function afficherAnalyseApprofondie() {
+  // Ouvrir une nouvelle fenêtre avec l'analyse approfondie
+  window.open('/interim/workflow/analyse-approfondie/', '_blank');
+}
+
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} position-fixed`;
+  notification.style.cssText = `
+    top: 20px; 
+    right: 20px; 
+    z-index: 9999; 
+    padding: 1rem; 
+    border-radius: 8px;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease-out;
+  `;
+  
+  const icons = {
+    'success': 'fas fa-check-circle',
+    'error': 'fas fa-exclamation-triangle',
+    'warning': 'fas fa-exclamation-circle',
+    'info': 'fas fa-info-circle'
+  };
+  
+  notification.innerHTML = `
+    <i class="${icons[type] || icons.info}"></i> ${message}
+    <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+// ========================================
+// GESTION DES RACCOURCIS CLAVIER
+// ========================================
+
+document.addEventListener('keydown', function(e) {
+  // R pour actualiser
+  if (e.key === 'r' && e.ctrlKey) {
+    e.preventDefault();
+    window.location.reload();
+  }
+  
+  // E pour exporter (si disponible)
+  if (e.key === 'e' && e.ctrlKey && document.querySelector('[onclick="exporterDashboard()"]')) {
+    e.preventDefault();
+    exporterDashboard();
+  }
+  
+  // A pour analyse approfondie
+  if (e.key === 'a' && e.ctrlKey) {
+    e.preventDefault();
+    afficherAnalyseApprofondie();
+  }
+});
+
+// ========================================
+// GESTION RESPONSIVE
+// ========================================
+
+function handleResponsiveChanges() {
+  const isMobile = window.innerWidth <= 768;
+  const chartWrappers = document.querySelectorAll('.chart-wrapper');
+  
+  chartWrappers.forEach(wrapper => {
+    if (isMobile) {
+      wrapper.style.height = '250px';
+    } else {
+      wrapper.style.height = '300px';
+    }
+  });
+}
+
+window.addEventListener('resize', handleResponsiveChanges);
+handleResponsiveChanges(); // Appel initial
+
+console.log('📊 Scripts dashboard workflow chargés avec succès');
+</script>
+{% endblock extra_js %}

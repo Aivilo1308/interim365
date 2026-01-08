@@ -1,0 +1,1794 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Hiérarchie - {{ employe.nom_complet }}{% endblock %}
+
+{% block content %}
+
+<!-- En-tête hiérarchie -->
+<div class="hierarchy-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8" style="margin-left: 20px;">
+        <h1 class="mb-0">
+          <i class="fas fa-sitemap"></i>
+          Hiérarchie organisationnelle
+        </h1>
+        <p class="mb-0 mt-2">
+          <span class="employee-badge">{{ employe.nom_complet }}</span>
+          <span class="matricule-badge">{{ employe.matricule }}</span>
+          <span class="niveau-badge niveau-{{ employe.type_profil|lower }}">
+            {{ employe.get_type_profil_display }}
+          </span>
+        </p>
+      </div>
+      <div class="col-md-4 text-end" style="margin-left: 20px;margin-top: 15px;">
+        <a href="{% url 'employe_detail' employe.matricule %}" class="btn btn-outline-light">
+          <i class="fas fa-user"></i>
+          Voir le profil
+        </a>
+        <a href="{% url 'employes_liste' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats_hierarchie.profondeur_vers_haut }}</div>
+          <div class="stat-label">Niveaux au-dessus</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats_hierarchie.equipe_directe_count }}</div>
+          <div class="stat-label">Équipe directe</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-network-wired"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats_hierarchie.equipe_totale_count }}</div>
+          <div class="stat-label">Équipe totale</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-briefcase"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats_hierarchie.demandes_en_cours }}</div>
+          <div class="stat-label">Demandes en cours</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Arbre hiérarchique principal -->
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-sitemap"></i>
+            Chaîne hiérarchique
+            <span class="hierarchy-depth">{{ chaine_hierarchique|length }} niveau{{ chaine_hierarchique|length|pluralize }}</span>
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="hierarchy-tree">
+            {% for niveau in chaine_hierarchique reversed %}
+              <div class="hierarchy-level level-{{ niveau.niveau_hierarchique }} {% if niveau.employe == employe %}current-employee{% endif %}">
+                
+                <!-- Connecteur vers le niveau supérieur -->
+                {% if not forloop.first %}
+                  <div class="hierarchy-connector">
+                    <div class="connector-line"></div>
+                    <div class="connector-arrow">
+                      <i class="fas fa-chevron-up"></i>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Carte de l'employé -->
+                <div class="employee-card {% if niveau.employe == employe %}highlighted{% endif %}">
+                  <div class="employee-avatar">
+                    <i class="fas fa-user-circle"></i>
+                    {% if niveau.employe == employe %}
+                      <div class="current-indicator">
+                        <i class="fas fa-star"></i>
+                      </div>
+                    {% endif %}
+                  </div>
+                  
+                  <div class="employee-info">
+                    <div class="employee-header">
+                      <h3 class="employee-name">
+                        <a href="{% url 'employe_detail' niveau.employe.matricule %}">
+                          {{ niveau.employe.nom_complet }}
+                        </a>
+                      </h3>
+                      <div class="employee-badges">
+                        <span class="level-badge level-{{ niveau.niveau_hierarchique }}">
+                          Niveau {{ niveau.niveau_hierarchique }}
+                        </span>
+                        {% if niveau.est_racine %}
+                          <span class="root-badge">
+                            <i class="fas fa-crown"></i>
+                            Sommet
+                          </span>
+                        {% endif %}
+                      </div>
+                    </div>
+                    
+                    <div class="employee-details">
+                      <div class="detail-row">
+                        <div class="detail-item">
+                          <i class="fas fa-id-badge"></i>
+                          <span>{{ niveau.employe.matricule }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <i class="fas fa-user-tag"></i>
+                          <span>{{ niveau.employe.get_type_profil_display }}</span>
+                        </div>
+                      </div>
+                      
+                      {% if niveau.employe.poste %}
+                        <div class="detail-row">
+                          <div class="detail-item">
+                            <i class="fas fa-briefcase"></i>
+                            <span>{{ niveau.employe.poste.titre }}</span>
+                          </div>
+                        </div>
+                      {% endif %}
+                      
+                      {% if niveau.employe.departement %}
+                        <div class="detail-row">
+                          <div class="detail-item">
+                            <i class="fas fa-building"></i>
+                            <span>{{ niveau.employe.departement.nom }}</span>
+                          </div>
+                          {% if niveau.employe.site %}
+                            <div class="detail-item">
+                              <i class="fas fa-map-marker-alt"></i>
+                              <span>{{ niveau.employe.site.nom }}</span>
+                            </div>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    </div>
+                    
+                    <div class="employee-stats">
+                      <div class="stat-item">
+                        <div class="stat-value">{{ niveau.equipe_count }}</div>
+                        <div class="stat-label">Équipe directe</div>
+                      </div>
+                      <div class="stat-item">
+                        <div class="stat-value">{{ niveau.distance_de_base }}</div>
+                        <div class="stat-label">Distance</div>
+                      </div>
+                    </div>
+                    
+                    <div class="employee-actions">
+                      <a href="{% url 'employe_detail' niveau.employe.matricule %}" class="btn btn-sm btn-outline">
+                        <i class="fas fa-eye"></i>
+                        Voir profil
+                      </a>
+                      {% if niveau.employe != employe %}
+                        <a href="{% url 'employe_hierarchie' niveau.employe.matricule %}" class="btn btn-sm btn-outline">
+                          <i class="fas fa-sitemap"></i>
+                          Sa hiérarchie
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Légende du niveau -->
+                <div class="level-legend">
+                  <div class="level-info">
+                    <span class="level-name">{{ niveau.niveau_nom }}</span>
+                    <span class="level-description">
+                      {% if niveau.niveau_hierarchique == 1 %}
+                        Niveau opérationnel
+                      {% elif niveau.niveau_hierarchique == 2 %}
+                        Encadrement de proximité
+                      {% elif niveau.niveau_hierarchique == 3 %}
+                        Management intermédiaire
+                      {% elif niveau.niveau_hierarchique == 4 %}
+                        Direction opérationnelle
+                      {% else %}
+                        Direction générale
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Colonne latérale -->
+    <div class="col-lg-4">
+      
+      <!-- Équipe directe -->
+      {% if equipe_directe %}
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-users"></i>
+              Équipe directe
+              <span class="count-badge">{{ equipe_directe.count }}</span>
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="team-list">
+              {% for membre in equipe_directe %}
+                <div class="team-member">
+                  <div class="member-avatar">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="member-info">
+                    <div class="member-name">
+                      <a href="{% url 'employe_detail' membre.matricule %}">
+                        {{ membre.nom_complet }}
+                      </a>
+                    </div>
+                    <div class="member-details">
+                      <span class="member-matricule">{{ membre.matricule }}</span>
+                      {% if membre.poste %}
+                        <span class="member-poste">{{ membre.poste.titre }}</span>
+                      {% endif %}
+                    </div>
+                    <div class="member-status">
+                      <span class="status-badge status-{{ membre.statut_employe|lower }}">
+                        {{ membre.get_statut_employe_display }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="member-actions">
+                    <a href="{% url 'employe_hierarchie' membre.matricule %}" class="btn btn-xs btn-outline" title="Voir sa hiérarchie">
+                      <i class="fas fa-sitemap"></i>
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- Collègues -->
+      {% if collegues %}
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-user-friends"></i>
+              Collègues
+              <span class="count-badge">{{ collegues.count }}</span>
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="colleagues-list">
+              {% for collegue in collegues|slice:":5" %}
+                <div class="colleague-item">
+                  <div class="colleague-info">
+                    <div class="colleague-name">
+                      <a href="{% url 'employe_detail' collegue.matricule %}">
+                        {{ collegue.nom_complet }}
+                      </a>
+                    </div>
+                    <div class="colleague-details">
+                      {% if collegue.poste %}
+                        <span class="colleague-poste">{{ collegue.poste.titre }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+              {% if collegues.count > 5 %}
+                <div class="more-colleagues">
+                  <i class="fas fa-ellipsis-h"></i>
+                  Et {{ collegues.count|add:"-5" }} autre{{ collegues.count|add:"-5"|pluralize }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- Demandes liées -->
+      {% if demandes_hierarchie %}
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-clipboard-list"></i>
+              Demandes liées
+              <span class="count-badge">{{ demandes_hierarchie.count }}</span>
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="demandes-list">
+              {% for demande in demandes_hierarchie|slice:":3" %}
+                <div class="demande-item">
+                  <div class="demande-header">
+                    <div class="demande-numero">{{ demande.numero_demande }}</div>
+                    <div class="demande-statut statut-{{ demande.statut|lower }}">
+                      {{ demande.get_statut_display }}
+                    </div>
+                  </div>
+                  <div class="demande-details">
+                    {% if demande.poste %}
+                      <div class="demande-poste">{{ demande.poste.titre }}</div>
+                    {% endif %}
+                    <div class="demande-dates">
+                      {% if demande.date_debut and demande.date_fin %}
+                        Du {{ demande.date_debut|date:"d/m/Y" }} au {{ demande.date_fin|date:"d/m/Y" }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="demande-actions">
+                    <a href="{% url 'demande_detail' demande.id %}" class="btn btn-xs btn-outline">
+                      <i class="fas fa-eye"></i>
+                      Voir
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
+    </div>
+  </div>
+</div>
+
+<!-- Actions rapides -->
+{% if peut_modifier_hierarchie %}
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-cogs"></i>
+        Actions administratives
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="admin-actions">
+<!--         
+        <button type="button" class="action-btn" onclick="exporterHierarchie()">
+          <i class="fas fa-download"></i>
+          <span>Exporter l'organigramme</span>
+        </button>
+ -->        
+        <button type="button" class="action-btn" onclick="imprimerHierarchie()">
+          <i class="fas fa-print"></i>
+          <span>Imprimer</span>
+        </button>
+        <button type="button" class="action-btn" onclick="afficherOrganigrammeComplet()">
+          <i class="fas fa-expand-arrows-alt"></i>
+          <span>Organigramme complet</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES POUR LA HIÉRARCHIE ORGANISATIONNELLE
+================================================================ */
+
+:root {
+  --hierarchy-primary: #2c3e50;
+  --hierarchy-secondary: #3498db;
+  --hierarchy-accent: #e74c3c;
+  --hierarchy-success: #27ae60;
+  --hierarchy-warning: #f39c12;
+  --hierarchy-light: #ecf0f1;
+  --hierarchy-dark: #34495e;
+  --border-radius: 8px;
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ================================================================
+   EN-TÊTE HIÉRARCHIE
+================================================================ */
+
+.hierarchy-header {
+  background: linear-gradient(135deg, var(--hierarchy-primary), var(--hierarchy-secondary));
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.employee-badge,
+.matricule-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.niveau-badge {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.hierarchy-depth {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: normal;
+  margin-left: 1rem;
+}
+
+/* ================================================================
+   STATISTIQUES
+================================================================ */
+
+.stat-card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  color: var(--hierarchy-secondary);
+  min-width: 60px;
+  text-align: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--hierarchy-primary);
+  line-height: 1;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* ================================================================
+   ARBRE HIÉRARCHIQUE
+================================================================ */
+
+.hierarchy-tree {
+  position: relative;
+  padding: 2rem 0;
+}
+
+.hierarchy-level {
+  position: relative;
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hierarchy-level.current-employee {
+  z-index: 10;
+}
+
+/* Connecteurs entre niveaux */
+.hierarchy-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+  height: 40px;
+}
+
+.connector-line {
+  width: 3px;
+  height: 25px;
+  background: linear-gradient(to bottom, var(--hierarchy-secondary), var(--hierarchy-primary));
+  border-radius: 2px;
+}
+
+.connector-arrow {
+  margin-top: 5px;
+  color: var(--hierarchy-secondary);
+  font-size: 1.2rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+/* ================================================================
+   CARTES EMPLOYÉ
+================================================================ */
+
+.employee-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.employee-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.employee-card.highlighted {
+  border-color: var(--hierarchy-accent);
+  background: linear-gradient(135deg, #fff, #fef9f9);
+  transform: scale(1.02);
+}
+
+.employee-card.highlighted::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--hierarchy-accent), var(--hierarchy-warning));
+}
+
+.employee-avatar {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.employee-avatar i {
+  font-size: 4rem;
+  color: var(--hierarchy-secondary);
+}
+
+.current-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--hierarchy-accent);
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.employee-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.employee-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+}
+
+.employee-name a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.employee-name a:hover {
+  color: var(--hierarchy-secondary);
+}
+
+.employee-badges {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.level-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+}
+
+.level-badge.level-1 { background: #95a5a6; }
+.level-badge.level-2 { background: #3498db; }
+.level-badge.level-3 { background: #9b59b6; }
+.level-badge.level-4 { background: #e67e22; }
+.level-badge.level-5 { background: #e74c3c; }
+
+.root-badge {
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(45deg, #f39c12, #e67e22);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.employee-details {
+  margin-bottom: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+  flex: 1;
+}
+
+.employee-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--hierarchy-light);
+  border-radius: 6px;
+}
+
+.employee-stats .stat-item {
+  text-align: center;
+}
+
+.employee-stats .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--hierarchy-primary);
+  line-height: 1;
+}
+
+.employee-stats .stat-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.employee-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* ================================================================
+   LÉGENDES DES NIVEAUX
+================================================================ */
+
+.level-legend {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.level-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.level-name {
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+  font-size: 0.9rem;
+}
+
+.level-description {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* ================================================================
+   ÉQUIPE ET COLLÈGUES
+================================================================ */
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.team-member:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+.member-avatar {
+  font-size: 1.5rem;
+  color: var(--hierarchy-secondary);
+  min-width: 30px;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.member-name a {
+  color: var(--hierarchy-primary);
+  text-decoration: none;
+}
+
+.member-name a:hover {
+  color: var(--hierarchy-secondary);
+}
+
+.member-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.member-matricule {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.member-status {
+  margin-top: 0.25rem;
+}
+
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.status-badge.status-actif { background: #d4edda; color: #155724; }
+.status-badge.status-conge { background: #fff3cd; color: #856404; }
+.status-badge.status-arret { background: #f8d7da; color: #721c24; }
+
+.member-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Collègues */
+.colleagues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.colleague-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.colleague-item:hover {
+  background: #e9ecef;
+}
+
+.colleague-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.colleague-name a {
+  color: var(--hierarchy-primary);
+  text-decoration: none;
+}
+
+.colleague-details {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.more-colleagues {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+/* ================================================================
+   DEMANDES LIÉES
+================================================================ */
+
+.demandes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.demande-item {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.demande-item:hover {
+  border-color: var(--hierarchy-secondary);
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.1);
+}
+
+.demande-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.demande-numero {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+  font-size: 0.9rem;
+}
+
+.demande-statut {
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.statut-soumise { background: #cce5ff; color: #004085; }
+.statut-en_validation { background: #fff3cd; color: #856404; }
+.statut-validee { background: #d4edda; color: #155724; }
+.statut-en_cours { background: #e2e3e5; color: #383d41; }
+
+.demande-details {
+  margin-bottom: 0.75rem;
+}
+
+.demande-poste {
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+  margin-bottom: 0.25rem;
+}
+
+.demande-dates {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.demande-actions {
+  text-align: right;
+}
+
+/* ================================================================
+   ACTIONS ADMINISTRATIVES
+================================================================ */
+
+.admin-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #495057;
+}
+
+.action-btn:hover {
+  border-color: var(--hierarchy-secondary);
+  background: #f8f9fa;
+  transform: translateY(-2px);
+  color: var(--hierarchy-secondary);
+}
+
+.action-btn i {
+  font-size: 2rem;
+}
+
+.action-btn span {
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ================================================================
+   COMMUNS
+================================================================ */
+
+.card-container {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--hierarchy-secondary);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.btn-outline,
+.btn-outline-light {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+}
+
+.btn-outline-light {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 992px) {
+  .hierarchy-tree {
+    padding: 1rem 0;
+  }
+  
+  .employee-card {
+    max-width: none;
+    padding: 1.5rem;
+  }
+  
+  .employee-stats {
+    gap: 1rem;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .admin-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .hierarchy-header {
+    padding: 1.5rem 0;
+  }
+  
+  .employee-card {
+    padding: 1rem;
+  }
+  
+  .employee-avatar i {
+    font-size: 3rem;
+  }
+  
+  .employee-name {
+    font-size: 1.2rem;
+  }
+  
+  .employee-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .team-member {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .member-actions {
+    align-self: stretch;
+  }
+  
+  .demande-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hierarchy-level {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.hierarchy-level:nth-child(1) { animation-delay: 0.1s; }
+.hierarchy-level:nth-child(2) { animation-delay: 0.2s; }
+.hierarchy-level:nth-child(3) { animation-delay: 0.3s; }
+.hierarchy-level:nth-child(4) { animation-delay: 0.4s; }
+.hierarchy-level:nth-child(5) { animation-delay: 0.5s; }
+
+/* ================================================================
+   MODE IMPRESSION
+================================================================ */
+
+@media print {
+  .hierarchy-header,
+  .btn,
+  .admin-actions {
+    display: none !important;
+  }
+  
+  .card-container {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    break-inside: avoid;
+  }
+  
+  .employee-card {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+  }
+  
+  .hierarchy-tree {
+    padding: 1rem 0;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🏢 Initialisation de la page hiérarchie organisationnelle');
+  
+  // Animation d'entrée progressive pour les niveaux
+  const hierarchyLevels = document.querySelectorAll('.hierarchy-level');
+  hierarchyLevels.forEach((level, index) => {
+    level.style.opacity = '0';
+    level.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+      level.style.transition = 'all 0.6s ease';
+      level.style.opacity = '1';
+      level.style.transform = 'translateY(0)';
+    }, index * 150);
+  });
+  
+  // Animation des statistiques
+  animerStatistiques();
+  
+  // Gestion des liens de navigation
+  setupNavigationLinks();
+  
+  console.log('✅ Page hiérarchie initialisée avec succès');
+});
+
+function animerStatistiques() {
+  const statNumbers = document.querySelectorAll('.stat-number');
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const element = entry.target;
+        const finalValue = parseInt(element.textContent) || 0;
+        
+        if (finalValue > 0) {
+          animerCompteur(element, finalValue);
+        }
+        
+        observer.unobserve(element);
+      }
+    });
+  }, { threshold: 0.5 });
+  
+  statNumbers.forEach(number => observer.observe(number));
+}
+
+function animerCompteur(element, finalValue) {
+  let currentValue = 0;
+  const increment = Math.ceil(finalValue / 20);
+  
+  const timer = setInterval(() => {
+    currentValue += increment;
+    if (currentValue >= finalValue) {
+      currentValue = finalValue;
+      clearInterval(timer);
+    }
+    
+    element.textContent = currentValue;
+  }, 50);
+}
+
+function setupNavigationLinks() {
+  // Smooth scroll pour les liens internes
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+  
+  // Préchargement des liens de hiérarchie
+  const hierarchyLinks = document.querySelectorAll('a[href*="hierarchie"]');
+  hierarchyLinks.forEach(link => {
+    link.addEventListener('mouseenter', function() {
+      // Précharger la page de destination
+      const prefetchLink = document.createElement('link');
+      prefetchLink.rel = 'prefetch';
+      prefetchLink.href = this.href;
+      document.head.appendChild(prefetchLink);
+    });
+  });
+}
+
+function exporterHierarchie() {
+  console.log('📁 Export de la hiérarchie organisationnelle');
+  
+  // Afficher un indicateur de chargement
+  const btn = event.target.closest('.action-btn');
+  const originalContent = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Génération...</span>';
+  btn.disabled = true;
+  
+  // Simulation de l'export (à remplacer par l'appel réel)
+  setTimeout(() => {
+    // Restaurer le bouton
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+    
+    // Afficher une notification de succès
+    afficherNotification('Organigramme exporté avec succès !', 'success');
+  }, 2000);
+}
+
+function imprimerHierarchie() {
+  console.log('🖨️ Impression de la hiérarchie');
+  
+  // Masquer les éléments non nécessaires à l'impression
+  const elementsToHide = document.querySelectorAll('.btn, .admin-actions, .card-header .count-badge');
+  elementsToHide.forEach(el => {
+    el.style.display = 'none';
+  });
+  
+  // Lancer l'impression
+  window.print();
+  
+  // Restaurer les éléments après impression
+  setTimeout(() => {
+    elementsToHide.forEach(el => {
+      el.style.display = '';
+    });
+  }, 1000);
+}
+
+function afficherOrganigrammeComplet() {
+  console.log('🗂️ Affichage de l\'organigramme complet');
+  
+  // Créer une modal pour l'organigramme complet
+  const modal = document.createElement('div');
+  modal.className = 'organigramme-modal';
+  modal.innerHTML = `
+    <div class="organigramme-modal-content">
+      <div class="organigramme-modal-header">
+        <h3>Organigramme complet du département</h3>
+        <button onclick="fermerOrganigrammeModal()" class="btn-close">&times;</button>
+      </div>
+      <div class="organigramme-modal-body">
+        <div class="organigramme-placeholder">
+          <i class="fas fa-sitemap" style="font-size: 4rem; opacity: 0.3;"></i>
+          <h4>Organigramme interactif</h4>
+          <p>L'organigramme complet sera affiché ici dans une prochaine version.</p>
+          <p>Cette fonctionnalité permettra de visualiser l'ensemble de la structure organisationnelle.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Styles de la modal
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+  `;
+  
+  const content = modal.querySelector('.organigramme-modal-content');
+  content.style.cssText = `
+    background: white;
+    border-radius: 8px;
+    max-width: 80%;
+    max-height: 80%;
+    width: 800px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    overflow: hidden;
+  `;
+  
+  const header = modal.querySelector('.organigramme-modal-header');
+  header.style.cssText = `
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  `;
+  
+  const body = modal.querySelector('.organigramme-modal-body');
+  body.style.cssText = `
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+  `;
+  
+  const closeBtn = modal.querySelector('.btn-close');
+  closeBtn.style.cssText = `
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Fermer en cliquant sur le fond
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      fermerOrganigrammeModal();
+    }
+  });
+}
+
+function fermerOrganigrammeModal() {
+  const modal = document.querySelector('.organigramme-modal');
+  if (modal) {
+    modal.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(() => modal.remove(), 300);
+  }
+}
+
+function afficherNotification(message, type = 'info') {
+  console.log(`📢 Notification ${type}: ${message}`);
+  
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+    padding: 1rem;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease;
+  `;
+  
+  // Couleurs selon le type
+  const colors = {
+    success: '#27ae60',
+    error: '#e74c3c',
+    warning: '#f39c12',
+    info: '#3498db'
+  };
+  
+  notification.style.backgroundColor = colors[type] || colors.info;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  // Retirer après 4 secondes
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.style.animation = 'slideOutRight 0.3s ease';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }
+  }, 4000);
+}
+
+// Gestion des raccourcis clavier
+document.addEventListener('keydown', function(event) {
+  // Raccourcis uniquement si aucun champ n'est en focus
+  if (document.activeElement.tagName === 'INPUT' || 
+      document.activeElement.tagName === 'TEXTAREA' || 
+      document.activeElement.tagName === 'SELECT') {
+    return;
+  }
+
+  switch(event.key) {
+    case 'e':
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        exporterHierarchie();
+      }
+      break;
+    case 'p':
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        imprimerHierarchie();
+      }
+      break;
+    case 'o':
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        afficherOrganigrammeComplet();
+      }
+      break;
+    case 'Escape':
+      fermerOrganigrammeModal();
+      break;
+  }
+});
+
+// Gestion du hover pour les cartes d'employé
+document.querySelectorAll('.employee-card').forEach(card => {
+  card.addEventListener('mouseenter', function() {
+    // Ajouter un effet de focus aux connecteurs
+    const level = this.closest('.hierarchy-level');
+    const connector = level.querySelector('.hierarchy-connector');
+    if (connector) {
+      connector.style.opacity = '1';
+      connector.style.transform = 'scale(1.1)';
+    }
+  });
+  
+  card.addEventListener('mouseleave', function() {
+    // Restaurer l'état normal des connecteurs
+    const level = this.closest('.hierarchy-level');
+    const connector = level.querySelector('.hierarchy-connector');
+    if (connector) {
+      connector.style.opacity = '';
+      connector.style.transform = '';
+    }
+  });
+});
+
+// Tooltip pour les badges de niveau
+document.querySelectorAll('.level-badge').forEach(badge => {
+  badge.addEventListener('mouseenter', function() {
+    const level = this.textContent.match(/\d+/)?.[0];
+    const descriptions = {
+      '1': 'Niveau opérationnel - Exécution des tâches',
+      '2': 'Encadrement de proximité - Management direct',
+      '3': 'Management intermédiaire - Coordination',
+      '4': 'Direction opérationnelle - Stratégie métier',
+      '5': 'Direction générale - Vision globale'
+    };
+    
+    if (level && descriptions[level]) {
+      this.title = descriptions[level];
+    }
+  });
+});
+
+// Amélioration de l'accessibilité
+function ameliorerAccessibilite() {
+  // Ajouter des attributs ARIA
+  document.querySelectorAll('.employee-card').forEach((card, index) => {
+    card.setAttribute('role', 'article');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `Employé niveau hiérarchique ${index + 1}`);
+  });
+  
+  // Navigation au clavier dans la hiérarchie
+  document.querySelectorAll('.employee-card').forEach((card, index, cards) => {
+    card.addEventListener('keydown', function(e) {
+      switch(e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          if (index > 0) {
+            cards[index - 1].focus();
+          }
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (index < cards.length - 1) {
+            cards[index + 1].focus();
+          }
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          const link = this.querySelector('.employee-name a');
+          if (link) {
+            link.click();
+          }
+          break;
+      }
+    });
+  });
+}
+
+// Performance - Lazy loading pour les images d'avatar
+function setupLazyLoading() {
+  if ('IntersectionObserver' in window) {
+    const avatarObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const avatar = entry.target;
+          // Ici on pourrait charger une vraie photo si disponible
+          avatar.classList.add('loaded');
+          avatarObserver.unobserve(avatar);
+        }
+      });
+    });
+    
+    document.querySelectorAll('.employee-avatar').forEach(avatar => {
+      avatarObserver.observe(avatar);
+    });
+  }
+}
+
+// Fonction pour détecter et signaler les boucles dans la hiérarchie
+function detecterBouclesHierarchie() {
+  const employeeCards = document.querySelectorAll('.employee-card');
+  const matricules = new Set();
+  let boucleDetectee = false;
+  
+  employeeCards.forEach(card => {
+    const links = card.querySelectorAll('a[href*="employe"]');
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      const matricule = href.split('/').pop().replace('/', '');
+      
+      if (matricules.has(matricule)) {
+        console.warn('⚠️ Boucle hiérarchique détectée pour le matricule:', matricule);
+        boucleDetectee = true;
+        
+        // Marquer visuellement la boucle
+        card.style.border = '2px dashed #e74c3c';
+        card.title = 'Attention: Boucle hiérarchique détectée';
+      } else {
+        matricules.add(matricule);
+      }
+    });
+  });
+  
+  if (boucleDetectee) {
+    afficherNotification('Attention: Des boucles hiérarchiques ont été détectées', 'warning');
+  }
+}
+
+// Fonction pour analyser la structure hiérarchique
+function analyserStructureHierarchie() {
+  const levels = document.querySelectorAll('.hierarchy-level');
+  const stats = {
+    niveaux: levels.length,
+    employesParNiveau: {},
+    porteeControle: [],
+    profondeurMax: levels.length
+  };
+  
+  levels.forEach((level, index) => {
+    const equipeCount = level.querySelector('.employee-stats .stat-value')?.textContent || '0';
+    stats.employesParNiveau[`niveau_${index + 1}`] = parseInt(equipeCount);
+    
+    if (parseInt(equipeCount) > 0) {
+      stats.porteeControle.push(parseInt(equipeCount));
+    }
+  });
+  
+  // Calculer la portée de contrôle moyenne
+  if (stats.porteeControle.length > 0) {
+    stats.porteeControleMoyenne = stats.porteeControle.reduce((a, b) => a + b, 0) / stats.porteeControle.length;
+  }
+  
+  console.log('📊 Analyse de la structure hiérarchique:', stats);
+  return stats;
+}
+
+// Fonction pour optimiser l'affichage selon la taille de la hiérarchie
+function optimiserAffichage() {
+  const levels = document.querySelectorAll('.hierarchy-level');
+  
+  // Si trop de niveaux, ajuster l'espacement
+  if (levels.length > 6) {
+    levels.forEach(level => {
+      level.style.marginBottom = '2rem';
+    });
+    
+    // Réduire la taille des cartes
+    document.querySelectorAll('.employee-card').forEach(card => {
+      card.style.maxWidth = '400px';
+      card.style.padding = '1.5rem';
+    });
+    
+    console.log('🎨 Optimisation de l\'affichage pour', levels.length, 'niveaux');
+  }
+}
+
+// Fonction pour exporter les données hiérarchiques
+function exporterDonneesHierarchie() {
+  const hierarchieData = {
+    timestamp: new Date().toISOString(),
+    employe_base: {
+      matricule: '{{ employe.matricule }}',
+      nom: '{{ employe.nom_complet }}',
+      type_profil: '{{ employe.type_profil }}'
+    },
+    chaine_hierarchique: [],
+    statistiques: analyserStructureHierarchie()
+  };
+  
+  // Collecter les données de chaque niveau
+  document.querySelectorAll('.hierarchy-level').forEach((level, index) => {
+    const card = level.querySelector('.employee-card');
+    const nom = card.querySelector('.employee-name a')?.textContent.trim();
+    const matricule = card.querySelector('.detail-item')?.textContent.trim();
+    const typeProfile = card.querySelector('.detail-item:nth-child(2)')?.textContent.trim();
+    
+    hierarchieData.chaine_hierarchique.push({
+      niveau: index + 1,
+      nom: nom,
+      matricule: matricule,
+      type_profil: typeProfile,
+      est_employe_base: level.classList.contains('current-employee')
+    });
+  });
+  
+  return hierarchieData;
+}
+
+// Initialisation des fonctionnalités avancées
+setTimeout(() => {
+  ameliorerAccessibilite();
+  setupLazyLoading();
+  detecterBouclesHierarchie();
+  optimiserAffichage();
+}, 1000);
+
+// Ajout des styles d'animation manquants
+const animationStyles = document.createElement('style');
+animationStyles.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.9); }
+  }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  .employee-avatar.loaded {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+  }
+  
+  .hierarchy-connector {
+    transition: all 0.3s ease;
+  }
+  
+  .employee-card:focus {
+    outline: 2px solid var(--hierarchy-secondary);
+    outline-offset: 2px;
+  }
+  
+  .organigramme-placeholder {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6c757d;
+  }
+  
+  .organigramme-placeholder i {
+    margin-bottom: 1rem;
+    display: block;
+  }
+  
+  .organigramme-placeholder h4 {
+    margin-bottom: 1rem;
+    color: #495057;
+  }
+`;
+
+document.head.appendChild(animationStyles);
+
+console.log('🎯 Fonctionnalités avancées de la hiérarchie initialisées');
+console.log('📌 Raccourcis clavier disponibles:');
+console.log('   • Ctrl+E: Exporter');
+console.log('   • Ctrl+P: Imprimer');
+console.log('   • Ctrl+O: Organigramme complet');
+console.log('   • Flèches: Navigation dans la hiérarchie');
+console.log('   • Échap: Fermer les modales');
+</script>
+{% endblock extra_js %}

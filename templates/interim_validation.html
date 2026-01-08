@@ -1,0 +1,3939 @@
+{% extends "base.html" %}
+{% load static %}
+{% load interim_filters %}
+
+{% block title %}Interim365 - BNI | Validation Demande {{ demande.numero_demande }}{% endblock %}
+
+{% block content %}
+<!-- ================================================================
+     VALIDATION DEMANDE D'INTÉRIM - VERSION CORRIGÉE MODALES
+     Interface avec modales fonctionnelles et workflow complet
+================================================================ -->
+
+<!-- Alert informatif avec progression -->
+<div class="alert alert-info">
+  <i class="fas fa-clipboard-check fa-lg"></i>
+  <div class="alert-content">
+    <div class="alert-title">Validation demande {{ demande.numero_demande }}</div>
+    <p>{{ workflow_info.type_validateur }} - {{ workflow_info.etape_actuelle }}. 
+       Analysez les propositions précédentes et prenez votre décision de validation.</p>
+  </div>
+</div>
+
+<!-- Formulaire principal de validation -->
+<form method="post" id="validationForm" novalidate>
+  {% csrf_token %}
+  
+  <!-- ================================================================
+       PROGRESSION DU WORKFLOW
+  ================================================================ -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-route"></i>
+        Progression du workflow
+      </h2>
+      <div class="workflow-status-badge">
+        <span class="badge badge-urgence badge-{{ demande.urgence }}">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ demande_details.urgence_display }}
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="workflow-progress">
+        <div class="progress mb-3">
+          <div class="progress-bar" role="progressbar" 
+               style="width: {{ workflow_info.progression_pct }}%"
+               aria-valuenow="{{ workflow_info.progression_pct }}" 
+               aria-valuemin="0" aria-valuemax="100">
+            {{ workflow_info.progression_pct|floatformat:0 }}%
+          </div>
+        </div>
+        
+        <div class="workflow-steps">
+          <div class="workflow-step completed">
+            <div class="step-icon"><i class="fas fa-check"></i></div>
+            <div class="step-content">
+              <div class="step-title">Demande créée</div>
+              <div class="step-description">{{ demande.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+          </div>
+          
+          <div class="workflow-step {% if workflow_info.niveau_a_valider >= 1 %}current{% else %}pending{% endif %}">
+            <div class="step-icon">{% if workflow_info.niveau_a_valider >= 1 %}1{% else %}<i class="fas fa-clock"></i>{% endif %}</div>
+            <div class="step-content">
+              <div class="step-title">Validation N+1</div>
+              <div class="step-description">Responsable</div>
+            </div>
+          </div>
+          
+          <div class="workflow-step {% if workflow_info.niveau_a_valider >= 2 %}current{% elif workflow_info.niveau_validation_actuel >= 2 %}completed{% else %}pending{% endif %}">
+            <div class="step-icon">{% if workflow_info.niveau_validation_actuel >= 2 %}<i class="fas fa-check"></i>{% elif workflow_info.niveau_a_valider >= 2 %}2{% else %}<i class="fas fa-clock"></i>{% endif %}</div>
+            <div class="step-content">
+              <div class="step-title">Validation N+2</div>
+              <div class="step-description">Directeur</div>
+            </div>
+          </div>
+          
+          <div class="workflow-step {% if workflow_info.niveau_a_valider >= 3 %}current{% elif workflow_info.niveau_validation_actuel >= 3 %}completed{% else %}pending{% endif %}">
+            <div class="step-icon">{% if workflow_info.niveau_validation_actuel >= 3 %}<i class="fas fa-check"></i>{% elif workflow_info.niveau_a_valider >= 3 %}3{% else %}<i class="fas fa-clock"></i>{% endif %}</div>
+            <div class="step-content">
+              <div class="step-title">Validation finale</div>
+              <div class="step-description">RH/Admin</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       INFORMATIONS DE LA DEMANDE
+  ================================================================ -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-info-circle"></i>
+        Détails de la demande initiale
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <!-- Informations du poste -->
+        <div class="form-group">
+          <label class="form-label">Poste à pourvoir</label>
+          <div class="info-display">{{ demande.poste.titre }}</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Département</label>
+          <div class="info-display">{{ demande_details.departement_concerne }}</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Site</label>
+          <div class="info-display">{{ demande_details.site_concerne }}</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Motif d'absence</label>
+          <div class="info-display">{{ demande_details.motif_display }}</div>
+        </div>
+
+        <!-- Informations temporelles -->
+        <div class="form-group">
+          <label class="form-label">Période de mission</label>
+          <div class="info-display">
+            Du {{ demande.date_debut|date:"d/m/Y" }} au {{ demande.date_fin|date:"d/m/Y" }}
+            <span class="duration-badge">{{ demande_details.duree_mission }} jours</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date de création</label>
+          <div class="info-display">{{ demande.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Dernière modification</label>
+          <div class="info-display">{{ demande.updated_at|date:"d/m/Y H:i" }}</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Niveau d'urgence</label>
+          <div class="info-display">
+            <span class="badge badge-urgence badge-{{ demande.urgence }}">
+              {{ demande_details.urgence_display }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acteurs de la demande -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-user"></i>
+            Demandeur
+          </label>
+          <div class="employee-info-display active">
+            <div class="employee-info-content">
+              <div class="employee-info-row">
+                <strong>{{ demande_details.demandeur_info.nom }}</strong>
+                <span class="employee-matricule">{{ demande.demandeur.matricule }}</span>
+              </div>
+              <div class="employee-info-organization">
+                <span class="org-info">{{ demande_details.demandeur_info.poste }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-user-minus"></i>
+            Personne à remplacer
+          </label>
+          <div class="employee-info-display active">
+            <div class="employee-info-content">
+              <div class="employee-info-row">
+                <strong>{{ demande_details.personne_remplacee_info.nom }}</strong>
+                <span class="employee-matricule">{{ demande_details.personne_remplacee_info.matricule }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description du poste -->
+      {% if demande.description_poste %}
+      <div class="form-group">
+        <label class="form-label">Description du poste et des missions</label>
+        <div class="description-box">{{ demande.description_poste }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Compétences indispensables -->
+      {% if demande.competences_indispensables %}
+      <div class="form-group">
+        <label class="form-label">Compétences indispensables</label>
+        <div class="description-box">{{ demande.competences_indispensables }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Instructions particulières -->
+      {% if demande.instructions_particulieres %}
+      <div class="form-group">
+        <label class="form-label">Instructions particulières</label>
+        <div class="description-box">{{ demande.instructions_particulieres }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+<!-- ================================================================
+       PROPOSITIONS DES NIVEAUX PRÉCÉDENTS
+  ================================================================ -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-users"></i>
+        Propositions précédentes
+        {% if propositions_precedentes %}
+        <span class="count-badge">{{ propositions_precedentes|length }}</span>
+        {% endif %}
+      </h2>
+      <div class="card-header-actions">
+        {% if propositions_precedentes %}
+        <span class="info-badge">Toutes les propositions reçues</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-body">
+      {% if propositions_precedentes %}
+        {% for proposition_data in propositions_precedentes %}
+        <div class="proposition-card">
+          
+          <!-- En-tête avec informations du proposant -->
+          <div class="proposition-header">
+            <div class="proposition-info">
+              <h5 class="proposition-title">
+                <i class="fas fa-user-tie text-primary"></i>
+                {{ proposition_data.candidat_propose.nom_complet }}
+                <span class="matricule-badge">{{ proposition_data.candidat_propose.matricule }}</span>
+              </h5>
+              
+              <!-- Informations détaillées du proposant -->
+              <div class="proposition-meta">
+                <div class="proposant-details">
+                  <span class="proposant-name">
+                    <i class="fas fa-user-circle"></i>
+                    Proposé par <strong>{{ proposition_data.proposant.nom_complet }}</strong>
+                  </span>
+                  <span class="proposant-role">
+                    <i class="fas fa-id-badge"></i>
+                    {{ proposition_data.proposant.get_type_profil_display }}
+                  </span>
+                  <span class="proposition-date">
+                    <i class="fas fa-calendar"></i>
+                    {% if proposition_data.created_at %}
+                      {% if proposition_data.created_at.year %}
+                        {{ proposition_data.created_at|date:"d/m/Y à H:i" }}
+                      {% else %}
+                        {{ proposition_data.created_at }}
+                      {% endif %}
+                    {% else %}
+                      Date non disponible
+                    {% endif %}
+                  </span>
+                  <span class="proposition-source">
+                    <i class="fas fa-source"></i>
+                    {{ proposition_data.source_display }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Score de la proposition avec détails -->
+            <div class="proposition-score-container">
+              <div class="score-display">
+                <span class="candidate-score {{ proposition_data.score_class|default:'score-average' }}">
+                  {{ proposition_data.score_final|default:0 }}
+                </span>
+                <small class="score-label">Score Final</small>
+              </div>
+              
+              <!-- Bouton pour voir les détails du score -->
+              <button type="button" 
+                      class="btn btn-outline-small btn-score-details" 
+                      onclick="afficherDetailsScore('{{ proposition_data.candidat_propose.matricule }}', 'proposition', {{ proposition_data.id }})"
+                      title="Voir les détails du score">
+                <i class="fas fa-chart-pie"></i>
+                Détails
+              </button>
+            </div>
+          </div>
+
+          <!-- Détails du candidat proposé -->
+          <div class="proposition-details">
+            <div class="candidate-info-grid">
+              
+              <!-- Informations candidat -->
+              <div class="candidate-basic-info">
+                <h6 class="section-subtitle">
+                  <i class="fas fa-user"></i>
+                  Informations candidat
+                </h6>
+                <div class="info-list">
+                  <div class="info-item">
+                    <i class="fas fa-briefcase text-muted"></i>
+                    <span>{{ proposition_data.candidat_propose.poste.titre|default:"Poste non renseigné" }}</span>
+                  </div>
+                  <div class="info-item">
+                    <i class="fas fa-building text-muted"></i>
+                    <span>{{ proposition_data.candidat_propose.departement.nom|default:"Département non renseigné" }}</span>
+                  </div>
+                  <div class="info-item">
+                    <i class="fas fa-map-marker-alt text-muted"></i>
+                    <span>{{ proposition_data.candidat_propose.site.nom|default:"Site non renseigné" }}</span>
+                  </div>
+                  {% if proposition_data.candidat_propose.matricule %}
+                  <div class="info-item">
+                    <i class="fas fa-id-card text-muted"></i>
+                    <span>{{ proposition_data.candidat_propose.matricule }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <!-- Compétences si disponibles -->
+                {% if proposition_data.competences_specifiques %}
+                <h6 class="section-subtitle mt-3">
+                  <i class="fas fa-tools"></i>
+                  Compétences spécifiques mentionnées
+                </h6>
+                <div class="competences-mentioned">
+                  {{ proposition_data.competences_specifiques|linebreaks }}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Arguments du proposant -->
+              <div class="candidate-justification">
+                <h6 class="section-subtitle">
+                  <i class="fas fa-comment-alt"></i>
+                  Arguments du proposant
+                </h6>
+                
+                {% if proposition_data.justification %}
+                <div class="justification-box">
+                  <div class="justification-content">
+                    {{ proposition_data.justification|linebreaks }}
+                  </div>
+                </div>
+                {% else %}
+                <div class="no-justification">
+                  <i class="fas fa-exclamation-triangle text-warning"></i>
+                  Aucune justification fournie
+                </div>
+                {% endif %}
+
+                {% if proposition_data.experience_pertinente %}
+                <h6 class="section-subtitle mt-3">
+                  <i class="fas fa-briefcase"></i>
+                  Expérience pertinente
+                </h6>
+                <div class="experience-box">
+                  {{ proposition_data.experience_pertinente|linebreaks }}
+                </div>
+                {% endif %}
+
+                <!-- Contexte hiérarchique -->
+                <div class="hierarchie-context mt-3">
+                  <h6 class="section-subtitle">
+                    <i class="fas fa-sitemap"></i>
+                    Contexte hiérarchique
+                  </h6>
+                  <div class="context-info">
+                    <div class="context-item">
+                      <span class="context-label">Niveau du proposant:</span>
+                      <span class="context-value">{{ proposition_data.proposant.get_type_profil_display }}</span>
+                    </div>
+                    {% if proposition_data.proposant.departement %}
+                    <div class="context-item">
+                      <span class="context-label">Département du proposant:</span>
+                      <span class="context-value">{{ proposition_data.proposant.departement.nom }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="context-item">
+                      <span class="context-label">Source:</span>
+                      <span class="context-value">{{ proposition_data.source_display }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions pour cette proposition -->
+          <div class="proposition-actions">
+            <div class="validation-options">
+              
+              <!-- Option de validation -->
+              <div class="validation-choice">
+                <div class="custom-radio">
+                  <input type="radio" 
+                        class="radio-input" 
+                        id="valider_{{ proposition_data.id }}" 
+                        name="decision_proposition" 
+                        value="VALIDER_{{ proposition_data.id }}"
+                        onchange="togglePropositionOptions(this)">
+                  <label class="radio-label success" for="valider_{{ proposition_data.id }}">
+                    <i class="fas fa-check"></i>
+                    <span>Valider cette proposition</span>
+                  </label>
+                </div>
+                
+                <!-- Zone de commentaire pour validation -->
+                <div id="validation_justification_{{ proposition_data.id }}" 
+                    class="validation-comment" style="display: none;">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <i class="fas fa-comment-alt"></i>
+                      Vos commentaires sur cette validation
+                    </label>
+                    <textarea name="justification_validation_{{ proposition_data.id }}" 
+                              class="form-textarea" 
+                              rows="3" 
+                              placeholder="Ajoutez vos commentaires pour appuyer cette validation..."></textarea>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Option de refus -->
+              <div class="validation-choice">
+                <div class="custom-radio">
+                  <input type="radio" 
+                        class="radio-input" 
+                        id="refuser_{{ proposition_data.id }}" 
+                        name="decision_proposition_{{ proposition_data.id }}" 
+                        value="REFUSER"
+                        onchange="toggleRefusJustification({{ proposition_data.id }}, true)">
+                  <label class="radio-label danger" for="refuser_{{ proposition_data.id }}">
+                    <i class="fas fa-times"></i>
+                    <span>Refuser cette proposition</span>
+                  </label>
+                </div>
+                
+                <!-- Zone de justification du refus -->
+                <div id="refus_justification_{{ proposition_data.id }}" 
+                    class="refus-comment" style="display: none;">
+                  <div class="form-group">
+                    <label class="form-label required">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      Justification du refus (obligatoire)
+                    </label>
+                    <textarea name="justification_refus_{{ proposition_data.id }}" 
+                              class="form-textarea" 
+                              rows="3" 
+                              required
+                              placeholder="Expliquez les raisons du refus de cette proposition..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="action-buttons">
+              <button type="button" 
+                      class="btn btn-outline-small" 
+                      onclick="voirDetailsCandidatProposition('{{ proposition_data.candidat_propose.matricule }}')">
+                <i class="fas fa-eye"></i>
+                Voir profil complet
+              </button>
+              <button type="button" 
+                      class="btn btn-outline-small btn-score-main" 
+                      onclick="afficherDetailsScore('{{ proposition_data.candidat_propose.matricule }}', 'proposition', {{ proposition_data.id }})">
+                <i class="fas fa-chart-line"></i>
+                Score détaillé
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+      {% else %}
+        <!-- État vide si aucune proposition -->
+        <div class="empty-state">
+          <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
+          <h5>Aucune proposition reçue</h5>
+          <p class="text-muted">
+            Cette demande n'a pas encore reçu de propositions de candidats. 
+            Les propositions peuvent venir de tous les niveaux hiérarchiques autorisés.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PROPOSITION ALTERNATIVE
+  ================================================================ -->
+  {% if permissions.peut_proposer_nouveau %}
+  <div class="card-container" id="sectionPropositionAlternative">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-user-plus"></i>
+        Proposition alternative
+      </h2>
+      <div class="card-header-actions">
+        <button type="button" class="btn btn-outline-small" id="btnTogglePropositionAlternative">
+          <i class="fas fa-plus"></i>
+          Proposer un candidat alternatif
+        </button>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <div class="alert alert-warning">
+        <i class="fas fa-info-circle"></i>
+        <div class="alert-content">
+          <div class="alert-title">Option alternative</div>
+          <p>Si aucune des propositions précédentes ne vous convient, 
+             vous pouvez proposer un candidat alternatif.</p>
+        </div>
+      </div>
+
+      <!-- Section repliable pour proposition alternative -->
+      <div class="proposition-alternative-section" id="propositionAlternativeBody" data-visible="false">
+        
+        <!-- Activation de la proposition alternative -->
+        <div class="activation-checkbox">
+          <div class="custom-checkbox">
+            <input type="checkbox" 
+                   class="checkbox-input" 
+                   id="proposer_alternative" 
+                   name="proposer_alternative" 
+                   value="1"
+                   onchange="togglePropositionAlternative(this.checked)">
+            <label class="checkbox-label" for="proposer_alternative">
+              <i class="fas fa-plus"></i>
+              <span>Je souhaite proposer un candidat alternatif</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Formulaire de proposition alternative -->
+        <div id="formulairePropositionAlternative" class="alternative-form" style="display: none;">
+          <div class="form-grid">
+            <div class="form-group">
+              <!-- Recherche de candidat -->
+              <label for="candidat_alternatif_matricule" class="form-label required">
+                <i class="fas fa-search"></i>
+                Rechercher un candidat
+                <span class="form-help">Saisissez le matricule du candidat</span>
+              </label>
+              <div class="employee-search-container">
+                <input type="text" 
+                       name="candidat_alternatif_matricule" 
+                       id="candidat_alternatif_matricule" 
+                       class="form-input employee-matricule-input" 
+                       placeholder="Ex: EMP001, 12345..." 
+                       autocomplete="off"
+                       oninput="rechercherCandidatAlternatif(this.value.trim())">
+                <input type="hidden" name="candidat_alternatif_id" id="candidat_alternatif_id">
+                
+                <!-- Zone d'affichage des informations candidat -->
+                <div id="candidat_alternatif_info" class="employee-info-display" style="display: none;">
+                  <div class="employee-info-header">
+                    <i class="fas fa-user-check text-success"></i>
+                    <span class="employee-info-title">Candidat trouvé</span>
+                  </div>
+                  <div class="employee-info-content" id="candidat_alternatif_details">
+                    <!-- Contenu généré dynamiquement -->
+                  </div>
+                  <div class="employee-score-display">
+                    <span class="score-label">Score calculé pour cette mission:</span>
+                    <div class="score-container">
+                      <span id="candidat_alternatif_score" class="score-value">--</span>
+                      <button type="button" 
+                              class="btn btn-outline-small btn-score-alt" 
+                              id="btnScoreAlternatif"
+                              onclick="afficherDetailsScoreAlternatif()"
+                              style="display: none;">
+                        <i class="fas fa-chart-pie"></i>
+                        Détails
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Zone d'erreur -->
+                <div id="candidat_alternatif_error" class="employee-error-display" style="display: none;">
+                  <i class="fas fa-exclamation-triangle text-danger"></i>
+                  <span class="error-message" id="candidat_alternatif_error_message"></span>
+                </div>
+                
+                <!-- Indicateur de chargement -->
+                <div id="candidat_alternatif_loading" class="employee-loading-display" style="display: none;">
+                  <i class="fas fa-spinner fa-spin text-primary"></i>
+                  <span>Recherche et calcul du score...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Justification obligatoire -->
+            <div class="form-group">
+              <label for="justification_proposition_alternative" class="form-label required">
+                <i class="fas fa-comment-alt"></i>
+                Justification de votre proposition
+              </label>
+              <textarea name="justification_proposition_alternative" 
+                        id="justification_proposition_alternative"
+                        class="form-textarea" 
+                        rows="4" 
+                        required
+                        placeholder="Expliquez pourquoi vous proposez ce candidat alternatif pour cette mission..."></textarea>
+              <div class="form-help">Décrivez les raisons spécifiques qui vous amènent à proposer ce candidat</div>
+            </div>
+          </div>
+
+          <!-- Informations complémentaires -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="competences_specifiques_alternative" class="form-label">
+                <i class="fas fa-tools"></i>
+                Compétences spécifiques du candidat
+              </label>
+              <textarea name="competences_specifiques_alternative" 
+                        id="competences_specifiques_alternative"
+                        class="form-textarea" 
+                        rows="3"
+                        placeholder="Détaillez les compétences spécifiques de ce candidat pour cette mission..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="experience_pertinente_alternative" class="form-label">
+                <i class="fas fa-briefcase"></i>
+                Expérience pertinente
+              </label>
+              <textarea name="experience_pertinente_alternative" 
+                        id="experience_pertinente_alternative"
+                        class="form-textarea" 
+                        rows="3"
+                        placeholder="Décrivez l'expérience pertinente du candidat pour cette mission..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ================================================================
+       CANDIDATS AUTOMATIQUES (CONSULTATION)
+  ================================================================ -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-robot"></i>
+        Candidats sélectionnés automatiquement
+      </h2>
+      <div class="card-header-actions">
+        {% if candidats_automatiques %}
+        <span class="count-badge">{{ candidats_automatiques|length }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="fas fa-lightbulb"></i>
+        <div class="alert-content">
+          <div class="alert-title">Pour information</div>
+          <p>Consultez la liste des candidats sélectionnés automatiquement 
+             par l'intelligence artificielle pour éclairer votre décision.</p>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <button type="button" 
+                class="btn btn-info btn-large" 
+                onclick="ouvrirModaleCandidatsAutomatiques()">
+          <i class="fas fa-eye"></i>
+          Afficher les candidats automatiques
+          {% if candidats_automatiques %}
+          <span class="btn-badge">{{ candidats_automatiques|length }}</span>
+          {% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       COMMENTAIRE GÉNÉRAL DE VALIDATION
+  ================================================================ -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-comment"></i>
+        Commentaire général de validation
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="commentaire_validation_general" class="form-label required">
+          <i class="fas fa-pen"></i>
+          Votre commentaire de validation
+        </label>
+        <textarea name="commentaire_validation_general" 
+                  id="commentaire_validation_general"
+                  class="form-textarea" 
+                  rows="4" 
+                  required
+                  placeholder="Saisissez un commentaire général sur votre décision de validation..."></textarea>
+        <div class="form-help">
+          Ce commentaire sera visible dans l'historique de la demande et pour les prochains validateurs.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       ACTIONS DE VALIDATION
+  ================================================================ -->
+  {% if permissions.peut_valider %}
+  <div class="card-footer validation-actions-footer">
+    <div class="validation-actions-horizontal">
+      <!-- Bouton Retour à gauche -->
+      <div class="action-group action-group-left">
+        <button type="button" class="btn btn-outline btn-back" onclick="history.back()">
+          <i class="fas fa-arrow-left"></i>
+          <span class="btn-text">Retour</span>
+        </button>
+      </div>
+      
+      <!-- Boutons principales (Refuser/Approuver) au centre -->
+      <div class="action-group action-group-center">
+        <button type="button" class="btn btn-danger btn-action" onclick="validerDemande('REFUSER')" id="btnRefuser">
+          <i class="fas fa-times"></i>
+          <span class="btn-text">Refuser la demande</span>
+          <div class="loading-spinner" id="loadingSpinnerRefus">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </button>
+        
+        <button type="button" class="btn btn-success btn-action" onclick="validerDemande('APPROUVER')" id="btnApprouver">
+          <i class="fas fa-check"></i>
+          <span class="btn-text">Approuver</span>
+          <div class="loading-spinner" id="loadingSpinner">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </button>
+      </div>
+      
+      <!-- Menu actions supplémentaires à droite -->
+      <div class="action-group action-group-right">
+        <div class="dropdown">
+          <button class="btn btn-outline btn-secondary dropdown-toggle" type="button" 
+                  data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-ellipsis-v"></i>
+            <span class="btn-text d-none d-md-inline">Plus d'actions</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="#" onclick="demanderInfos(); return false;">
+                <i class="fas fa-question-circle"></i> 
+                Demander des informations
+              </a>
+            </li>
+            {% if permissions.peut_escalader %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-warning" href="#" onclick="escaladerValidation(); return false;">
+                <i class="fas fa-arrow-up"></i> 
+                Escalader au niveau supérieur
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card-footer">
+    <div class="text-center">
+      <a href="{{ request.META.HTTP_REFERER|default:'/interim/dashboard/' }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</form>
+
+<!-- ================================================================
+     MODALES
+================================================================ -->
+
+<!-- Modal candidats automatiques -->
+<div class="modal fade modal-xl" id="modalCandidatsAutomatiques" tabindex="-1" 
+     aria-labelledby="modalCandidatsAutomatiquesLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCandidatsAutomatiquesLabel">
+          <i class="fas fa-robot"></i>
+          Candidats sélectionnés automatiquement
+          {% if candidats_automatiques %}
+          <span class="count-badge">{{ candidats_automatiques|length }}</span>
+          {% endif %}
+        </h5>
+
+        <div style="height:20px;"></div>
+
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Fermer">
+          <span aria-hidden="true">&times;</span>
+        </button>
+
+        <div style="height:20px;"></div>
+
+      </div>
+      <div class="modal-body">
+        {% if candidats_automatiques %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          Ces candidats ont été sélectionnés par l'intelligence artificielle basée sur les critères de la demande.
+          Cliquez sur l'icône de score pour voir les détails de chaque évaluation.
+        </div>
+
+        <div class="candidates-table-container">
+          <table class="candidates-table">
+            <thead>
+              <tr>
+                <th class="text-center">Score</th>
+                <th>Candidat</th>
+                <th>Poste actuel</th>
+                <th>Compétences</th>
+                <th>Disponibilité</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for candidat_data in candidats_automatiques %}
+              <tr>
+                <td class="text-center">
+                  <div class="score-cell">
+                    <div class="candidate-score {{ candidat_data.score_class|default:'score-average' }}">
+                      {{ candidat_data.score_affichage|default:'--' }}
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="candidate-info">
+                    <div class="candidate-name">
+                      {{ candidat_data.candidat_info.nom_complet|default:'Nom non disponible' }}
+                    </div>
+                    <div class="candidate-matricule">{{ candidat_data.candidat_info.matricule|default:'N/A' }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="candidate-details">
+                    <div class="candidate-poste">{{ candidat_data.candidat_info.poste_actuel|default:'Poste non renseigné' }}</div>
+                    <small class="text-muted">{{ candidat_data.candidat_info.departement|default:'Département non renseigné' }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="candidate-skills">
+                    {% if candidat_data.candidat_info.competences_principales %}
+                      {% for competence in candidat_data.candidat_info.competences_principales|slice:":3" %}
+                      <span class="skill-tag {% if competence.certifie %}certifiee{% endif %}">
+                        {{ competence.nom|default:'Compétence' }}
+                        {% if competence.niveau %}
+                        <small>({{ competence.niveau }}/4)</small>
+                        {% endif %}
+                      </span>
+                      {% endfor %}
+                    {% else %}
+                      <span class="text-muted">Aucune</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  {% if candidat_data.candidat_info.disponibilite.disponible %}
+                  <span class="availability-status available">
+                    <i class="fas fa-check"></i>
+                    Disponible
+                  </span>
+                  <div class="availability-score">
+                    Score: {{ candidat_data.candidat_info.disponibilite.score_disponibilite|default:0 }}
+                  </div>
+                  {% else %}
+                  <span class="availability-status unavailable">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{ candidat_data.candidat_info.disponibilite.raison|default:'Indisponible' }}
+                  </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="action-buttons-table">
+                    <button type="button" 
+                            class="btn btn-outline-small" 
+                            onclick="voirDetailsCandidatProposition('{{ candidat_data.candidat.matricule }}')">
+                      <i class="fas fa-eye"></i>
+                      Profil
+                    </button>
+                    <button type="button" 
+                            class="btn btn-outline-small btn-score-table" 
+                            onclick="afficherDetailsScore('{{ candidat_data.candidat.matricule }}', 'automatique', null)">
+                      <i class="fas fa-chart-line"></i>
+                      Score
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Légende pour les scores automatiques -->
+        <div class="scores-legend mt-3">
+          <h6>Légende des scores automatiques :</h6>
+          <div class="legend-items">
+            <div class="legend-item">
+              <span class="candidate-score score-excellent">85+</span>
+              <span>Excellent candidat</span>
+            </div>
+            <div class="legend-item">
+              <span class="candidate-score score-good">70-84</span>
+              <span>Bon candidat</span>
+            </div>
+            <div class="legend-item">
+              <span class="candidate-score score-average">55-69</span>
+              <span>Candidat moyen</span>
+            </div>
+            <div class="legend-item">
+              <span class="candidate-score score-poor">0-54</span>
+              <span>Candidat faible</span>
+            </div>
+          </div>
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-robot fa-4x text-muted mb-3"></i>
+          <h5>Aucun candidat automatique</h5>
+          <p class="text-muted">Aucun candidat n'a été sélectionné automatiquement pour cette demande.</p>
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal détails des scores -->
+<div class="modal fade modal-lg" id="modalDetailsScore" tabindex="-1" 
+     aria-labelledby="modalDetailsScoreLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDetailsScoreLabel">
+          <i class="fas fa-chart-pie"></i>
+          Détails du score - <span id="scoreModalCandidatNom">Candidat</span>
+        </h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Fermer">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Loading state -->
+        <div id="scoreModalLoading" class="text-center">
+          <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+          <p class="mt-3">Chargement des détails du score...</p>
+        </div>
+
+        <!-- Contenu principal -->
+        <div id="scoreModalContent" style="display: none;">
+          
+          <!-- Score principal -->
+          <div class="score-header">
+            <div class="score-principal">
+              <span class="score-final-display" id="scoreFinalDisplay">0</span>
+              <div class="score-info">
+                <div class="score-label">Score final</div>
+                <div class="score-type" id="scoreTypeDisplay">Type non défini</div>
+              </div>
+            </div>
+            <div class="score-confidence">
+              <span class="confidence-level" id="scoreConfidenceDisplay">Confiance: Moyenne</span>
+            </div>
+          </div>
+
+          <!-- Répartition des scores par critères -->
+          <div class="scores-breakdown">
+            <h6 class="breakdown-title">
+              <i class="fas fa-chart-bar"></i>
+              Répartition par critères
+            </h6>
+            <div class="criteria-scores" id="criteriaScoresContainer">
+              <!-- Contenu généré dynamiquement -->
+            </div>
+          </div>
+
+          <!-- Bonus et pénalités -->
+          <div class="scores-modifiers">
+            <h6 class="modifiers-title">
+              <i class="fas fa-plus-minus"></i>
+              Bonus et pénalités
+            </h6>
+            <div class="modifiers-list" id="modifiersListContainer">
+              <!-- Contenu généré dynamiquement -->
+            </div>
+          </div>
+
+          <!-- Commentaires et justifications -->
+          <div class="score-comments">
+            <h6 class="comments-title">
+              <i class="fas fa-comments"></i>
+              Commentaires d'évaluation
+            </h6>
+            <div class="comments-list" id="commentsListContainer">
+              <!-- Contenu généré dynamiquement -->
+            </div>
+          </div>
+
+          <!-- Métadonnées du calcul -->
+          <div class="score-metadata">
+            <h6 class="metadata-title">
+              <i class="fas fa-info-circle"></i>
+              Informations de calcul
+            </h6>
+            <div class="metadata-content" id="metadataContainer">
+              <!-- Contenu généré dynamiquement -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- État d'erreur -->
+        <div id="scoreModalError" style="display: none;" class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="alert-content">
+            <div class="alert-title">Erreur de chargement</div>
+            <p id="scoreModalErrorMessage">Impossible de charger les détails du score.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmation de refus -->
+<div class="modal fade" id="modalConfirmationRefus" tabindex="-1" 
+     aria-labelledby="modalConfirmationRefusLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="modalConfirmationRefusLabel">
+          <i class="fas fa-exclamation-triangle"></i>
+          Confirmation du refus
+        </h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Fermer">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir refuser cette demande d'intérim ?</p>
+        <div class="form-group">
+          <label for="motif_refus_global" class="form-label">Motif du refus</label>
+          <select id="motif_refus_global" class="form-select">
+            <option value="">Sélectionnez un motif...</option>
+            {% for code, libelle in motifs_refus %}
+            <option value="{{ code }}">{{ libelle }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="details_refus_global" class="form-label required">Détails du refus</label>
+          <textarea id="details_refus_global" 
+                    class="form-textarea" 
+                    rows="3" 
+                    required
+                    placeholder="Expliquez les raisons détaillées du refus..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" onclick="confirmerRefusGlobal()">
+          <i class="fas fa-times"></i>
+          Confirmer le refus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Traitement en cours...</p>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11;">
+  <!-- Les toasts seront ajoutés ici dynamiquement -->
+</div>
+
+<!-- Script Bootstrap pour les modales - Version compatible -->
+<script>
+// Détecter la version de Bootstrap et adapter les API modales
+function getBootstrapModal(element) {
+  // Essayer Bootstrap 5 en premier
+  if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+    return new bootstrap.Modal(element);
+  }
+  // Fallback Bootstrap 4 avec jQuery
+  else if (typeof $ !== 'undefined' && $.fn.modal) {
+    return $(element);
+  }
+  // Fallback manuel
+  else {
+    return {
+      show: () => {
+        element.style.display = 'block';
+        element.classList.add('show');
+        document.body.classList.add('modal-open');
+        
+        // Ajouter backdrop si nécessaire
+        if (!document.querySelector('.modal-backdrop')) {
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
+        }
+      },
+      hide: () => {
+        element.style.display = 'none';
+        element.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        
+        // Supprimer backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+      }
+    };
+  }
+}
+
+// Gestion universelle des boutons de fermeture
+document.addEventListener('click', function(e) {
+  // Fermer avec bouton close
+  if (e.target.matches('[data-bs-dismiss="modal"], [data-bs-dismiss="modal"] *')) {
+    const modal = e.target.closest('.modal');
+    if (modal) {
+      const modalInstance = getBootstrapModal(modal);
+      if (modalInstance.modal) {
+        modalInstance.modal('hide'); // Bootstrap 4/jQuery
+      } else if (modalInstance.hide) {
+        modalInstance.hide(); // Bootstrap 5 ou fallback
+      }
+    }
+  }
+  
+  // Fermer en cliquant sur le backdrop
+  if (e.target.classList.contains('modal')) {
+    const modalInstance = getBootstrapModal(e.target);
+    if (modalInstance.modal) {
+      modalInstance.modal('hide');
+    } else if (modalInstance.hide) {
+      modalInstance.hide();
+    }
+  }
+});
+
+// Fermer avec Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const openModal = document.querySelector('.modal.show, .modal[style*="display: block"]');
+    if (openModal) {
+      const modalInstance = getBootstrapModal(openModal);
+      if (modalInstance.modal) {
+        modalInstance.modal('hide');
+      } else if (modalInstance.hide) {
+        modalInstance.hide();
+      }
+    }
+  }
+});
+</script>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES POUR LA VALIDATION AVEC MODALES FONCTIONNELLES
+================================================================ */
+
+:root {
+  --primary-color: #007bff;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  
+  --excellent-color: #28a745;
+  --good-color: #17a2b8;
+  --average-color: #ffc107;
+  --poor-color: #dc3545;
+}
+
+/* Boutons de score */
+.btn-score-details, 
+.btn-score-main, 
+.btn-score-alt {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-score-details:hover, 
+.btn-score-main:hover, 
+.btn-score-alt:hover {
+  background: linear-gradient(135deg, #138496, #117a8b);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-score-mini {
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 0.8rem;
+  padding: 0.25rem;
+  margin-top: 0.25rem;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-score-mini:hover {
+  background: #e9ecef;
+  color: var(--info-color);
+  transform: scale(1.1);
+}
+
+/* Container du score dans proposition */
+.proposition-score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Styles de la modale de détails des scores */
+.score-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--info-color);
+}
+
+.score-principal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.score-final-display {
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--info-color);
+  min-width: 80px;
+  text-align: center;
+}
+
+.score-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.score-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.score-type {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.score-confidence {
+  text-align: right;
+}
+
+.confidence-level {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Répartition des scores */
+.scores-breakdown {
+  margin-bottom: 1.5rem;
+}
+
+.breakdown-title,
+.modifiers-title,
+.comments-title,
+.metadata-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 0.5rem;
+}
+
+.criteria-scores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.criteria-item {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.criteria-item:hover {
+  border-color: var(--info-color);
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.1);
+}
+
+.criteria-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.criteria-name {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.criteria-score {
+  background: var(--info-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.criteria-progress {
+  background: #e9ecef;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.criteria-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--info-color), #20c997);
+  transition: width 0.3s ease;
+}
+
+/* Modificateurs (bonus/pénalités) */
+.modifiers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modifier-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 4px solid transparent;
+}
+
+.modifier-item.bonus {
+  background: #d4edda;
+  border-left-color: var(--success-color);
+}
+
+.modifier-item.penalty {
+  background: #f8d7da;
+  border-left-color: var(--danger-color);
+}
+
+.modifier-item.neutral {
+  background: #e2e3e5;
+  border-left-color: #6c757d;
+}
+
+.modifier-name {
+  font-weight: 500;
+  color: #495057;
+}
+
+.modifier-value {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.modifier-value.positive {
+  background: var(--success-color);
+}
+
+.modifier-value.negative {
+  background: var(--danger-color);
+}
+
+.modifier-value.neutral {
+  background: #6c757d;
+}
+
+/* Liste des commentaires */
+.comments-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comment-item {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.comment-item:last-child {
+  margin-bottom: 0;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #495057;
+}
+
+.comment-type {
+  background: #e9ecef;
+  color: #6c757d;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.comment-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.comment-content {
+  line-height: 1.5;
+  color: #495057;
+}
+
+.comment-score {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+/* Métadonnées */
+.metadata-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--info-color);
+}
+
+.metadata-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.metadata-value {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Tableau des candidats automatiques */
+.score-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.availability-score {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.action-buttons-table {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.btn-score-table {
+  background: var(--info-color);
+  color: white;
+  border: none;
+  font-size: 0.8rem;
+}
+
+.btn-score-table:hover {
+  background: #138496;
+}
+
+/* Légende des scores */
+.scores-legend {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 1rem;
+  border-left: 4px solid var(--info-color);
+}
+
+.scores-legend h6 {
+  margin-bottom: 0.75rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.legend-items {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.legend-item .candidate-score {
+  width: 40px;
+  height: 40px;
+  font-size: 0.8rem;
+}
+
+/* Styles des cartes et containers */
+.card-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card-container:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.card-footer {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+  padding: 1.5rem 2rem;
+}
+
+/* Workflow et progression */
+.workflow-progress {
+  background: var(--light-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.progress {
+  height: 12px;
+  border-radius: 6px;
+  background-color: #e9ecef;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, var(--success-color), #20c997);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.workflow-step.completed {
+  border-color: var(--success-color);
+  background-color: #f8fff8;
+}
+
+.workflow-step.current {
+  border-color: var(--primary-color);
+  background-color: #f0f8ff;
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+  animation: pulse 2s infinite;
+}
+
+.workflow-step.pending {
+  border-color: #dee2e6;
+  opacity: 0.7;
+}
+
+.step-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.workflow-step.completed .step-icon { 
+  background-color: var(--success-color); 
+  color: white; 
+}
+
+.workflow-step.current .step-icon { 
+  background-color: var(--primary-color); 
+  color: white; 
+}
+
+.workflow-step.pending .step-icon { 
+  background-color: #6c757d; 
+  color: white; 
+}
+
+/* Styles des propositions */
+.proposition-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.proposition-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.15);
+}
+
+.proposition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 1rem;
+}
+
+.proposition-info h5.proposition-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.matricule-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.proposition-meta {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.score-display {
+  text-align: center;
+}
+
+.candidate-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-subtitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.25rem;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Actions de validation des propositions */
+.proposition-actions {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-top: 2px solid #e9ecef;
+}
+
+.validation-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.validation-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.custom-radio {
+  display: flex;
+  align-items: center;
+}
+
+.radio-input {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #dee2e6;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-input:checked {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  box-shadow: inset 0 0 0 4px white;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.radio-label.success {
+  color: var(--success-color);
+}
+
+.radio-label.danger {
+  color: var(--danger-color);
+}
+
+.radio-label:hover {
+  opacity: 0.8;
+}
+
+.validation-comment, .refus-comment {
+  background: white;
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-left: 2.75rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+.validation-comment {
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+}
+
+.refus-comment {
+  border-color: var(--danger-color);
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Scores et badges */
+.candidate-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.score-excellent { background-color: #28a745; }
+.score-good { background-color: #17a2b8; }
+.score-average { background-color: #ffc107; color: #212529; }
+.score-poor { background-color: #dc3545; }
+
+.score-value {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.badge-urgence {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge-urgence.badge-CRITIQUE { 
+  background-color: var(--danger-color); 
+  color: white;
+}
+
+.badge-urgence.badge-ELEVEE { 
+  background-color: var(--warning-color); 
+  color: #212529;
+}
+
+.badge-urgence.badge-MOYENNE { 
+  background-color: var(--info-color); 
+  color: white;
+}
+
+.badge-urgence.badge-NORMALE { 
+  background-color: var(--success-color); 
+  color: white;
+}
+
+.duration-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background: var(--info-color);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.skill-tag {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-right: 0.25rem;
+  margin-bottom: 0.25rem;
+  display: inline-block;
+}
+
+.skill-tag.certifiee {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.availability-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.availability-status.available {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.availability-status.unavailable {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Actions de validation horizontales */
+.validation-actions-footer {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+  padding: 1.5rem 2rem;
+  margin-top: 2rem;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.validation-actions-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 100%;
+  min-height: 60px;
+  position: relative;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.action-group-left {
+  justify-content: flex-start;
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.action-group-center {
+  justify-content: center;
+  flex: 1;
+  gap: 2rem;
+}
+
+.action-group-right {
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.btn-action {
+  min-width: 140px;
+  min-height: 50px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.btn-back {
+  min-width: 100px;
+  min-height: 50px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid #6c757d;
+  color: #6c757d;
+  background: white;
+}
+
+.btn-back:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(108, 117, 125, 0.2);
+}
+
+.btn-danger.btn-action {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border: none;
+  color: white;
+}
+
+.btn-danger.btn-action:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+}
+
+.btn-success.btn-action {
+  background: linear-gradient(135deg, #28a745, #218838);
+  border: none;
+  color: white;
+}
+
+.btn-success.btn-action:hover {
+  background: linear-gradient(135deg, #218838, #1e7e34);
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+}
+
+/* Spinner de chargement */
+.loading-spinner {
+  display: none;
+  margin-left: 0.5rem;
+}
+
+.btn-action:disabled .loading-spinner {
+  display: inline-block;
+}
+
+.btn-action:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Formulaires */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-label.required::after {
+  content: " *";
+  color: var(--danger-color);
+}
+
+.form-input, .form-textarea, .form-select {
+  padding: 0.75rem;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.form-help {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.info-display {
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid var(--primary-color);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.description-box {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #495057;
+}
+
+/* Boutons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline {
+  background: white;
+  border: 2px solid #6c757d;
+  color: #6c757d;
+}
+
+.btn-outline:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-outline-small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, var(--info-color), #117a8b);
+  color: white;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #117a8b, #0f6674);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-large {
+  padding: 0.875rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* États vides */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  margin-bottom: 1rem;
+}
+
+.empty-state h5 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+/* Loading et animations */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .candidate-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .workflow-steps {
+    grid-template-columns: 1fr;
+  }
+  
+  .criteria-scores {
+    grid-template-columns: 1fr;
+  }
+  
+  .metadata-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .legend-items {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .action-buttons-table {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .card-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .proposition-card {
+    padding: 1rem;
+  }
+  
+  .validation-actions-horizontal {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .action-group {
+    width: 100%;
+    justify-content: center;
+    flex: none;
+  }
+  
+  .action-group-left,
+  .action-group-right {
+    min-width: auto;
+  }
+  
+  .action-group-center {
+    gap: 1rem;
+    flex-direction: column;
+  }
+  
+  .btn-action {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .btn-back {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .score-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .validation-actions-footer {
+    padding: 1rem;
+  }
+  
+  .btn-text {
+    display: none;
+  }
+  
+  .btn-action,
+  .btn-back {
+    min-width: 60px;
+    padding: 0.75rem;
+  }
+  
+  .action-group-center {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  
+  .proposition-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .candidates-table-container {
+    font-size: 0.8rem;
+  }
+  
+  .candidates-table th,
+  .candidates-table td {
+    padding: 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scoreReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.criteria-item,
+.modifier-item,
+.comment-item {
+  animation: scoreReveal 0.3s ease-out;
+}
+
+/* Effet de pulsation pour les scores élevés */
+.score-final-display.excellent {
+  animation: scorePulse 2s infinite;
+  color: var(--success-color);
+}
+
+@keyframes scorePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Proposition alternative */
+.proposition-alternative-section {
+  display: none;
+  transition: all 0.3s ease;
+}
+
+.proposition-alternative-section.visible {
+  display: block;
+}
+
+.activation-checkbox {
+  margin-bottom: 1rem;
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-input {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  margin-right: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.checkbox-input:checked {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3e%3cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-size: 14px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.alternative-form {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.employee-search-container {
+  position: relative;
+}
+
+.employee-info-display {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.employee-info-display.active {
+  border-color: var(--success-color);
+  background: #f8fff8;
+}
+
+.employee-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--success-color);
+}
+
+.employee-score-display {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.score-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.employee-error-display {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  color: #721c24;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.employee-loading-display {
+  background: #e2e3e5;
+  border: 1px solid #d6d8db;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Utilitaires */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.justify-content-between { justify-content: space-between; }
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mt-3 { margin-top: 1.5rem; }
+
+.text-muted { color: #6c757d; }
+.text-primary { color: var(--primary-color); }
+.text-success { color: var(--success-color); }
+.text-danger { color: var(--danger-color); }
+.text-warning { color: var(--warning-color); }
+
+.d-none { display: none; }
+.d-md-inline { display: inline; }
+
+@media (max-width: 768px) {
+  .d-md-inline { display: none; }
+}
+
+/* Tables responsives */
+.candidates-table-container {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.candidates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.candidates-table th,
+.candidates-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.candidates-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  position: sticky;
+  top: 0;
+}
+
+.candidates-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.candidate-info {
+  min-width: 150px;
+}
+
+.candidate-name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.candidate-matricule {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.candidate-details {
+  min-width: 120px;
+}
+
+.candidate-poste {
+  font-weight: 500;
+  color: #495057;
+}
+
+.candidate-skills {
+  min-width: 200px;
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+// ================================================================
+// JAVASCRIPT POUR VALIDATION AVEC MODALES CORRIGÉES
+// ================================================================
+
+// Variables globales
+let candidatAlternatifTrouve = null;
+let propositionAlternativeActive = false;
+let debounceTimer = null;
+let scoresDetailsCandidats = {}; // Cache des scores détaillés
+
+// ================================================================
+// INITIALISATION
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Initialisation validation workflow avec modales corrigées');
+  
+  // Initialiser les composants
+  initValidationFormulaire();
+  initEventListeners();
+  configurerEtatInitial();
+  
+  // Auto-resize des textareas
+  document.querySelectorAll('textarea').forEach(textarea => {
+    autoResizeTextarea(textarea);
+    textarea.addEventListener('input', () => autoResizeTextarea(textarea));
+  });
+  
+  console.log('✅ Interface de validation avec modales fonctionnelles initialisée');
+});
+
+// ================================================================
+// FONCTIONS POUR LES SCORES DÉTAILLÉS
+// ================================================================
+
+async function recupererDetailsScore(candidatMatricule, typeSource, propositionId) {
+  try {
+    let url;
+    if (typeSource === 'proposition' && propositionId) {
+      url = `/interim/ajax/proposition/${propositionId}/score-details/`;
+    } else if (typeSource === 'automatique') {
+      url = `/ajax/candidat/matricule/${candidatMatricule}/score-automatique/{{ demande.id }}/`;
+    } else {
+      url = `/ajax/candidat/matricule/${candidatMatricule}/score-details/{{ demande.id }}/`;
+    }
+    
+    console.log('🔗 URL appelée:', url);
+    
+    // Vérifier le cache d'abord
+    const cacheKey = `${candidatMatricule}_${typeSource}_${propositionId || 'auto'}`;
+    if (scoresDetailsCandidats[cacheKey]) {
+      console.log('📋 Utilisation cache scores pour:', cacheKey);
+      return { success: true, data: scoresDetailsCandidats[cacheKey] };
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('📡 Réponse HTTP:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('📊 Données reçues:', data);
+    
+    // Mettre en cache
+    if (data.success) {
+      scoresDetailsCandidats[cacheKey] = data.data;
+    }
+    
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Erreur récupération scores AJAX:', error);
+    
+    return {
+      success: false,
+      error: error.message || 'Impossible de récupérer les détails du score'
+    };
+  }
+}
+
+async function afficherDetailsScore(candidatMatricule, typeSource, propositionId = null) {
+  console.log('📊 Affichage détails score candidat matricule:', candidatMatricule, 'Type:', typeSource, 'PropositionId:', propositionId);
+  
+  try {
+    // Obtenir l'élément modal
+    const modalElement = document.getElementById('modalDetailsScore');
+    if (!modalElement) {
+      console.error('❌ Modale modalDetailsScore non trouvée');
+      showToast('Erreur', 'Interface de score non disponible', 'error');
+      return;
+    }
+    
+    // Créer et afficher la modale avec compatibilité Bootstrap
+    const modal = getBootstrapModal(modalElement);
+    if (modal.modal) {
+      modal.modal('show'); // Bootstrap 4/jQuery
+    } else {
+      modal.show(); // Bootstrap 5 ou fallback
+    }
+    
+    // Réinitialiser l'état de la modale
+    document.getElementById('scoreModalLoading').style.display = 'block';
+    document.getElementById('scoreModalContent').style.display = 'none';
+    document.getElementById('scoreModalError').style.display = 'none';
+    
+    // Récupérer les détails du score
+    console.log('🔄 Récupération des détails du score...');
+    const scoreDetails = await recupererDetailsScore(candidatMatricule, typeSource, propositionId);
+    
+    if (scoreDetails && scoreDetails.success) {
+      console.log('✅ Détails du score récupérés:', scoreDetails.data);
+      
+      // Afficher les détails
+      afficherContenuDetailsScore(scoreDetails.data);
+      
+      // Masquer le loading et afficher le contenu
+      document.getElementById('scoreModalLoading').style.display = 'none';
+      document.getElementById('scoreModalContent').style.display = 'block';
+      
+      console.log('✅ Modale affichée avec succès');
+      
+    } else {
+      throw new Error(scoreDetails?.error || scoreDetails?.message || 'Erreur de récupération des scores');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur affichage détails score:', error);
+    
+    // Afficher l'erreur dans la modale
+    document.getElementById('scoreModalLoading').style.display = 'none';
+    document.getElementById('scoreModalContent').style.display = 'none';
+    document.getElementById('scoreModalError').style.display = 'block';
+    
+    const errorElement = document.getElementById('scoreModalErrorMessage');
+    if (errorElement) {
+      errorElement.textContent = error.message || 'Erreur lors du chargement des détails du score';
+    }
+    
+    // Toast pour notification
+    showToast('Erreur', error.message || 'Impossible de charger les détails du score', 'error');
+  }
+}
+
+function afficherContenuDetailsScore(scoreData) {
+  try {
+    // Mettre à jour le nom du candidat
+    document.getElementById('scoreModalCandidatNom').textContent = 
+      scoreData.candidat_nom || 'Candidat';
+    
+    // Score principal
+    const scoreFinal = scoreData.score_final || 0;
+    const scoreDisplay = document.getElementById('scoreFinalDisplay');
+    scoreDisplay.textContent = scoreFinal;
+    scoreDisplay.className = `score-final-display ${getScoreClass(scoreFinal)}`;
+    
+    // Type de score
+    document.getElementById('scoreTypeDisplay').textContent = 
+      scoreData.type_calcul || 'Score calculé';
+    
+    // Confiance
+    document.getElementById('scoreConfidenceDisplay').textContent = 
+      `Confiance: ${scoreData.confiance || 'Moyenne'}`;
+    
+    // Critères de scoring
+    afficherCriteresScoring(scoreData.criteres || {});
+    
+    // Modificateurs (bonus/pénalités)
+    afficherModificateursScore(scoreData.modificateurs || {});
+    
+    // Commentaires
+    afficherCommentairesScore(scoreData.commentaires || []);
+    
+    // Métadonnées
+    afficherMetadonneesScore(scoreData.metadonnees || {});
+    
+  } catch (error) {
+    console.error('Erreur affichage contenu score:', error);
+    throw error;
+  }
+}
+
+function afficherCriteresScoring(criteres) {
+  const container = document.getElementById('criteriaScoresContainer');
+  container.innerHTML = '';
+  
+  const criteresListe = [
+    { key: 'competences', label: 'Compétences', icon: 'fa-tools' },
+    { key: 'experience', label: 'Expérience', icon: 'fa-briefcase' },
+    { key: 'disponibilite', label: 'Disponibilité', icon: 'fa-calendar-check' },
+    { key: 'proximite', label: 'Proximité', icon: 'fa-map-marker-alt' },
+    { key: 'similarite_poste', label: 'Similarité poste', icon: 'fa-user-tie' },
+    { key: 'anciennete', label: 'Ancienneté', icon: 'fa-clock' }
+  ];
+  
+  criteresListe.forEach(critere => {
+    const score = criteres[critere.key] || 0;
+    const pourcentage = Math.min(100, Math.max(0, score));
+    
+    const critereElement = document.createElement('div');
+    critereElement.className = 'criteria-item';
+    critereElement.innerHTML = `
+      <div class="criteria-header">
+        <span class="criteria-name">
+          <i class="fas ${critere.icon}"></i>
+          ${critere.label}
+        </span>
+        <span class="criteria-score">${score}</span>
+      </div>
+      <div class="criteria-progress">
+        <div class="criteria-progress-bar" style="width: ${pourcentage}%"></div>
+      </div>
+    `;
+    
+    container.appendChild(critereElement);
+  });
+}
+
+function afficherModificateursScore(modificateurs) {
+  const container = document.getElementById('modifiersListContainer');
+  container.innerHTML = '';
+  
+  // Bonus
+  const bonus = modificateurs.bonus || {};
+  Object.entries(bonus).forEach(([key, value]) => {
+    if (value !== 0) {
+      const modifierElement = document.createElement('div');
+      modifierElement.className = 'modifier-item bonus';
+      modifierElement.innerHTML = `
+        <span class="modifier-name">
+          <i class="fas fa-plus"></i>
+          ${formatModifierName(key)}
+        </span>
+        <span class="modifier-value positive">+${value}</span>
+      `;
+      container.appendChild(modifierElement);
+    }
+  });
+  
+  // Pénalités
+  const penalites = modificateurs.penalites || {};
+  Object.entries(penalites).forEach(([key, value]) => {
+    if (value !== 0) {
+      const modifierElement = document.createElement('div');
+      modifierElement.className = 'modifier-item penalty';
+      modifierElement.innerHTML = `
+        <span class="modifier-name">
+          <i class="fas fa-minus"></i>
+          ${formatModifierName(key)}
+        </span>
+        <span class="modifier-value negative">-${Math.abs(value)}</span>
+      `;
+      container.appendChild(modifierElement);
+    }
+  });
+  
+  // Si aucun modificateur
+  if (container.children.length === 0) {
+    container.innerHTML = `
+      <div class="modifier-item neutral">
+        <span class="modifier-name">
+          <i class="fas fa-equals"></i>
+          Aucun modificateur appliqué
+        </span>
+        <span class="modifier-value neutral">0</span>
+      </div>
+    `;
+  }
+}
+
+function afficherCommentairesScore(commentaires) {
+  const container = document.getElementById('commentsListContainer');
+  container.innerHTML = '';
+  
+  if (commentaires.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-muted">
+        <i class="fas fa-comment-slash fa-2x mb-2"></i>
+        <p>Aucun commentaire d'évaluation</p>
+      </div>
+    `;
+    return;
+  }
+  
+  commentaires.forEach(commentaire => {
+    const commentElement = document.createElement('div');
+    commentElement.className = 'comment-item';
+    commentElement.innerHTML = `
+      <div class="comment-header">
+        <div>
+          <span class="comment-author">${commentaire.auteur || 'Auteur inconnu'}</span>
+          <span class="comment-type">${commentaire.type || 'Commentaire'}</span>
+        </div>
+        <span class="comment-date">${formatDate(commentaire.date)}</span>
+      </div>
+      <div class="comment-content">${commentaire.contenu || 'Aucun contenu'}</div>
+      ${commentaire.score_associe ? `<div class="comment-score">Score associé: ${commentaire.score_associe}</div>` : ''}
+    `;
+    container.appendChild(commentElement);
+  });
+}
+
+function afficherMetadonneesScore(metadonnees) {
+  const container = document.getElementById('metadataContainer');
+  container.innerHTML = '';
+  
+  const metaItems = [
+    { key: 'date_calcul', label: 'Date de calcul', icon: 'fa-calendar', formatter: formatDate },
+    { key: 'version_algorithme', label: 'Version algorithme', icon: 'fa-code-branch' },
+    { key: 'source_donnees', label: 'Sources de données', icon: 'fa-database' },
+    { key: 'calcule_par', label: 'Calculé par', icon: 'fa-user-cog' },
+    { key: 'duree_calcul', label: 'Durée calcul', icon: 'fa-stopwatch' },
+    { key: 'fiabilite', label: 'Fiabilité', icon: 'fa-shield-alt' }
+  ];
+  
+  metaItems.forEach(item => {
+    const value = metadonnees[item.key];
+    if (value !== undefined && value !== null && value !== '') {
+      const metaElement = document.createElement('div');
+      metaElement.className = 'metadata-item';
+      metaElement.innerHTML = `
+        <div class="metadata-label">
+          <i class="fas ${item.icon}"></i>
+          ${item.label}
+        </div>
+        <div class="metadata-value">
+          ${item.formatter ? item.formatter(value) : value}
+        </div>
+      `;
+      container.appendChild(metaElement);
+    }
+  });
+  
+  // Si aucune métadonnée
+  if (container.children.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-muted">
+        <i class="fas fa-info-circle fa-2x mb-2"></i>
+        <p>Aucune métadonnée disponible</p>
+      </div>
+    `;
+  }
+}
+
+// ================================================================
+// OUVERTURE DE LA MODALE CANDIDATS AUTOMATIQUES
+// ================================================================
+
+function ouvrirModaleCandidatsAutomatiques() {
+  console.log('📋 Ouverture modale candidats automatiques');
+  
+  try {
+    const modalElement = document.getElementById('modalCandidatsAutomatiques');
+    if (!modalElement) {
+      console.error('❌ Modale modalCandidatsAutomatiques non trouvée');
+      showToast('Erreur', 'Interface candidats automatiques non disponible', 'error');
+      return;
+    }
+    
+    // Créer et afficher la modale avec compatibilité Bootstrap
+    const modal = getBootstrapModal(modalElement);
+    if (modal.modal) {
+      modal.modal('show'); // Bootstrap 4/jQuery
+    } else {
+      modal.show(); // Bootstrap 5 ou fallback
+    }
+    
+    console.log('✅ Modale candidats automatiques ouverte');
+    
+  } catch (error) {
+    console.error('❌ Erreur ouverture modale candidats automatiques:', error);
+    showToast('Erreur', 'Impossible d\'ouvrir la liste des candidats', 'error');
+  }
+}
+
+// ================================================================
+// GESTION DES PROPOSITIONS
+// ================================================================
+
+function togglePropositionOptions(radioElement) {
+  console.log('🔄 Toggle proposition:', radioElement.value);
+  
+  const value = radioElement.value;
+  const isValidation = value.startsWith('VALIDER_');
+  
+  if (isValidation) {
+    const propositionId = value.replace('VALIDER_', '');
+    
+    // Masquer toutes les autres zones
+    document.querySelectorAll('[id^="validation_justification_"]').forEach(zone => {
+      zone.style.display = 'none';
+    });
+    document.querySelectorAll('[id^="refus_justification_"]').forEach(zone => {
+      zone.style.display = 'none';
+    });
+    
+    // Désactiver la proposition alternative
+    const checkboxAlternative = document.getElementById('proposer_alternative');
+    if (checkboxAlternative) {
+      checkboxAlternative.checked = false;
+      togglePropositionAlternative(false);
+    }
+    
+    // Décocher tous les refus individuels
+    document.querySelectorAll('[id^="refuser_"]').forEach(radio => {
+      radio.checked = false;
+    });
+    
+    // Afficher la zone de validation pour cette proposition
+    const validationZone = document.getElementById('validation_justification_' + propositionId);
+    if (validationZone) {
+      validationZone.style.display = 'block';
+    }
+    
+    showToast('Validation', 'Proposition sélectionnée pour validation', 'success');
+  }
+  
+  updateValidationButtons();
+}
+
+function toggleRefusJustification(propositionId, show) {
+  console.log('🔄 Toggle refus justification:', propositionId, show);
+  
+  const zone = document.getElementById('refus_justification_' + propositionId);
+  if (zone) {
+    zone.style.display = show ? 'block' : 'none';
+  }
+  
+  if (show) {
+    // Décocher la validation de cette proposition si elle était sélectionnée
+    const validationRadio = document.querySelector(`[value="VALIDER_${propositionId}"]`);
+    if (validationRadio) {
+      validationRadio.checked = false;
+    }
+    
+    // Masquer la zone de validation
+    const validationZone = document.getElementById('validation_justification_' + propositionId);
+    if (validationZone) {
+      validationZone.style.display = 'none';
+    }
+    
+    // Focus sur le textarea de justification
+    setTimeout(() => {
+      const textarea = document.getElementById(`justification_refus_${propositionId}`);
+      if (textarea) textarea.focus();
+    }, 100);
+    
+    showToast('Refus', 'Veuillez justifier le refus de cette proposition', 'warning');
+  }
+  
+  updateValidationButtons();
+}
+
+// ================================================================
+// GESTION DE LA PROPOSITION ALTERNATIVE
+// ================================================================
+
+function togglePropositionAlternative(activer) {
+  console.log('🔄 Toggle proposition alternative:', activer);
+  
+  propositionAlternativeActive = activer;
+  const formulaire = document.getElementById('formulairePropositionAlternative');
+  const sectionBody = document.getElementById('propositionAlternativeBody');
+  const btn = document.getElementById('btnTogglePropositionAlternative');
+  
+  if (formulaire && sectionBody) {
+    if (activer) {
+      // Afficher le formulaire
+      formulaire.style.display = 'block';
+      sectionBody.setAttribute('data-visible', 'true');
+      sectionBody.classList.add('visible');
+      sectionBody.style.display = 'block';
+      
+      // Mettre à jour le bouton
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-minus"></i> Fermer la proposition';
+        btn.classList.add('active');
+      }
+      
+      // Décocher toutes les validations de propositions précédentes
+      document.querySelectorAll('[name="decision_proposition"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Masquer toutes les zones de validation/refus
+      document.querySelectorAll('[id^="validation_justification_"]').forEach(zone => {
+        zone.style.display = 'none';
+      });
+      document.querySelectorAll('[id^="refus_justification_"]').forEach(zone => {
+        zone.style.display = 'none';
+      });
+      
+      // Focus sur le champ de recherche
+      const matriculeInput = document.getElementById('candidat_alternatif_matricule');
+      if (matriculeInput) {
+        setTimeout(() => matriculeInput.focus(), 300);
+      }
+      
+      showToast('Proposition', 'Section de proposition alternative ouverte', 'info');
+    } else {
+      // Masquer le formulaire
+      formulaire.style.display = 'none';
+      sectionBody.setAttribute('data-visible', 'false');
+      sectionBody.classList.remove('visible');
+      sectionBody.style.display = 'none';
+      
+      // Mettre à jour le bouton
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-plus"></i> Proposer un candidat alternatif';
+        btn.classList.remove('active');
+      }
+      
+      // Reset du formulaire alternatif
+      resetFormulaireAlternatif();
+    }
+  }
+  
+  updateValidationButtons();
+}
+
+function resetFormulaireAlternatif() {
+  console.log('🔄 Reset formulaire alternatif');
+  
+  // Reset des champs
+  const champs = [
+    'candidat_alternatif_matricule',
+    'candidat_alternatif_id',
+    'justification_proposition_alternative',
+    'competences_specifiques_alternative',
+    'experience_pertinente_alternative'
+  ];
+  
+  champs.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.value = '';
+  });
+  
+  // Masquer les zones d'affichage
+  const zones = [
+    'candidat_alternatif_info',
+    'candidat_alternatif_error', 
+    'candidat_alternatif_loading'
+  ];
+  
+  zones.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.style.display = 'none';
+  });
+  
+  // Masquer le bouton de score alternatif
+  const btnScore = document.getElementById('btnScoreAlternatif');
+  if (btnScore) {
+    btnScore.style.display = 'none';
+  }
+  
+  candidatAlternatifTrouve = null;
+}
+
+// ================================================================
+// RECHERCHE DE CANDIDAT ALTERNATIF
+// ================================================================
+
+function rechercherCandidatAlternatif(matricule) {
+  console.log('🔍 Recherche candidat alternatif par matricule:', matricule);
+  
+  // Nettoyer les timers précédents
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+  
+  if (!matricule || matricule.length < 2) {
+    masquerInfosCandidatAlternatif();
+    return;
+  }
+  
+  // Debounce pour éviter trop de requêtes
+  debounceTimer = setTimeout(() => {
+    executerRechercheAlternative(matricule);
+  }, 500);
+}
+
+async function executerRechercheAlternative(matricule) {
+  console.log('🚀 Exécution recherche alternative pour matricule:', matricule);
+  
+  // Afficher le loading
+  document.getElementById('candidat_alternatif_loading').style.display = 'flex';
+  masquerInfosCandidatAlternatif();
+  
+  try {
+    const response = await fetch('/interim/ajax/rechercher-candidat-alternatif/', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        matricule: matricule,
+        demande_id: parseInt('{{ demande.id }}') // S'assurer que c'est un entier
+      })
+    });
+    
+    console.log('📡 Réponse recherche alternative:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('📊 Données candidat alternatif:', data);
+    
+    if (data.success && data.employe) {
+      candidatAlternatifTrouve = data.employe;
+      
+      // Remplir le champ caché avec l'ID
+      document.getElementById('candidat_alternatif_id').value = data.employe.id;
+      
+      // Extraire le score de manière sécurisée
+      let score = 0;
+      if (data.score) {
+        if (typeof data.score === 'object' && data.score.score_final !== undefined) {
+          score = data.score.score_final;
+        } else if (typeof data.score === 'number') {
+          score = data.score;
+        }
+      }
+      
+      // Afficher les informations
+      afficherCandidatAlternatif(data.employe, score);
+      
+      // Afficher le bouton de score détaillé
+      const btnScore = document.getElementById('btnScoreAlternatif');
+      if (btnScore) {
+        btnScore.style.display = 'inline-flex';
+      }
+      
+      showToast('Succès', `Candidat ${data.employe.nom_complet} trouvé`, 'success');
+    } else {
+      throw new Error(data.message || data.error || 'Candidat non trouvé');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur recherche:', error);
+    
+    let messageErreur = 'Erreur de communication';
+    
+    // Gestion des erreurs spécifiques
+    if (error.message) {
+      if (error.message.includes('not supported between instances')) {
+        messageErreur = 'Erreur de calcul du score. Veuillez réessayer.';
+      } else if (error.message.includes('non trouvé')) {
+        messageErreur = 'Employé non trouvé avec ce matricule';
+      } else if (error.message.includes('déjà proposé')) {
+        messageErreur = 'Ce candidat est déjà proposé pour cette demande';
+      } else {
+        messageErreur = error.message;
+      }
+    }
+    
+    afficherErreurCandidatAlternatif(messageErreur);
+    showToast('Erreur', messageErreur, 'error');
+  } finally {
+    document.getElementById('candidat_alternatif_loading').style.display = 'none';
+  }
+}
+
+function afficherCandidatAlternatif(employe, score) {
+  console.log('✅ Affichage candidat alternatif:', employe.nom_complet, 'Score:', score);
+  
+  // S'assurer que le score est un nombre
+  const scoreNumeric = parseFloat(score) || 0;
+  
+  // Construire le HTML des détails
+  const detailsHtml = `
+    <div class="employee-info-row">
+      <strong>${employe.nom_complet || 'Nom non disponible'}</strong>
+      <span class="employee-matricule">${employe.matricule || 'N/A'}</span>
+    </div>
+    <div class="employee-info-organization">
+      <span class="org-info"><i class="fas fa-briefcase"></i> ${employe.poste_actuel || 'Poste non renseigné'}</span>
+      <span class="org-info"><i class="fas fa-building"></i> ${employe.departement || 'Département non renseigné'}</span>
+      <span class="org-info"><i class="fas fa-map-marker-alt"></i> ${employe.site || 'Site non renseigné'}</span>
+      ${employe.anciennete ? `<span class="org-info"><i class="fas fa-calendar-alt"></i> ${employe.anciennete}</span>` : ''}
+    </div>
+  `;
+  
+  document.getElementById('candidat_alternatif_details').innerHTML = detailsHtml;
+  
+  // Afficher le score avec classe appropriée
+  const scoreElement = document.getElementById('candidat_alternatif_score');
+  if (scoreElement) {
+    scoreElement.textContent = scoreNumeric;
+    scoreElement.className = 'score-value ' + getScoreClass(scoreNumeric);
+  }
+  
+  // Afficher la zone d'information
+  document.getElementById('candidat_alternatif_info').style.display = 'block';
+  
+  updateValidationButtons();
+}
+
+function afficherErreurCandidatAlternatif(message) {
+  document.getElementById('candidat_alternatif_error_message').textContent = message;
+  document.getElementById('candidat_alternatif_error').style.display = 'flex';
+  
+  candidatAlternatifTrouve = null;
+  document.getElementById('candidat_alternatif_id').value = '';
+  
+  // Masquer le bouton de score
+  const btnScore = document.getElementById('btnScoreAlternatif');
+  if (btnScore) {
+    btnScore.style.display = 'none';
+  }
+  
+  updateValidationButtons();
+}
+
+function masquerInfosCandidatAlternatif() {
+  const zones = [
+    'candidat_alternatif_info',
+    'candidat_alternatif_error'
+  ];
+  
+  zones.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.style.display = 'none';
+  });
+  
+  // Masquer le bouton de score
+  const btnScore = document.getElementById('btnScoreAlternatif');
+  if (btnScore) {
+    btnScore.style.display = 'none';
+  }
+}
+
+function afficherDetailsScoreAlternatif() {
+  if (candidatAlternatifTrouve && candidatAlternatifTrouve.matricule) {
+    afficherDetailsScore(candidatAlternatifTrouve.matricule, 'alternatif');
+  } else {
+    showToast('Erreur', 'Aucun candidat alternatif sélectionné', 'error');
+  }
+}
+
+// ================================================================
+// VALIDATION ET SOUMISSION
+// ================================================================
+
+function validerDemande(action) {
+  console.log('📤 Validation demande:', action);
+  
+  // Retirer la classe loading de tous les boutons
+  document.querySelectorAll('.btn-action').forEach(btn => {
+    btn.classList.remove('loading');
+  });
+  
+  if (action === 'REFUSER') {
+    const modalElement = document.getElementById('modalConfirmationRefus');
+    if (modalElement) {
+      const modal = getBootstrapModal(modalElement);
+      if (modal.modal) {
+        modal.modal('show'); // Bootstrap 4/jQuery
+      } else {
+        modal.show(); // Bootstrap 5 ou fallback
+      }
+    }
+  } else if (action === 'APPROUVER') {
+    // Vérifier que le formulaire est valide
+    if (!validerFormulaire()) {
+      return;
+    }
+    
+    // Désactiver les boutons et soumettre
+    setLoadingState(true);
+    document.getElementById('validationForm').submit();
+  }
+}
+
+function confirmerRefusGlobal() {
+  const motif = document.getElementById('motif_refus_global').value;
+  const details = document.getElementById('details_refus_global').value.trim();
+  
+  if (!details) {
+    showToast('Erreur', 'Veuillez saisir les détails du refus.', 'error');
+    return;
+  }
+  
+  // Ajouter les champs cachés pour le refus
+  const form = document.getElementById('validationForm');
+  
+  const actionInput = document.createElement('input');
+  actionInput.type = 'hidden';
+  actionInput.name = 'action_validation';
+  actionInput.value = 'REFUSER';
+  form.appendChild(actionInput);
+  
+  const motifInput = document.createElement('input');
+  motifInput.type = 'hidden';
+  motifInput.name = 'motif_refus_global';
+  motifInput.value = motif;
+  form.appendChild(motifInput);
+  
+  const detailsInput = document.createElement('input');
+  detailsInput.type = 'hidden';
+  detailsInput.name = 'details_refus_global';
+  detailsInput.value = details;
+  form.appendChild(detailsInput);
+  
+  // Fermer la modale
+  const modalElement = document.getElementById('modalConfirmationRefus');
+  if (modalElement) {
+    const modal = getBootstrapModal(modalElement);
+    if (modal.modal) {
+      modal.modal('hide'); // Bootstrap 4/jQuery
+    } else {
+      modal.hide(); // Bootstrap 5 ou fallback
+    }
+  }
+  
+  // Soumettre le formulaire
+  setLoadingState(true);
+  form.submit();
+}
+
+function validerFormulaire() {
+  const commentaireGeneral = document.getElementById('commentaire_validation_general').value.trim();
+  
+  if (!commentaireGeneral || commentaireGeneral.length < 10) {
+    showToast('Erreur', 'Veuillez saisir un commentaire général de validation d\'au moins 10 caractères.', 'error');
+    document.getElementById('commentaire_validation_general').focus();
+    return false;
+  }
+  
+  // Vérifier qu'au moins une action a été choisie
+  const propositionValidee = document.querySelector('[name="decision_proposition"]:checked');
+  const propositionAlternative = document.getElementById('proposer_alternative')?.checked;
+  
+  if (!propositionValidee && !propositionAlternative) {
+    showToast('Erreur', 'Veuillez valider une proposition existante ou proposer un candidat alternatif.', 'error');
+    return false;
+  }
+  
+  // Si proposition alternative, vérifier les champs obligatoires
+  if (propositionAlternative) {
+    const matricule = document.getElementById('candidat_alternatif_matricule')?.value?.trim();
+    const justification = document.getElementById('justification_proposition_alternative')?.value?.trim();
+    
+    if (!matricule || !candidatAlternatifTrouve) {
+      showToast('Erreur', 'Veuillez rechercher et sélectionner un candidat alternatif valide.', 'error');
+      document.getElementById('candidat_alternatif_matricule')?.focus();
+      return false;
+    }
+    
+    if (!justification || justification.length < 10) {
+      showToast('Erreur', 'Veuillez justifier votre proposition alternative (minimum 10 caractères).', 'error');
+      document.getElementById('justification_proposition_alternative')?.focus();
+      return false;
+    }
+  }
+  
+  // Vérifier les justifications de refus si nécessaire
+  const refusChecked = document.querySelectorAll('[id^="refuser_"]:checked');
+  for (let refusRadio of refusChecked) {
+    const propositionId = refusRadio.id.replace('refuser_', '');
+    const justificationRefus = document.getElementById(`justification_refus_${propositionId}`);
+    if (justificationRefus && !justificationRefus.value.trim()) {
+      showToast('Erreur', `Veuillez justifier le refus de la proposition.`, 'error');
+      justificationRefus.focus();
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+function updateValidationButtons() {
+  const btnApprouver = document.getElementById('btnApprouver');
+  const btnRefuser = document.getElementById('btnRefuser');
+  
+  if (btnApprouver && btnRefuser) {
+    const commentaire = document.getElementById('commentaire_validation_general')?.value?.trim() || '';
+    const canValidate = commentaire.length >= 10;
+    
+    btnApprouver.disabled = !canValidate;
+    btnRefuser.disabled = !canValidate;
+  }
+}
+
+function setLoadingState(loading) {
+  const buttons = document.querySelectorAll('#btnApprouver, #btnRefuser');
+  const spinners = document.querySelectorAll('.loading-spinner');
+  const overlay = document.getElementById('loadingOverlay');
+  
+  buttons.forEach(btn => {
+    btn.disabled = loading;
+    if (loading) {
+      btn.classList.add('loading');
+    } else {
+      btn.classList.remove('loading');
+    }
+  });
+  
+  spinners.forEach(spinner => {
+    spinner.style.display = loading ? 'inline-block' : 'none';
+  });
+  
+  if (overlay) {
+    overlay.style.display = loading ? 'flex' : 'none';
+  }
+}
+
+// ================================================================
+// ACTIONS SUPPLÉMENTAIRES
+// ================================================================
+
+function voirDetailsCandidatProposition(candidatMatricule) {
+  console.log('👤 Voir détails candidat proposition matricule:', candidatMatricule);
+  window.open(`/interim/employe/${candidatMatricule}/`, '_blank');
+}
+
+function demanderInfos() {
+  const informations = prompt('Quelles informations complémentaires souhaitez-vous demander ?');
+  if (informations && informations.trim()) {
+    fetch('/interim/ajax/demander-informations/', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        demande_id: parseInt('{{ demande.id }}'), // S'assurer que c'est un entier
+        informations: informations
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Information', 'Demande d\'informations envoyée avec succès', 'success');
+      } else {
+        showToast('Erreur', data.message || 'Erreur lors de l\'envoi', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur demande informations:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    });
+  }
+}
+
+function escaladerValidation() {
+  if (confirm('Êtes-vous sûr de vouloir escalader cette validation au niveau supérieur ?')) {
+    const motif = prompt('Motif de l\'escalade:');
+    if (motif && motif.trim()) {
+      fetch('/interim/ajax/escalader-validation/', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+          demande_id: parseInt('{{ demande.id }}'), // S'assurer que c'est un entier
+          motif: motif
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Escalade', 'Escalade effectuée avec succès', 'success');
+          setTimeout(() => location.reload(), 2000);
+        } else {
+          showToast('Erreur', data.message || 'Erreur lors de l\'escalade', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Erreur escalade:', error);
+        showToast('Erreur', 'Erreur de communication', 'error');
+      });
+    }
+  }
+}
+
+// ================================================================
+// FONCTIONS D'INITIALISATION ET UTILITAIRES
+// ================================================================
+
+function initEventListeners() {
+  console.log('🔧 Initialisation des event listeners...');
+  
+  // Event listener pour le bouton toggle proposition alternative
+  const btnToggle = document.getElementById('btnTogglePropositionAlternative');
+  if (btnToggle) {
+    btnToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      const sectionBody = document.getElementById('propositionAlternativeBody');
+      const isVisible = sectionBody?.getAttribute('data-visible') === 'true';
+      togglePropositionAlternative(!isVisible);
+    });
+  }
+  
+  // Event listener pour la checkbox proposition alternative
+  const checkboxAlternative = document.getElementById('proposer_alternative');
+  if (checkboxAlternative) {
+    checkboxAlternative.addEventListener('change', function() {
+      const formulaire = document.getElementById('formulairePropositionAlternative');
+      if (formulaire) {
+        formulaire.style.display = this.checked ? 'block' : 'none';
+      }
+    });
+  }
+  
+  // Event listener pour la recherche de candidat
+  const matriculeInput = document.getElementById('candidat_alternatif_matricule');
+  if (matriculeInput) {
+    matriculeInput.addEventListener('input', function() {
+      rechercherCandidatAlternatif(this.value.trim());
+    });
+  }
+  
+  // Event listener pour la justification
+  const justificationInput = document.getElementById('justification_proposition_alternative');
+  if (justificationInput) {
+    justificationInput.addEventListener('input', function() {
+      updateValidationButtons();
+      autoResizeTextarea(this);
+    });
+  }
+  
+  // Event listener pour le commentaire général
+  const commentaireGeneral = document.getElementById('commentaire_validation_general');
+  if (commentaireGeneral) {
+    commentaireGeneral.addEventListener('input', function() {
+      updateValidationButtons();
+      autoResizeTextarea(this);
+    });
+  }
+  
+  // Raccourcis clavier
+  document.addEventListener('keydown', function(e) {
+    // Escape pour fermer les sections ouvertes
+    if (e.key === 'Escape') {
+      const sectionBody = document.getElementById('propositionAlternativeBody');
+      if (sectionBody && sectionBody.getAttribute('data-visible') === 'true') {
+        togglePropositionAlternative(false);
+      }
+      
+      // Note: La fermeture des modales avec Escape est gérée dans le script Bootstrap universel
+    }
+  });
+  
+  console.log('✅ Event listeners initialisés');
+}
+
+function configurerEtatInitial() {
+  console.log('🔧 Configuration état initial...');
+  
+  // S'assurer que la section proposition alternative est fermée
+  const sectionBody = document.getElementById('propositionAlternativeBody');
+  if (sectionBody) {
+    sectionBody.style.display = 'none';
+    sectionBody.setAttribute('data-visible', 'false');
+    sectionBody.classList.remove('visible');
+  }
+  
+  // Masquer le formulaire alternatif
+  const formulaire = document.getElementById('formulairePropositionAlternative');
+  if (formulaire) {
+    formulaire.style.display = 'none';
+  }
+  
+  // Vérification initiale des boutons
+  updateValidationButtons();
+  
+  console.log('✅ État initial configuré');
+}
+
+function initValidationFormulaire() {
+  // Auto-resize pour toutes les textareas
+  document.querySelectorAll('.form-textarea').forEach(textarea => {
+    autoResizeTextarea(textarea);
+  });
+  
+  // Focus sur le commentaire général
+  {% if permissions.peut_valider %}
+  const commentaireInput = document.getElementById('commentaire_validation_general');
+  if (commentaireInput) {
+    setTimeout(() => commentaireInput.focus(), 500);
+  }
+  {% endif %}
+}
+
+// ================================================================
+// FONCTIONS UTILITAIRES
+// ================================================================
+
+function autoResizeTextarea(textarea) {
+  if (textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+}
+
+function getScoreClass(score) {
+  if (score >= 85) return 'score-excellent';
+  if (score >= 70) return 'score-good';
+  if (score >= 55) return 'score-average';
+  return 'score-poor';
+}
+
+function formatModifierName(key) {
+  const names = {
+    'proposition_humaine': 'Proposition humaine',
+    'experience_similaire': 'Expérience similaire',
+    'recommandation': 'Recommandation',
+    'hierarchique': 'Bonus hiérarchique',
+    'kelio': 'Données Kelio',
+    'indisponibilite': 'Indisponibilité',
+    'distance': 'Distance excessive',
+    'competences_manquantes': 'Compétences manquantes'
+  };
+  return names[key] || key.replace(/_/g, ' ');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'Non définie';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR') + ' à ' + date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function showToast(titre, message, type = 'info') {
+  const toastContainer = document.querySelector('.toast-container');
+  if (!toastContainer) {
+    if (type === 'error') alert(`Erreur: ${message}`);
+    return;
+  }
+  
+  const toastId = 'toast_' + Date.now();
+  const bgClass = {
+    'success': 'text-bg-success',
+    'error': 'text-bg-danger', 
+    'warning': 'text-bg-warning',
+    'info': 'text-bg-info'
+  }[type] || 'text-bg-info';
+  
+  const icon = {
+    'success': 'fa-check-circle',
+    'error': 'fa-exclamation-circle',
+    'warning': 'fa-exclamation-triangle', 
+    'info': 'fa-info-circle'
+  }[type] || 'fa-info-circle';
+  
+  const toastHtml = `
+    <div class="toast ${bgClass}" id="${toastId}" role="alert" data-bs-autohide="true" data-bs-delay="${type === 'error' ? '8000' : '5000'}">
+      <div class="toast-header">
+        <i class="fas ${icon} me-2"></i>
+        <strong class="me-auto">${titre}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body">${message}</div>
+    </div>
+  `;
+  
+  toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+  
+  const toastElement = document.getElementById(toastId);
+  if (toastElement) {
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    toastElement.addEventListener('hidden.bs.toast', function() {
+      toastElement.remove();
+    });
+  }
+}
+
+// ================================================================
+// EXPOSITION DES FONCTIONS GLOBALES
+// ================================================================
+
+// Nouvelles fonctions pour les scores
+window.afficherDetailsScore = afficherDetailsScore;
+window.afficherDetailsScoreAlternatif = afficherDetailsScoreAlternatif;
+
+// Fonctions principales
+window.togglePropositionOptions = togglePropositionOptions;
+window.toggleRefusJustification = toggleRefusJustification;
+window.togglePropositionAlternative = togglePropositionAlternative;
+window.rechercherCandidatAlternatif = rechercherCandidatAlternatif;
+
+// Fonctions de validation
+window.validerDemande = validerDemande;
+window.confirmerRefusGlobal = confirmerRefusGlobal;
+
+// Fonctions modales
+window.ouvrirModaleCandidatsAutomatiques = ouvrirModaleCandidatsAutomatiques;
+window.voirDetailsCandidatProposition = voirDetailsCandidatProposition;
+window.demanderInfos = demanderInfos;
+window.escaladerValidation = escaladerValidation;
+
+// ================================================================
+// MESSAGES DE BIENVENUE
+// ================================================================
+
+setTimeout(() => {
+  {% if permissions.peut_valider %}
+  showToast(
+    'Interface de validation améliorée', 
+    'Analysez les propositions avec leurs scores détaillés, ou proposez un candidat alternatif si besoin.', 
+    'info'
+  );
+  {% else %}
+  showToast(
+    'Consultation', 
+    'Vous consultez cette demande en lecture seule avec accès aux scores détaillés.', 
+    'info'
+  );
+  {% endif %}
+}, 1000);
+
+console.log('🎉 Interface de validation avec modales corrigées chargée avec succès');
+console.log('🔧 Version: Workflow complet + Scores détaillés + UX moderne + Modales Bootstrap 5');
+console.log('📅 Chargement terminé:', new Date().toLocaleTimeString());
+
+</script>
+{% endblock extra_js %}

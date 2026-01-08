@@ -1,0 +1,1028 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  
+  <title>
+    {% block title %}Interim365 - BNI | {{ page_title|default:"Accueil" }}{% endblock %}
+  </title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{% static 'img/i365.ico' %}">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- CSS de base -->
+  {% block base_css %}
+  <style>
+
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --secondary: #10b981;
+      --secondary-dark: #059669;
+      --secondary-light: #d1fae5;
+      --orange: #f97316;
+      --orange-light: #ffedd5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #eab308;
+      --warning-light: #fef3c7;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 0.5rem;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --sidebar-width: 90px;
+      --sidebar-width-expanded: 100px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Content Wrapper */
+    .content-wrapper {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Logo Container */
+    .logo-container {
+      display: flex;
+      justify-content: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo-container img {
+      max-width: 200px;
+      width: 25%;
+      height: auto;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #fff;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 0;
+      z-index: 20;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: 100vh;
+    }
+
+    /* Style personnalisé pour la scrollbar */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-400);
+    }
+
+    /* Support Firefox */
+    .sidebar {
+      scrollbar-width: thin;
+      scrollbar-color: var(--gray-300) var(--gray-100);
+    }
+
+    .sidebar .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar .logo a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .sidebar .nav-item {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem 0;
+      color: var(--gray-500);
+      position: relative;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .sidebar .nav-item.active {
+      color: var(--primary);
+    }
+
+    .sidebar .nav-item:hover {
+      color: var(--primary-dark);
+      background-color: var(--gray-100);
+    }
+
+    .sidebar .nav-item.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: var(--primary);
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .sidebar .divider {
+      width: 30px;
+      height: 1px;
+      background-color: var(--gray-200);
+      margin: 0.5rem 0;
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 30;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: white;
+      box-shadow: var(--shadow);
+      justify-content: center;
+      align-items: center;
+      color: var(--gray-700);
+      cursor: pointer;
+      border: none;
+      font-size: 1.25rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      max-width: 1600px;
+      transition: all 0.3s ease;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-menu .icon-btn {
+      background: none;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .user-menu .icon-btn:hover {
+      background-color: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Cards */
+    .card-container {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title i {
+      color: var(--primary);
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .card-footer {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .form-label.required::after {
+      content: " *";
+      color: var(--danger);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius);
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-help {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 0.25rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--border-radius);
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-success {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background-color: var(--secondary-dark);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background-color: var(--gray-100);
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    /* Alert */
+    .alert {
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .alert i {
+      margin-top: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-info {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .alert-info i {
+      color: var(--primary);
+    }
+
+    .alert-success {
+      background-color: var(--secondary-light);
+      color: var(--secondary-dark);
+    }
+
+    .alert-warning {
+      background-color: var(--warning-light);
+      color: #92400e;
+    }
+
+    .alert-danger {
+      background-color: var(--danger-light);
+      color: #991b1b;
+    }
+
+    /* Workflow Preview */
+    .workflow-preview {
+      margin-top: 1.5rem;
+    }
+
+    .workflow-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .workflow-steps {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .workflow-steps::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0.75rem;
+      width: 2px;
+      background-color: var(--gray-200);
+    }
+
+    .workflow-step {
+      position: relative;
+      padding-bottom: 1.5rem;
+    }
+
+    .workflow-step:last-child {
+      padding-bottom: 0;
+    }
+
+    .workflow-step::before {
+      content: "";
+      position: absolute;
+      left: -2rem;
+      top: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background-color: var(--gray-300);
+      z-index: 1;
+    }
+
+    .workflow-step.active::before {
+      background-color: var(--primary);
+    }
+
+    .workflow-step.completed::before {
+      background-color: var(--secondary);
+    }
+
+    .workflow-step-title {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .workflow-step-description {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      display: none;
+      margin-left: 0.5rem;
+    }
+
+    .loading-spinner.show {
+      display: inline-block;
+    }
+
+    /* Proposition Section */
+    .proposition-section {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      padding: 1.25rem;
+      background-color: var(--gray-50);
+      margin-top: 1rem;
+    }
+
+    .toggle-section {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .toggle-section i {
+      transition: transform 0.2s;
+    }
+
+    .toggle-section.expanded i {
+      transform: rotate(90deg);
+    }
+
+    .proposition-content {
+      display: none;
+    }
+
+    .proposition-content.show {
+      display: block;
+    }
+
+    /* Candidate Availability Display */
+    .availability-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+
+    .availability-indicator.available {
+      background-color: var(--secondary-light);
+      color: var(--secondary-dark);
+    }
+
+    .availability-indicator.unavailable {
+      background-color: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .availability-indicator.loading {
+      background-color: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    /* Footer */
+    .footer {
+      background-color: white;
+      border-top: 1px solid var(--gray-200);
+      padding: 1.5rem 2rem;
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      width: 100%;
+      box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--gray-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .footer-links span {
+      color: var(--gray-700);
+      font-size: 0.875rem;
+    }
+
+    .footer > div:last-child {
+      color: var(--gray-500);
+      font-size: 0.75rem;
+    }
+
+    /* Notification badges */
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: var(--danger);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: flex;
+    }
+      
+    .content-wrapper {
+      flex-direction: column;
+    }
+    
+    .sidebar {
+      position: fixed;
+      height: 100vh;
+      transform: translateX(-100%);
+      box-shadow: var(--shadow-md);
+      z-index: 30;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    .sidebar.active {
+      transform: translateX(0);
+    }
+    
+    .main-content {
+      padding: 1rem;
+      padding-top: 4rem;
+    }
+    
+    .form-grid,
+    .form-grid-2 {
+      grid-template-columns: 1fr;
+    }
+    
+    .card-header,
+    .card-footer {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .card-footer .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .footer {
+      padding: 1rem;
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+    
+    .footer-links {
+      justify-content: center;
+    }
+
+    /* Styles manquants pour les grilles */
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }      
+  }
+  </style>
+  {% endblock base_css %}
+
+  <!-- CSS spécifique à la page -->
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <!-- Sidebar Navigation -->
+    {% block sidebar %}
+    <div class="sidebar" id="sidebar">
+      <div class="logo">
+        <a href="{% url 'index' %}">I365</a>
+      </div>
+      
+      <!-- TABLEAU DE BORD -->
+      <a href="{% url 'index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}" title="Accueil">
+        <i class="fas fa-home"></i>
+      </a>
+      
+      {% if profil_utilisateur.type_profil in 'CHEF_EQUIPE,RESPONSABLE,DIRECTEUR,RH' %}
+      <a href="{% url 'index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}" title="Mon Dashboard">
+        <i class="fas fa-tachometer-alt"></i>
+        {% if mes_validations_stats.a_valider > 0 %}
+        <span class="notification-badge">{{ mes_validations_stats.a_valider }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+      
+      <a href="{% url 'historique_mes_propositions' %}" class="nav-item {% if request.resolver_match.url_name == 'historique_mes_propositions' %}active{% endif %}" title="Mes propositions">
+        <i class="fas fa-chart-line"></i>
+        {% if mes_propositions_stats.soumises > 0 %}
+        <span class="notification-badge">{{ mes_propositions_stats.soumises }}</span>
+        {% endif %}
+      </a>
+      
+      <div class="divider"></div>
+      
+      <!-- DEMANDES -->
+      <a href="{% url 'interim_demande' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_demande' %}active{% endif %}" title="Nouvelle demande">
+        <i class="fas fa-plus-circle"></i>
+      </a>
+      
+      <a href="{% url 'historique_interim' %}" class="nav-item {% if request.resolver_match.url_name == 'historique_interim' %}active{% endif %}" title="Mes demandes">
+        <i class="fas fa-folder-open"></i>
+        {% if mes_demandes_stats.en_attente > 0 %}
+        <span class="notification-badge">{{ mes_demandes_stats.en_attente }}</span>
+        {% endif %}
+      </a>
+      
+      <a href="{% url 'interim_recherche' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_recherche' %}active{% endif %}" title="Rechercher">
+        <i class="fas fa-search"></i>
+      </a>
+      
+      <a href="{% url 'interim_stats' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_stats' %}active{% endif %}" title="Suivi">
+        <i class="fas fa-chart-bar"></i>
+      </a>
+      
+      <div class="divider"></div>
+      
+      <!-- ÉQUIPE & CANDIDATS -->
+      <a href="{% url 'employes_liste' %}" class="nav-item {% if request.resolver_match.url_name == 'employes_liste' %}active{% endif %}" title="Employés">
+        <i class="fas fa-users"></i>
+      </a>
+      
+      <a href="{% url 'agenda' %}" class="nav-item" title="Agenda interims">
+        <i class="fas fa-calendar-alt"></i>
+      </a>
+      
+<!--       
+      <a href="#" class="nav-item" title="Disponibilités">
+        <i class="fas fa-clock"></i>
+      </a>
+ -->      
+      <div class="divider"></div>
+      
+      <!-- VALIDATION -->
+      {% if profil_utilisateur and profil_utilisateur.user and profil_utilisateur.user.username %}
+      <a href="{% url 'liste_interim_validation' %}" class="nav-item {% if request.resolver_match.url_name == 'liste_interim_validation' %}active{% endif %}" title="À valider">
+        <i class="fas fa-clipboard-check"></i>
+        {% if mes_validations_stats.a_valider > 0 %}
+        <span class="notification-badge">{{ mes_validations_stats.a_valider }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+      
+      <a href="{% url 'workflow_global' %}" class="nav-item" title="Workflow">
+        <i class="fas fa-project-diagram"></i>
+      </a>
+      
+      <a href="{% url 'notifications' %}" class="nav-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" title="Notifications">
+        <i class="fas fa-bell"></i>
+        {% if notifications|length > 0 %}
+        <span class="notification-badge">{{ notifications|length }}</span>
+        {% endif %}
+      </a>
+      
+<!--       <a href="#" class="nav-item" title="Actions">
+        <i class="fas fa-tasks"></i>
+      </a>
+ -->      
+      <div class="divider"></div>
+      
+      <!-- ANALYSES -->
+      <a href="{% url 'interim_stats' %}" class="nav-item {% if request.resolver_match.url_name == 'interim_stats' %}active{% endif %}" title="Statistiques">
+        <i class="fas fa-chart-pie"></i>
+      </a>
+      
+      <a href="#" class="nav-item" title="Rapports">
+        <i class="fas fa-file-alt"></i>
+      </a>
+           
+      <!-- CONFIGURATION (si admin) -->
+
+      {% if profil_utilisateur.type_profil in 'ADMIN,RH,SUPERUSER' %}
+      <div class="divider"></div>
+      <a href="{% url 'jourferie_liste' %}" class="nav-item" title="Jours fériés">
+        <i class="fas fa-calendar-alt"></i>
+      </a>
+      <a href="{% url 'absences_extraction_liste' %}" class="nav-item" title="Extraction absences">
+        <i class="fas fa-calendar-minus"></i>
+      </a>
+      {% endif %}
+
+    </div>
+    {% endblock sidebar %}
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+
+      <!-- Logo Container -->
+      {% block logo %}
+      <div class="logo-container">
+        <a href="{% url 'index' %}">
+          <img src="{% static 'img/i365.png' %}" alt="Logo I365">
+        </a>
+      </div>
+      {% endblock logo %}
+
+      <!-- Header -->
+      {% block header %}
+      <div class="header">
+        <h1 class="page-title">{% block page_title %}{{ page_title|default:"Tableau de bord" }}{% endblock page_title %}</h1>
+        <div class="user-menu">
+          <button class="icon-btn" title="Notifications">
+            <i class="fas fa-bell"></i>
+          </button>
+          <div class="user-avatar" title="{{ profil_utilisateur.nom_complet|default:'Utilisateur' }}">
+            {{ profil_utilisateur.initiales|default:'U' }}
+          </div>
+        </div>
+      </div>
+      {% endblock header %}
+
+      <!-- Messages -->
+      {% block messages %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% elif message.tags == 'error' or message.tags == 'danger' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+            <div class="alert-content">{{ message }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% endblock messages %}
+
+      <!-- Contenu principal de la page -->
+      {% block content %}
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <div class="alert-content">
+          <div class="alert-title">Bienvenue sur Interim365 - BNI</div>
+          <p>Système de gestion des remplacements et intérims.</p>
+        </div>
+      </div>
+      {% endblock content %}
+
+      {% include 'includes/etiquette_prochain_ferie.html' %}
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  {% block footer %}
+  <footer class="footer">
+    <div class="footer-links">
+      <span>&copy; {% now "Y" %} IA'CHAIN. Tous droits réservés.</span>
+      <!-- <a href="#" title="Aide">Aide</a> -->
+      <a href="https://www.iachain.io/" title="Contact" target="_blank" rel="noopener noreferrer">Contact</a>
+      <a href="{% url 'mentions_legales' %}" title="Mentions légales">Mentions légales</a>
+    </div>
+    <div>
+      <span>Interim365 v1.0.0 - Application Tiers de Kelio SRIH - Distribué par SAFESECUR AFRIQUE</span>
+      {% if user.is_authenticated %}
+      <span>| Connecté en tant que {{ user.get_full_name|default:user.username }}</span>
+      {% endif %}
+    </div>
+  </footer>
+  {% endblock footer %}
+
+  <!-- JavaScript de base -->
+  {% block base_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Mobile menu
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      const sidebar = document.getElementById('sidebar');
+      
+      if (mobileMenuToggle && sidebar) {
+        mobileMenuToggle.addEventListener('click', function() {
+          sidebar.classList.toggle('active');
+          const icon = mobileMenuToggle.querySelector('i');
+          if (sidebar.classList.contains('active')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+          } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+        });
+
+        // Fermer sidebar au clic extérieur sur mobile
+        document.addEventListener('click', function(event) {
+          if (
+            window.innerWidth <= 768 &&
+            sidebar.classList.contains('active') &&
+            !sidebar.contains(event.target) && 
+            event.target !== mobileMenuToggle && 
+            !mobileMenuToggle.contains(event.target)
+          ) {
+            sidebar.classList.remove('active');
+            const icon = mobileMenuToggle.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+        });
+
+        // Gestion du redimensionnement
+        window.addEventListener('resize', function() {
+          if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+            const icon = mobileMenuToggle.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+        });
+      }
+
+      // Auto-dismiss des messages après 5 secondes
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        if (!alert.classList.contains('alert-error') && !alert.classList.contains('alert-danger')) {
+          setTimeout(() => {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+              if (alert.parentNode) {
+                alert.parentNode.removeChild(alert);
+              }
+            }, 300);
+          }, 5000);
+        }
+      });
+
+      console.log('Template de base initialisé');
+    });
+  </script>
+  {% endblock base_js %}
+
+  <!-- JavaScript spécifique à la page -->
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

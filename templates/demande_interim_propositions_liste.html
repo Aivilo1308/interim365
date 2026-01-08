@@ -1,0 +1,3938 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | {{ page_title }}{% endblock %}
+
+{% block content %}
+<!-- Header de la demande -->
+<div class="demande-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <div class="breadcrumb-custom">
+          {% for item in breadcrumb %}
+          {% if not forloop.last %}
+          <a href="{{ item.1 }}">{{ item.0 }}</a>
+          <i class="fas fa-chevron-right"></i>
+          {% else %}
+          <span>{{ item.0 }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        <h1 class="mb-0">
+          <i class="fas fa-users"></i>
+          Propositions de candidats
+        </h1>
+        <p class="mb-0 mt-2">
+          Demande {{ demande.numero_demande|default:"N/A" }} - {{ demande.poste.titre|default:"Poste non défini" }}
+          <span class="demande-urgence {{ demande.urgence|lower }}">
+            {{ demande.get_urgence_display|default:"N/A" }}
+          </span>
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="niveau-validation-badge">
+          <i class="fas fa-layer-group"></i>
+          {{ niveau_validation_info.niveau_info.libelle|default:"Niveau non défini" }}
+          <div class="progression-bar">
+            <div class="progression-fill" style="width: {{ niveau_validation_info.progression_pourcentage|default:0 }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations de la demande -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations de la demande
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-item">
+        <div class="info-label">Poste à pourvoir</div>
+        <div class="info-value">
+          {{ demande.poste.titre|default:"N/A" }}
+          <small class="text-muted d-block">
+            {{ demande.poste.departement.nom|default:"N/A" }} - {{ demande.poste.site.nom|default:"N/A" }}
+          </small>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Personne à remplacer</div>
+        <div class="info-value">
+          {{ demande.personne_remplacee.nom_complet|default:"N/A" }}
+          <small class="text-muted d-block">{{ demande.motif_absence.nom|default:"N/A" }}</small>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Période</div>
+        <div class="info-value">
+          {% if demande.date_debut and demande.date_fin %}
+          {{ demande.date_debut|date:"d/m/Y" }} au {{ demande.date_fin|date:"d/m/Y" }}
+          <small class="text-muted d-block">{{ demande.duree_mission|default:"0" }} jour{% if demande.duree_mission > 1 %}s{% endif %}</small>
+          {% else %}
+          Dates non définies
+          {% endif %}
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Demandeur</div>
+        <div class="info-value">
+          {{ demande.demandeur.nom_complet|default:"N/A" }}
+          <small class="text-muted d-block">{{ demande.demandeur.poste.titre|default:"N/A" }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques des propositions -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Statistiques des propositions
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number text-primary">
+          {{ stats_propositions.total_propositions|default:"0" }}
+        </div>
+        <div class="stat-label">Propositions total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number text-success">
+          {{ stats_propositions.retenus|default:"0" }}
+        </div>
+        <div class="stat-label">Candidats retenus</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number text-warning">
+          {{ stats_propositions.sans_evaluation|default:"0" }}
+        </div>
+        <div class="stat-label">En attente d'évaluation</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number text-info">
+          {{ stats_propositions.score_moyen|default:"0" }}
+        </div>
+        <div class="stat-label">
+          Score moyen
+          {% if stats_propositions.score_min != stats_propositions.score_max %}
+          <br><small>({{ stats_propositions.score_min }} - {{ stats_propositions.score_max }})</small>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Filtres de recherche
+      <button type="button" class="btn btn-outline-sm ms-auto" data-bs-toggle="collapse" data-bs-target="#filtresCollapse">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+    </h2>
+  </div>
+  <div class="collapse{% if filtres.statut or filtres.source or filtres.recherche %} show{% endif %}" id="filtresCollapse">
+    <div class="card-body">
+      <form method="get" id="filtresForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="statut" class="form-label">Statut</label>
+            <select name="statut" id="statut" class="form-select">
+              <option value="">Tous les statuts</option>
+              {% for statut_code, statut_libelle in statuts_disponibles %}
+              <option value="{{ statut_code }}" {% if filtres.statut == statut_code %}selected{% endif %}>
+                {{ statut_libelle }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="source" class="form-label">Source</label>
+            <select name="source" id="source" class="form-select">
+              <option value="">Toutes les sources</option>
+              {% for source_code, source_libelle in sources_disponibles %}
+              <option value="{{ source_code }}" {% if filtres.source == source_code %}selected{% endif %}>
+                {{ source_libelle }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="departement" class="form-label">Département candidat</label>
+            <select name="departement" id="departement" class="form-select">
+              <option value="">Tous les départements</option>
+              {% for dept in departements_filtre %}
+              <option value="{{ dept.id }}" {% if filtres.departement == dept.id|stringformat:"s" %}selected{% endif %}>
+                {{ dept.nom }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="score_min" class="form-label">Score minimum</label>
+            <input type="number" name="score_min" id="score_min" class="form-input" 
+                   min="0" max="100" value="{{ filtres.score_min|default:'' }}"
+                   placeholder="0-100">
+          </div>
+          
+          <div class="form-group">
+            <label for="score_max" class="form-label">Score maximum</label>
+            <input type="number" name="score_max" id="score_max" class="form-input" 
+                   min="0" max="100" value="{{ filtres.score_max|default:'' }}"
+                   placeholder="0-100">
+          </div>
+          
+          <div class="form-group">
+            <label for="recherche" class="form-label">Recherche</label>
+            <input type="text" name="recherche" id="recherche" class="form-input" 
+                   placeholder="Nom candidat, matricule, justification..." 
+                   value="{{ filtres.recherche|default:'' }}">
+          </div>
+          
+          <div class="form-group">
+            <label for="proposant" class="form-label">Proposé par</label>
+            <input type="text" name="proposant" id="proposant" class="form-input" 
+                   placeholder="Nom du proposant..." 
+                   value="{{ filtres.proposant|default:'' }}">
+          </div>
+          
+          <div class="form-group">
+            <label for="avec_evaluation" class="form-label">Évaluation</label>
+            <select name="avec_evaluation" id="avec_evaluation" class="form-select">
+              <option value="">Toutes</option>
+              <option value="oui" {% if filtres.avec_evaluation == 'oui' %}selected{% endif %}>Avec évaluation</option>
+              <option value="non" {% if filtres.avec_evaluation == 'non' %}selected{% endif %}>Sans évaluation</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">&nbsp;</label>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+                Filtrer
+              </button>
+              <a href="?" class="btn btn-outline">
+                <i class="fas fa-undo"></i>
+                Réinitialiser
+              </a>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Tri et actions -->
+<div class="card-container">
+  <div class="card-body py-2">
+    <div class="tri-actions-container">
+      <div class="tri-controls">
+        <label class="form-label-inline">Trier par :</label>
+        <select id="triSelect" class="form-select-inline" onchange="changerTri()">
+          {% for tri_code, tri_libelle in options_tri %}
+          <option value="{{ tri_code }}" {% if tri_actuel == tri_code %}selected{% endif %}>
+            {{ tri_libelle }}
+          </option>
+          {% endfor %}
+        </select>
+        <button type="button" class="btn btn-outline-sm" id="btnOrdre" onclick="inverserOrdre()" 
+                title="{% if ordre_actuel == 'desc' %}Ordre croissant{% else %}Ordre décroissant{% endif %}">
+          <i class="fas fa-sort-amount-{% if ordre_actuel == 'desc' %}down{% else %}up{% endif %}"></i>
+        </button>
+      </div>
+      
+      <div class="actions-rapides">
+        {% if permissions.peut_ajouter_proposition %}
+        <button type="button" class="btn btn-primary btn-sm" onclick="ouvrirAjoutProposition()">
+          <i class="fas fa-user-plus"></i>
+          Ajouter une proposition
+        </button>
+        {% endif %}
+        
+        {% if permissions.peut_evaluer_propositions %}
+        <button type="button" class="btn btn-success btn-sm" onclick="evaluationRapide('RETENIR')">
+          <i class="fas fa-check"></i>
+          Retenir sélection
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="evaluationRapide('REJETER')">
+          <i class="fas fa-times"></i>
+          Rejeter sélection
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Liste des propositions -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-list"></i>
+      Propositions de candidats
+      {% if propositions %}
+        <span class="count-badge">{{ propositions|length }}</span>
+      {% endif %}
+    </h2>
+  </div>
+  <div class="card-body p-0">
+    {% if propositions %}
+    <div class="table-responsive">
+      <table class="table table-propositions" id="tablePropositions">
+        <thead>
+          <tr>
+            {% if permissions.peut_evaluer_propositions %}
+            <th width="40">
+              <input type="checkbox" id="selectAll" class="form-check-input" 
+                     onchange="toggleSelectAll(this)">
+            </th>
+            {% endif %}
+            <th width="100">Score</th>
+            <th>Candidat</th>
+            <th>Poste actuel</th>
+            <th>Expérience</th>
+            <th>Disponibilité</th>
+            <th>Proposé par</th>
+            <th width="120">Statut</th>
+            <th width="180">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prop_data in propositions %}
+          {% with proposition=prop_data.proposition candidat=prop_data.candidat %}
+          <tr id="row_{{ proposition.id }}" 
+              class="{% if proposition.statut == 'RETENUE' %}table-success{% elif proposition.statut == 'REJETEE' %}table-danger{% endif %}">
+            
+            {% if permissions.peut_evaluer_propositions %}
+            <td>
+              <input type="checkbox" class="form-check-input proposition-checkbox" 
+                     value="{{ proposition.id }}" onchange="updateSelectionCount()">
+            </td>
+            {% endif %}
+            
+            <!-- Score -->
+            <td>
+              <div class="score-container">
+                <div class="score-principal {{ prop_data.score_classe_css }}">
+                  {{ proposition.score_final|default:"0" }}
+                </div>
+                {% if permissions.peut_voir_scores_detailles and prop_data.score_detail %}
+                <button type="button" class="btn btn-outline-xs" 
+                        onclick="voirScoreDetail({{ proposition.id }})"
+                        title="Voir le détail du score">
+                  <i class="fas fa-chart-pie"></i>
+                </button>
+                {% endif %}
+                {% if proposition.bonus_proposition_humaine > 0 %}
+                <div class="score-bonus">
+                  +{{ proposition.bonus_proposition_humaine }}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            
+            <!-- Candidat -->
+            <td>
+              <div class="candidat-info">
+                <div class="candidat-nom">
+                  {{ candidat.nom_complet|default:"Nom non défini" }}
+                </div>
+                <div class="candidat-meta">
+                  <i class="fas fa-id-badge"></i> {{ candidat.matricule|default:"N/A" }}
+                </div>
+                <div class="candidat-meta">
+                  <i class="fas fa-building"></i> {{ candidat.departement.nom|default:"N/A" }}
+                </div>
+                {% if prop_data.badges_candidat %}
+                <div class="candidat-badges">
+                  {% for badge in prop_data.badges_candidat %}
+                  <span class="badge {{ badge.classe }} badge-xs">
+                    {{ badge.icone }} {{ badge.texte }}
+                  </span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            
+            <!-- Poste actuel -->
+            <td>
+              <div class="poste-info">
+                {% if candidat.poste %}
+                <div class="poste-titre">{{ candidat.poste.titre }}</div>
+                <div class="poste-details">
+                  {{ candidat.poste.get_niveau_responsabilite_display|default:"N/A" }}
+                </div>
+                {% else %}
+                <span class="text-muted">Poste non défini</span>
+                {% endif %}
+              </div>
+            </td>
+            
+            <!-- Expérience -->
+            <td>
+              <div class="experience-info">
+                {% if prop_data.experience_similaire.meme_poste %}
+                <div class="experience-item experience-excellente">
+                  <i class="fas fa-star"></i> Poste identique
+                </div>
+                {% elif prop_data.experience_similaire.meme_departement %}
+                <div class="experience-item experience-bonne">
+                  <i class="fas fa-check"></i> Même département
+                </div>
+                {% elif prop_data.experience_similaire.niveau_similaire %}
+                <div class="experience-item experience-acceptable">
+                  <i class="fas fa-info"></i> Niveau similaire
+                </div>
+                {% else %}
+                <div class="experience-item experience-limitee">
+                  <i class="fas fa-question"></i> Expérience différente
+                </div>
+                {% endif %}
+                
+                {% if prop_data.competences_pertinentes %}
+                <div class="competences-mini">
+                  <i class="fas fa-tools"></i>
+                  {{ prop_data.competences_pertinentes|length }} compétence{% if prop_data.competences_pertinentes|length > 1 %}s{% endif %}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            
+            <!-- Disponibilité -->
+            <td>
+              <div class="disponibilite-info">
+                {% if prop_data.disponibilite.disponible %}
+                <div class="disponible">
+                  <i class="fas fa-check-circle text-success"></i>
+                  Disponible
+                </div>
+                {% elif prop_data.disponibilite.disponible == False %}
+                <div class="indisponible">
+                  <i class="fas fa-times-circle text-danger"></i>
+                  {{ prop_data.disponibilite.raison|default:"Indisponible" }}
+                </div>
+                {% else %}
+                <div class="disponibilite-inconnue">
+                  <i class="fas fa-question-circle text-warning"></i>
+                  À vérifier
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            
+            <!-- Proposé par -->
+            <td>
+              <div class="proposant-info">
+                <div class="proposant-nom">
+                  {{ proposition.proposant.nom_complet|default:"N/A" }}
+                </div>
+                <div class="proposant-details">
+                  {{ proposition.source_display }}
+                </div>
+                <div class="proposition-date">
+                  <i class="fas fa-clock"></i>
+                  {{ prop_data.temps_depuis_proposition_display }}
+                </div>
+              </div>
+            </td>
+            
+            <!-- Statut -->
+            <td>
+              <span class="badge {{ prop_data.statut_display.classe }}">
+                {{ prop_data.statut_display.icone }} {{ prop_data.statut_display.libelle }}
+              </span>
+            </td>
+            
+            <!-- Actions -->
+            <td>
+              <div class="actions-cell">
+                <!-- Bouton Voir détail -->
+                <button type="button" class="btn btn-info btn-action btn-sm" 
+                        onclick="voirDetailCandidat({{ candidat.id }}, {{ proposition.id }})"
+                        title="Voir le détail du candidat">
+                  <i class="fas fa-eye"></i>
+                  <span class="d-none d-lg-inline">Détail</span>
+                </button>
+                
+                {% if permissions.peut_evaluer_propositions %}
+                <!-- Actions d'évaluation -->
+                {% if prop_data.peut_etre_retenu %}
+                <button type="button" class="btn btn-success btn-action btn-sm" 
+                        onclick="retenirCandidat({{ proposition.id }})"
+                        title="Retenir ce candidat">
+                  <i class="fas fa-check"></i>
+                  <span class="d-none d-lg-inline">Retenir</span>
+                </button>
+                <button type="button" class="btn btn-danger btn-action btn-sm" 
+                        onclick="rejeterCandidat({{ proposition.id }})"
+                        title="Rejeter ce candidat">
+                  <i class="fas fa-times"></i>
+                  <span class="d-none d-lg-inline">Rejeter</span>
+                </button>
+                {% endif %}
+                
+                <!-- Bouton évaluer -->
+                {% if proposition.statut in 'SOUMISE,EN_EVALUATION' %}
+                <button type="button" class="btn btn-warning btn-action btn-sm" 
+                        onclick="evaluerCandidat({{ proposition.id }})"
+                        title="Évaluer ce candidat">
+                  <i class="fas fa-star"></i>
+                  <span class="d-none d-lg-inline">Évaluer</span>
+                </button>
+                {% endif %}
+                {% endif %}
+                
+                <!-- Menu actions supplémentaires -->
+                <div class="btn-group">
+                  <button type="button" class="btn btn-outline-secondary btn-action btn-sm dropdown-toggle" 
+                          data-bs-toggle="dropdown" title="Plus d'actions">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a class="dropdown-item" href="#" onclick="voirJustification({{ proposition.id }})">
+                        <i class="fas fa-comment"></i> Voir justification
+                      </a>
+                    </li>
+                    {% if permissions.peut_voir_scores_detailles %}
+                    <li>
+                      <a class="dropdown-item" href="#" onclick="voirScoreDetail({{ proposition.id }})">
+                        <i class="fas fa-chart-bar"></i> Détail du score
+                      </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                      <a class="dropdown-item" href="#" onclick="voirHistoriqueCandidat({{ candidat.id }})">
+                        <i class="fas fa-history"></i> Historique candidat
+                      </a>
+                    </li>
+                    {% if permissions.peut_modifier_scores %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="dropdown-item" href="#" onclick="ajusterScore({{ proposition.id }})">
+                        <i class="fas fa-edit"></i> Ajuster score
+                      </a>
+                    </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if propositions_paginator.has_other_pages %}
+    <div class="table-pagination">
+      <div class="pagination-info">
+        <span>Affichage de {{ propositions_paginator.start_index|default:"1" }} à {{ propositions_paginator.end_index|default:"0" }} 
+        sur {{ propositions_paginator.paginator.count|default:"0" }} proposition{% if propositions_paginator.paginator.count > 1 %}s{% endif %}</span>
+      </div>
+      <nav class="pagination-nav">
+        <ul class="pagination pagination-sm mb-0">
+          {% if propositions_paginator.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ propositions_paginator.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          </li>
+          {% endif %}
+          
+          {% for num in propositions_paginator.paginator.page_range %}
+          {% if num == propositions_paginator.number %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+          {% elif num > propositions_paginator.number|add:'-3' and num < propositions_paginator.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              {{ num }}
+            </a>
+          </li>
+          {% endif %}
+          {% endfor %}
+          
+          {% if propositions_paginator.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ propositions_paginator.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-right"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ propositions_paginator.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Aucune proposition -->
+    <div class="empty-state">
+      <i class="fas fa-users fa-4x text-muted mb-3"></i>
+      <h4>Aucune proposition de candidat</h4>
+      <p class="text-muted">
+        {% if filtres.statut or filtres.source or filtres.recherche %}
+        Aucune proposition ne correspond à vos critères de recherche.
+        <br><a href="?" class="btn btn-outline-primary mt-2">Réinitialiser les filtres</a>
+        {% else %}
+        Aucun candidat n'a encore été proposé pour cette demande.
+        {% if permissions.peut_ajouter_proposition %}
+        <br><button type="button" class="btn btn-primary mt-2" onclick="ouvrirAjoutProposition()">
+          <i class="fas fa-user-plus"></i> Proposer un candidat
+        </button>
+        {% endif %}
+        {% endif %}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Historique récent -->
+{% if historique_recent %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-history"></i>
+      Historique récent
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="historique-liste">
+      {% for action in historique_recent %}
+      <div class="historique-item">
+        <div class="historique-icone">
+          <i class="fas fa-{% if action.action == 'PROPOSITION_CANDIDAT' %}user-plus{% elif action.action == 'EVALUATION_CANDIDAT' %}star{% else %}check{% endif %}"></i>
+        </div>
+        <div class="historique-contenu">
+          <div class="historique-description">{{ action.description }}</div>
+          <div class="historique-meta">
+            <span class="historique-utilisateur">{{ action.utilisateur.nom_complet|default:"Système" }}</span>
+            <span class="historique-date">{{ action.created_at|date:"d/m/Y H:i" }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modales -->
+
+<!-- Modal Détail Candidat -->
+<div class="modal fade" id="modalDetailCandidat" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user"></i> Détail du candidat
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalDetailCandidatBody">
+        <!-- Contenu chargé dynamiquement -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Évaluation Candidat -->
+<div class="modal fade" id="modalEvaluationCandidat" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title">
+          <i class="fas fa-star"></i> Évaluation du candidat
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEvaluationCandidat">
+          <input type="hidden" id="propositionIdEval" name="proposition_id">
+          
+          <!-- Informations candidat -->
+          <div class="candidat-resume" id="candidatResumeEval">
+            <!-- Chargé dynamiquement -->
+          </div>
+          
+          <!-- Évaluation -->
+          <div class="form-group">
+            <label for="scoreAjuste" class="form-label">
+              <i class="fas fa-chart-line"></i>
+              Score ajusté (0-100)
+            </label>
+            <div class="score-input-container">
+              <input type="range" id="scoreRange" class="form-range" 
+                     min="0" max="100" step="1" oninput="updateScoreDisplay(this.value)">
+              <input type="number" id="scoreAjuste" name="score_ajuste" class="form-input score-number" 
+                     min="0" max="100" step="1" oninput="updateScoreRange(this.value)">
+            </div>
+            <div class="score-indicators">
+              <span class="score-indicator poor">0-40</span>
+              <span class="score-indicator average">41-60</span>
+              <span class="score-indicator good">61-80</span>
+              <span class="score-indicator excellent">81-100</span>
+            </div>
+          </div>
+          
+          <!-- Commentaire d'évaluation -->
+          <div class="form-group">
+            <label for="commentaireEvaluation" class="form-label required">
+              <i class="fas fa-comment"></i>
+              Commentaire d'évaluation
+            </label>
+            <textarea name="commentaire_evaluation" id="commentaireEvaluation" 
+                      class="form-textarea" rows="4" required
+                      placeholder="Évaluez les points forts et faibles du candidat pour ce poste..."></textarea>
+          </div>
+          
+          <!-- Critères spécifiques -->
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-tasks"></i>
+              Évaluation par critères
+            </label>
+            <div class="criteres-evaluation">
+              <div class="critere-item">
+                <label>Compétences techniques</label>
+                <select name="eval_competences" class="form-select-sm">
+                  <option value="">Non évalué</option>
+                  <option value="1">Insuffisant</option>
+                  <option value="2">Acceptable</option>
+                  <option value="3">Bon</option>
+                  <option value="4">Excellent</option>
+                </select>
+              </div>
+              <div class="critere-item">
+                <label>Expérience pertinente</label>
+                <select name="eval_experience" class="form-select-sm">
+                  <option value="">Non évalué</option>
+                  <option value="1">Insuffisant</option>
+                  <option value="2">Acceptable</option>
+                  <option value="3">Bon</option>
+                  <option value="4">Excellent</option>
+                </select>
+              </div>
+              <div class="critere-item">
+                <label>Disponibilité</label>
+                <select name="eval_disponibilite" class="form-select-sm">
+                  <option value="">Non évalué</option>
+                  <option value="1">Problématique</option>
+                  <option value="2">Partielle</option>
+                  <option value="3">Bonne</option>
+                  <option value="4">Totale</option>
+                </select>
+              </div>
+              <div class="critere-item">
+                <label>Adéquation poste</label>
+                <select name="eval_adequation" class="form-select-sm">
+                  <option value="">Non évalué</option>
+                  <option value="1">Faible</option>
+                  <option value="2">Moyenne</option>
+                  <option value="3">Bonne</option>
+                  <option value="4">Parfaite</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-warning" onclick="sauvegarderEvaluation()">
+          <i class="fas fa-save"></i>
+          Sauvegarder évaluation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Retenir/Rejeter Candidat -->
+<div class="modal fade" id="modalDecisionCandidat" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" id="modalDecisionHeader">
+        <h5 class="modal-title" id="modalDecisionTitre">
+          <i class="fas fa-check"></i> Retenir le candidat
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formDecisionCandidat">
+          <input type="hidden" id="propositionIdDecision" name="proposition_id">
+          <input type="hidden" id="actionDecision" name="action">
+          
+          <!-- Résumé candidat -->
+          <div class="candidat-decision-resume" id="candidatDecisionResume">
+            <!-- Chargé dynamiquement -->
+          </div>
+          
+          <!-- Motif (pour refus) -->
+          <div class="form-group" id="divMotifRefus" style="display: none;">
+            <label for="motifRefus" class="form-label required">
+              <i class="fas fa-exclamation-triangle"></i>
+              Motif du refus
+            </label>
+            <select id="motifRefus" name="motif_refus" class="form-select">
+              <option value="">Sélectionnez un motif</option>
+              <option value="COMPETENCES_INSUFFISANTES">Compétences insuffisantes</option>
+              <option value="EXPERIENCE_INADEQUATE">Expérience inadéquate</option>
+              <option value="INDISPONIBILITE">Indisponibilité</option>
+              <option value="PROFIL_INADAPTE">Profil inadapté au poste</option>
+              <option value="MEILLEUR_CANDIDAT">Meilleur candidat disponible</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
+          
+          <!-- Commentaire obligatoire -->
+          <div class="form-group">
+            <label for="commentaireDecision" class="form-label required">
+              <i class="fas fa-comment"></i>
+              Commentaire sur la décision
+            </label>
+            <textarea id="commentaireDecision" name="commentaire_decision" 
+                      class="form-textarea" rows="4" required
+                      placeholder="Expliquez votre décision..."></textarea>
+          </div>
+          
+          <!-- Priorité (pour candidats retenus) -->
+          <div class="form-group" id="divPrioriteCandidat" style="display: none;">
+            <label for="prioriteCandidat" class="form-label">
+              <i class="fas fa-flag"></i>
+              Priorité du candidat
+            </label>
+            <select id="prioriteCandidat" name="priorite_candidat" class="form-select">
+              <option value="NORMALE">Normale</option>
+              <option value="ELEVEE">Élevée</option>
+              <option value="TRES_ELEVEE">Très élevée</option>
+            </select>
+          </div>
+          
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn" id="btnConfirmerDecision" onclick="confirmerDecisionCandidat()">
+          <i class="fas fa-check"></i> Confirmer la décision
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Détail Score -->
+<div class="modal fade" id="modalDetailScore" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-chart-pie"></i> Détail du score
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalDetailScoreBody">
+        <!-- Contenu chargé dynamiquement -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Justification -->
+<div class="modal fade" id="modalJustification" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-comment"></i> Justification de la proposition
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalJustificationBody">
+        <!-- Contenu chargé dynamiquement -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ajout Proposition -->
+<div class="modal fade" id="modalAjoutProposition" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-user-plus"></i> Ajouter une proposition de candidat
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formAjoutProposition">
+          <input type="hidden" name="demande_id" value="{{ demande.id }}">
+          
+          <!-- Recherche candidat avec nouveau système -->
+          <div class="form-group">
+            <label for="candidatMatricule" class="form-label required">
+              <i class="fas fa-search"></i>
+              Matricule du candidat à proposer
+              <span class="form-help">Saisissez le matricule du candidat</span>
+            </label>
+            <div class="employee-search-container">
+              <input type="text" 
+                     name="candidat_matricule" 
+                     id="candidatMatricule" 
+                     class="form-input employee-matricule-input" 
+                     placeholder="Ex: EMP001, 12345..." 
+                     required 
+                     autocomplete="off">
+              <input type="hidden" name="candidat_id" id="candidatId">
+              
+              <!-- Zone d'affichage des informations candidat -->
+              <div id="candidat_info" class="employee-info-display" style="display: none;">
+                <div class="employee-info-header">
+                  <i class="fas fa-user-check text-success"></i>
+                  <span class="employee-info-title">Candidat trouvé</span>
+                  <span class="employee-sync-status" id="candidat_sync_status"></span>
+                </div>
+                <div class="employee-info-content">
+                  <div class="employee-info-row">
+                    <strong id="candidat_nom_complet"></strong>
+                    <span class="employee-matricule" id="candidat_matricule_display"></span>
+                  </div>
+                  <div class="employee-info-details">
+                    <span id="candidat_sexe" class="employee-detail"></span>
+                    <span id="candidat_anciennete" class="employee-detail"></span>
+                  </div>
+                  <div class="employee-info-organization">
+                    <span id="candidat_departement" class="org-info"></span>
+                    <span id="candidat_site" class="org-info"></span>
+                    <span id="candidat_poste" class="org-info"></span>
+                  </div>
+                </div>
+                
+                <!-- Vérification disponibilité -->
+                <div id="candidat_disponibilite" class="availability-indicator" style="display: none;">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Vérification de la disponibilité...
+                </div>
+                
+                <!-- Score calculé du candidat -->
+                <div id="candidat_score" class="candidate-score-display" style="display: none;">
+                  <span class="score-label">Score calculé:</span>
+                  <span id="candidat_score_value" class="score-value">--</span>
+                </div>
+              </div>
+              
+              <!-- Zone d'erreur -->
+              <div id="candidat_error" class="employee-error-display" style="display: none;">
+                <i class="fas fa-exclamation-triangle text-danger"></i>
+                <span class="error-message"></span>
+              </div>
+              
+              <!-- Indicateur de chargement -->
+              <div id="candidat_loading" class="employee-loading-display" style="display: none;">
+                <i class="fas fa-spinner fa-spin text-primary"></i>
+                <span>Recherche et calcul du score...</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Justification -->
+          <div class="form-group">
+            <label for="justificationProposition" class="form-label required">
+              <i class="fas fa-comment"></i>
+              Justification de votre proposition
+            </label>
+            <textarea name="justification" id="justificationProposition" 
+                      class="form-textarea" rows="4" required
+                      placeholder="Expliquez pourquoi vous proposez ce candidat (compétences, expérience, disponibilité...)"></textarea>
+          </div>
+          
+          <!-- Compétences spécifiques -->
+          <div class="form-group">
+            <label for="competencesSpecifiques" class="form-label">
+              <i class="fas fa-tools"></i>
+              Compétences spécifiques pour ce poste
+            </label>
+            <textarea name="competences_specifiques" id="competencesSpecifiques" 
+                      class="form-textarea" rows="2"
+                      placeholder="Détaillez les compétences particulières de ce candidat pour le poste..."></textarea>
+          </div>
+          
+          <!-- Expérience pertinente -->
+          <div class="form-group">
+            <label for="experiencePertinente" class="form-label">
+              <i class="fas fa-briefcase"></i>
+              Expérience pertinente
+            </label>
+            <textarea name="experience_pertinente" id="experiencePertinente" 
+                      class="form-textarea" rows="2"
+                      placeholder="Décrivez l'expérience pertinente du candidat..."></textarea>
+          </div>
+          
+          <!-- Priorité -->
+          <div class="form-group">
+            <label for="prioriteProposition" class="form-label">
+              <i class="fas fa-flag"></i>
+              Priorité de cette proposition
+            </label>
+            <select name="priorite" id="prioriteProposition" class="form-select">
+              <option value="NORMALE">Normale</option>
+              <option value="ELEVEE">Élevée</option>
+              <option value="TRES_ELEVEE">Très élevée</option>
+            </select>
+          </div>
+          
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="btnSoumettreProposition" 
+                onclick="soumettreNouvelleProposition()" disabled>
+          <i class="fas fa-user-plus"></i>
+          Ajouter cette proposition
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+    <p class="mt-3">Traitement en cours...</p>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container">
+  <!-- Les toasts seront ajoutés ici dynamiquement -->
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES DE BASE POUR LES PROPOSITIONS
+================================================================ */
+
+.demande-header {
+  background: linear-gradient(135deg, var(--primary, #007bff), #6f42c1);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.breadcrumb-custom {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.breadcrumb-custom a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+.breadcrumb-custom a:hover {
+  color: white;
+}
+
+.breadcrumb-custom i {
+  margin: 0 0.5rem;
+  opacity: 0.6;
+}
+
+.demande-urgence {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-left: 1rem;
+}
+
+.demande-urgence.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.demande-urgence.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.demande-urgence.moyenne {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.demande-urgence.normale {
+  background-color: #6c757d;
+  color: white;
+}
+
+.niveau-validation-badge {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.progression-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.progression-fill {
+  height: 100%;
+  background: white;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ================================================================
+   STYLES DES INFORMATIONS DE DEMANDE
+================================================================ */
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  color: #212529;
+}
+
+/* ================================================================
+   STYLES DES STATISTIQUES
+================================================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary, #007bff);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--primary, #007bff);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* ================================================================
+   STYLES DU TRI ET ACTIONS
+================================================================ */
+
+.tri-actions-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.tri-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-label-inline {
+  margin: 0;
+  font-weight: 500;
+  color: #495057;
+}
+
+.form-select-inline {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background-color: white;
+}
+
+.actions-rapides {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ================================================================
+   STYLES DU TABLEAU DES PROPOSITIONS
+================================================================ */
+
+.table-propositions {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table-propositions th {
+  background-color: #f8f9fa;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid var(--primary, #007bff);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-propositions td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.table-propositions tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table-propositions tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+.table-propositions tbody tr.table-success {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.table-propositions tbody tr.table-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* ================================================================
+   STYLES SCORE
+================================================================ */
+
+.score-container {
+  text-align: center;
+  position: relative;
+}
+
+.score-principal {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.5rem;
+}
+
+.score-excellent {
+  background-color: #28a745;
+  color: white;
+}
+
+.score-bon {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.score-moyen {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.score-faible {
+  background-color: #6c757d;
+  color: white;
+}
+
+.score-bonus {
+  font-size: 0.75rem;
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* ================================================================
+   STYLES INFORMATIONS CANDIDAT
+================================================================ */
+
+.candidat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.candidat-nom {
+  font-weight: 500;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.candidat-meta {
+  font-size: 0.875rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.candidat-badges {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.badge-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+/* ================================================================
+   STYLES POSTE
+================================================================ */
+
+.poste-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.poste-titre {
+  font-weight: 500;
+  color: #495057;
+}
+
+.poste-details {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* ================================================================
+   STYLES EXPÉRIENCE
+================================================================ */
+
+.experience-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.experience-item {
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+}
+
+.experience-excellente {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.experience-bonne {
+  color: #17a2b8;
+}
+
+.experience-acceptable {
+  color: #ffc107;
+}
+
+.experience-limitee {
+  color: #6c757d;
+}
+
+.competences-mini {
+  font-size: 0.8rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ================================================================
+   STYLES DISPONIBILITÉ
+================================================================ */
+
+.disponibilite-info {
+  text-align: center;
+}
+
+.disponible,
+.indisponible,
+.disponibilite-inconnue {
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.disponible {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.indisponible {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.disponibilite-inconnue {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #856404;
+}
+
+/* ================================================================
+   STYLES PROPOSANT
+================================================================ */
+
+.proposant-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.proposant-nom {
+  font-weight: 500;
+  color: #495057;
+}
+
+.proposant-details {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.proposition-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ================================================================
+   STYLES DES ACTIONS
+================================================================ */
+
+.actions-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn-action {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  margin: 0.125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.btn-action:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+/* ================================================================
+   STYLES POUR LA RECHERCHE D'EMPLOYÉS
+================================================================ */
+
+.employee-search-container {
+  position: relative;
+}
+
+.employee-matricule-input {
+  padding-right: 40px;
+}
+
+.employee-info-display {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #28a745;
+  border-radius: var(--border-radius, 4px);
+  background-color: #f8fff9;
+}
+
+.employee-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.employee-info-title {
+  color: #155724;
+}
+
+.employee-sync-status {
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sync-status-recent {
+  background-color: #28a745;
+  color: white;
+}
+
+.sync-status-kelio {
+  background-color: #ffc107;
+  color: white;
+}
+
+.sync-status-local {
+  background-color: #6c757d;
+  color: white;
+}
+
+.employee-info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.employee-matricule {
+  padding: 0.25rem 0.5rem;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.employee-info-details {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.employee-detail {
+  padding: 0.25rem 0.5rem;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #1565c0;
+}
+
+.employee-info-organization {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.org-info {
+  padding: 0.25rem 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.employee-error-display {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #dc3545;
+  border-radius: var(--border-radius, 4px);
+  background-color: #f8d7da;
+  color: #721c24;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.employee-loading-display {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #007bff;
+  border-radius: var(--border-radius, 4px);
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.availability-indicator {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.availability-indicator.available {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.availability-indicator.unavailable {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.availability-indicator.loading {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.candidate-score-display {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.score-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.score-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 1rem;
+  color: white;
+  background-color: #6c757d;
+}
+
+/* Classes de score colorées */
+.score-value.candidate-score.excellent {
+  background-color: #28a745;
+}
+
+.score-value.candidate-score.good {
+  background-color: #17a2b8;
+}
+
+.score-value.candidate-score.average {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.score-value.candidate-score.poor {
+  background-color: #dc3545;
+}
+
+/* Animation pour les indicateurs de chargement */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.employee-loading-display {
+  animation: pulse 2s infinite;
+}
+
+/* ================================================================
+   STYLES DES MODALES
+================================================================ */
+
+.candidat-resume {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.score-input-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-range {
+  flex: 1;
+}
+
+.score-number {
+  width: 80px;
+  text-align: center;
+}
+
+.score-indicators {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.score-indicator {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.score-indicator.poor {
+  background-color: #dc3545;
+  color: white;
+}
+
+.score-indicator.average {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.score-indicator.good {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.score-indicator.excellent {
+  background-color: #28a745;
+  color: white;
+}
+
+.criteres-evaluation {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.critere-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.critere-item label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.form-select-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+/* ================================================================
+   STYLES HISTORIQUE
+================================================================ */
+
+.historique-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.historique-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid var(--primary, #007bff);
+}
+
+.historique-icone {
+  width: 40px;
+  height: 40px;
+  background: var(--primary, #007bff);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.historique-contenu {
+  flex: 1;
+}
+
+.historique-description {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.historique-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* ================================================================
+   STYLES RESPONSIVE
+================================================================ */
+
+@media (max-width: 768px) {
+  .demande-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .tri-actions-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .actions-rapides {
+    justify-content: stretch;
+  }
+  
+  .actions-rapides .btn {
+    flex: 1;
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .actions-cell {
+    min-width: 120px;
+  }
+  
+  .btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    margin: 0.125rem 0;
+  }
+  
+  .score-principal {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .candidat-meta,
+  .poste-details,
+  .proposant-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
+  }
+  
+  .criteres-evaluation {
+    grid-template-columns: 1fr;
+  }
+  
+  .employee-info-details,
+  .employee-info-organization {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .employee-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+  }
+  
+  .score-input-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ================================================================
+   STYLES COMMUNS
+================================================================ */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-label.required::after {
+  content: " *";
+  color: #dc3545;
+}
+
+.form-help {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: 0;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+  color: white;
+}
+
+.btn-success {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+  color: white;
+}
+
+.btn-danger {
+  color: white;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+  color: white;
+}
+
+.btn-warning {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  color: #212529;
+}
+
+.btn-info {
+  color: white;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  color: white;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-outline-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: #6c757d;
+  background-color: transparent;
+  border: 1px solid #6c757d;
+}
+
+.btn-outline-sm:hover {
+  color: white;
+  background-color: #6c757d;
+}
+
+.btn-outline-xs {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.75rem;
+  color: #6c757d;
+  background-color: transparent;
+  border: 1px solid #6c757d;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-state h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state .text-muted {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1050;
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.pagination-nav .pagination {
+  margin: 0;
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes highlight {
+  0% { background-color: rgba(40, 167, 69, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.row-updated {
+  animation: highlight 2s ease;
+}
+
+.row-success {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.row-error {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Interface de gestion des propositions initialisée');
+
+  // ================================================================
+  // VARIABLES GLOBALES
+  // ================================================================
+  
+  let propositionsSelectionnees = [];
+  
+  // Correction pour le CSRF token
+  function getCSRFToken() {
+    // Méthode 1: Depuis le cookie
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1];
+    
+    if (cookieValue) {
+      console.log('✅ CSRF token depuis cookie:', cookieValue);
+      return cookieValue;
+    }
+    
+    // Méthode 2: Depuis un input hidden
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfInput && csrfInput.value) {
+      console.log('✅ CSRF token depuis input:', csrfInput.value);
+      return csrfInput.value;
+    }
+    
+    // Méthode 3: Depuis une meta tag
+    const csrfMeta = document.querySelector('meta[name=csrf-token]');
+    if (csrfMeta && csrfMeta.getAttribute('content')) {
+      console.log('✅ CSRF token depuis meta:', csrfMeta.getAttribute('content'));
+      return csrfMeta.getAttribute('content');
+    }
+    
+    console.error('❌ Aucun CSRF token trouvé !');
+    return null;
+  }
+  
+  const csrfToken = getCSRFToken();
+
+  // Cache pour les recherches d'employés
+  const employeeCache = new Map();
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // ================================================================
+  // FONCTIONS UTILITAIRES
+  // ================================================================
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  function getElement(id, required = false) {
+    const element = document.getElementById(id);
+    if (!element && required) {
+      console.error(`❌ Élément requis non trouvé: ${id}`);
+    } else if (!element) {
+      console.warn(`⚠️ Élément optionnel non trouvé: ${id}`);
+    }
+    return element;
+  }
+
+  function setElementContent(id, content, fallback = '') {
+    const element = getElement(id);
+    if (element) {
+      element.textContent = content || fallback;
+      return true;
+    }
+    return false;
+  }
+
+  function setElementDisplay(id, show) {
+    const element = getElement(id);
+    if (element) {
+      element.style.display = show ? 'block' : 'none';
+      return true;
+    }
+    return false;
+  }
+
+  // ================================================================
+  // FONCTIONS DE RECHERCHE D'EMPLOYÉ
+  // ================================================================
+
+  async function rechercherEmploye(matricule, type) {
+    console.log(`🔍 DEBUT rechercherEmploye: matricule="${matricule}", type="${type}"`);
+    
+    if (!matricule || matricule.length < 2) {
+      console.log(`❌ Matricule invalide: "${matricule}"`);
+      masquerInfosEmploye(type);
+      return;
+    }
+
+    // Vérifier le cache
+    const cacheKey = `${matricule}_${type}`;
+    const cached = employeeCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      console.log(`💾 Cache hit pour ${matricule}`);
+      afficherInfosEmploye(cached.data, type);
+      return;
+    }
+
+    afficherChargementEmploye(type, true);
+    console.log(`🔍 Requête AJAX pour ${matricule}`);
+
+    try {
+      const requestData = {
+        matricule: matricule,
+        force_kelio_sync: false
+      };
+      
+      console.log(`📤 Envoi requête:`, requestData);
+      
+      const response = await fetch('/interim/ajax/rechercher-employe/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      console.log(`📨 Status: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log(`📨 Réponse brute (${responseText.length} chars):`, responseText.substring(0, 200) + '...');
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log(`📨 Données parsées:`, data);
+      } catch (parseError) {
+        console.error(`❌ Erreur parsing JSON:`, parseError);
+        throw new Error(`Réponse non-JSON: ${responseText.substring(0, 100)}...`);
+      }
+
+      // Traitement de la réponse
+      if (data && data.success === true) {
+        console.log(`✅ Succès détecté`);
+        
+        if (data.employe) {
+          console.log(`👤 Employé trouvé:`, data.employe);
+          
+          // Mettre en cache
+          employeeCache.set(cacheKey, {
+            data: data,
+            timestamp: Date.now()
+          });
+
+          // Afficher les informations
+          afficherInfosEmploye(data, type);
+          showToast('Succès', `Employé ${matricule} trouvé avec succès`, 'success');
+          
+          // Si c'est un candidat dans la modal d'ajout, calculer le score et vérifier disponibilité
+          if (type === 'candidat') {
+            setTimeout(() => {
+              calculerScoreCandidat(data.employe.id);
+              verifierDisponibiliteCandidat(data.employe.id);
+            }, 100);
+          }
+          
+        } else {
+          console.log(`❌ Pas d'employé dans la réponse`);
+          afficherErreurEmploye('Réponse invalide du serveur', type);
+        }
+        
+      } else if (data && data.success === false) {
+        console.log(`❌ Échec explicite:`, data.error);
+        afficherErreurEmploye(data.error || 'Erreur du serveur', type);
+        
+      } else {
+        console.log(`❌ Structure de réponse inattendue:`, data);
+        afficherErreurEmploye('Réponse serveur invalide', type);
+      }
+
+    } catch (error) {
+      console.error('❌ ERREUR dans rechercherEmploye:', error);
+      
+      let errorMessage = 'Erreur de communication avec le serveur';
+      
+      if (error.message.includes('404')) {
+        errorMessage = 'Service de recherche non disponible';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Erreur serveur temporaire';
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Erreur de format de réponse';
+      }
+      
+      afficherErreurEmploye(errorMessage, type);
+      
+    } finally {
+      console.log(`🔍 FIN rechercherEmploye pour ${matricule}`);
+      afficherChargementEmploye(type, false);
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS D'AFFICHAGE
+  // ================================================================
+
+  function afficherInfosEmploye(data, type) {
+    console.log(`📝 DEBUT afficherInfosEmploye pour type: ${type}`, data);
+    
+    const employe = data.employe;
+    if (!employe) {
+      console.error(`❌ Pas de données employé`);
+      return;
+    }
+
+    // Masquer erreurs et chargement
+    setElementDisplay(`${type}_error`, false);
+    setElementDisplay(`${type}_loading`, false);
+
+    // Remplir les informations principales
+    setElementContent(`${type}_nom_complet`, employe.nom_complet, 'Nom non disponible');
+    setElementContent(`${type}_matricule_display`, employe.matricule);
+    
+    // Détails avec icônes
+    if (employe.sexe) {
+      setElementContent(`${type}_sexe`, employe.sexe === 'M' ? '👨 Homme' : '👩 Femme');
+    }
+    
+    if (employe.anciennete) {
+      setElementContent(`${type}_anciennete`, `⏰ ${employe.anciennete}`);
+    }
+
+    // Informations organisationnelles
+    if (employe.departement) {
+      setElementContent(`${type}_departement`, `🏢 ${employe.departement}`);
+    }
+    
+    if (employe.site) {
+      setElementContent(`${type}_site`, `📍 ${employe.site}`);
+    }
+    
+    if (employe.poste) {
+      setElementContent(`${type}_poste`, `💼 ${employe.poste}`);
+    }
+
+    // Statut de synchronisation
+    const syncStatusElement = getElement(`${type}_sync_status`);
+    if (syncStatusElement && data.sync_info) {
+      if (data.sync_info.is_recent) {
+        syncStatusElement.textContent = 'Données à jour';
+        syncStatusElement.className = 'employee-sync-status sync-status-recent';
+      } else {
+        syncStatusElement.textContent = 'Données locales';
+        syncStatusElement.className = 'employee-sync-status sync-status-local';
+      }
+    }
+
+    // Définir l'ID caché
+    const hiddenInput = getElement(`${type}_id`);
+    if (hiddenInput && employe.id) {
+      hiddenInput.value = employe.id;
+      console.log(`✅ ID caché défini: ${employe.id}`);
+    }
+
+    // Afficher le container principal
+    setElementDisplay(`${type}_info`, true);
+    
+    console.log(`📝 FIN afficherInfosEmploye pour ${type}`);
+  }
+
+  function afficherErreurEmploye(message, type) {
+    console.log(`❌ Affichage erreur pour ${type}: ${message}`);
+    
+    setElementDisplay(`${type}_info`, false);
+    setElementDisplay(`${type}_loading`, false);
+    
+    const errorContainer = getElement(`${type}_error`);
+    if (errorContainer) {
+      const messageElement = errorContainer.querySelector('.error-message');
+      if (messageElement) {
+        messageElement.textContent = message;
+      }
+      errorContainer.style.display = 'flex';
+    }
+
+    // Vider l'ID caché
+    const hiddenInput = getElement(`${type}_id`);
+    if (hiddenInput) {
+      hiddenInput.value = '';
+    }
+  }
+
+  function afficherChargementEmploye(type, show) {
+    setElementDisplay(`${type}_loading`, show);
+    if (show) {
+      setElementDisplay(`${type}_info`, false);
+      setElementDisplay(`${type}_error`, false);
+    }
+  }
+
+  function masquerInfosEmploye(type) {
+    setElementDisplay(`${type}_info`, false);
+    setElementDisplay(`${type}_error`, false);
+    setElementDisplay(`${type}_loading`, false);
+    
+    const hiddenInput = getElement(`${type}_id`);
+    if (hiddenInput) {
+      hiddenInput.value = '';
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS DE CALCUL DE SCORE ET DISPONIBILITÉ
+  // ================================================================
+
+  async function calculerScoreCandidat(candidatId) {
+    console.log('📊 Calcul du score pour candidat:', candidatId);
+    
+    const formData = {
+      candidat_id: candidatId,
+      demande_id: {{ demande.id }},
+      poste_id: {{ demande.poste.id }},
+      date_debut: '{{ demande.date_debut|date:"Y-m-d" }}',
+      date_fin: '{{ demande.date_fin|date:"Y-m-d" }}',
+      description_poste: '{{ demande.description_poste|escapejs }}',
+      competences_indispensables: '{{ demande.competences_indispensables|escapejs }}'
+    };
+
+    try {
+      const response = await fetch('/interim/ajax/calculer-score-candidat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          afficherScoreCandidatModal(data.score);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur calcul score candidat:', error);
+    }
+  }
+
+  function afficherScoreCandidatModal(score) {
+    const scoreElement = document.getElementById('candidat_score_value');
+    const scoreContainer = document.getElementById('candidat_score');
+    
+    if (!scoreElement || !scoreContainer) return;
+    
+    let scoreClass = 'poor';
+    if (score >= 80) scoreClass = 'excellent';
+    else if (score >= 60) scoreClass = 'good';
+    else if (score >= 40) scoreClass = 'average';
+    
+    scoreElement.textContent = score;
+    scoreElement.className = `score-value candidate-score ${scoreClass}`;
+    
+    scoreContainer.style.display = 'flex';
+  }
+
+  async function verifierDisponibiliteCandidat(candidatId) {
+    console.log('📅 Vérification disponibilité pour candidat:', candidatId);
+    
+    const disponibiliteElement = document.getElementById('candidat_disponibilite');
+    if (!disponibiliteElement) return;
+
+    disponibiliteElement.style.display = 'flex';
+    disponibiliteElement.className = 'availability-indicator loading';
+    disponibiliteElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vérification...';
+
+    try {
+      const url = `/interim/ajax/verifier-disponibilite-candidat/?candidat_id=${candidatId}&date_debut={{ demande.date_debut|date:"Y-m-d" }}&date_fin={{ demande.date_fin|date:"Y-m-d" }}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.disponible) {
+        disponibiliteElement.className = 'availability-indicator available';
+        disponibiliteElement.innerHTML = '<i class="fas fa-check"></i> ' + data.raison;
+      } else {
+        disponibiliteElement.className = 'availability-indicator unavailable';
+        disponibiliteElement.innerHTML = '<i class="fas fa-times"></i> ' + data.raison;
+      }
+    } catch (error) {
+      console.error('Erreur vérification disponibilité:', error);
+      disponibiliteElement.className = 'availability-indicator unavailable';
+      disponibiliteElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erreur de vérification';
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS DE TRI ET FILTRAGE
+  // ================================================================
+  
+  window.changerTri = function() {
+    const triSelect = document.getElementById('triSelect');
+    const url = new URL(window.location);
+    url.searchParams.set('tri', triSelect.value);
+    window.location.href = url.toString();
+  };
+
+  window.inverserOrdre = function() {
+    const url = new URL(window.location);
+    const ordreActuel = url.searchParams.get('ordre') || 'desc';
+    const nouvelOrdre = ordreActuel === 'desc' ? 'asc' : 'desc';
+    url.searchParams.set('ordre', nouvelOrdre);
+    window.location.href = url.toString();
+  };
+
+  // ================================================================
+  // FONCTIONS DE GESTION DES SÉLECTIONS
+  // ================================================================
+  
+  window.toggleSelectAll = function(checkbox) {
+    console.log('Toggle select all:', checkbox.checked);
+    const checkboxes = document.querySelectorAll('.proposition-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = checkbox.checked;
+    });
+    updateSelectionCount();
+  };
+  
+  window.updateSelectionCount = function() {
+    const checkboxes = document.querySelectorAll('.proposition-checkbox:checked');
+    const count = checkboxes.length;
+    
+    console.log('Update selection count:', count);
+    
+    // Mettre à jour les propositions sélectionnées
+    propositionsSelectionnees = Array.from(checkboxes).map(cb => cb.value);
+    
+    // Activer/désactiver les boutons d'action
+    const btnsActions = document.querySelectorAll('.actions-rapides .btn');
+    btnsActions.forEach(btn => {
+      if (count > 0) {
+        btn.removeAttribute('disabled');
+      } else {
+        btn.setAttribute('disabled', 'disabled');
+      }
+    });
+  };
+
+  // ================================================================
+  // FONCTIONS D'ACTIONS SUR LES CANDIDATS
+  // ================================================================
+  
+  window.voirDetailCandidat = function(candidatId, propositionId) {
+    console.log('Voir détail candidat:', candidatId, 'proposition:', propositionId);
+    showLoading();
+    
+    fetch(`{{ url_scores_details }}?candidat_id=${candidatId}&proposition_id=${propositionId}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('modalDetailCandidatBody').innerHTML = data.html;
+        const modal = new bootstrap.Modal(document.getElementById('modalDetailCandidat'));
+        modal.show();
+      } else {
+        showToast('Erreur', 'Impossible de charger les détails du candidat', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur détail candidat:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  window.evaluerCandidat = function(propositionId) {
+    console.log('Évaluer candidat proposition:', propositionId);
+    
+    // Charger les données de la proposition
+    const row = document.querySelector(`#row_${propositionId}`);
+    if (!row) return;
+    
+    // Configurer la modal
+    document.getElementById('propositionIdEval').value = propositionId;
+    
+    // Charger les infos candidat dans la modal (simulation)
+    const candidatNom = row.querySelector('.candidat-nom').textContent;
+    const candidatPoste = row.querySelector('.poste-titre')?.textContent || 'N/A';
+    
+    document.getElementById('candidatResumeEval').innerHTML = `
+      <div class="candidat-resume-info">
+        <h6>${candidatNom}</h6>
+        <p>Poste actuel: ${candidatPoste}</p>
+      </div>
+    `;
+    
+    // Réinitialiser le formulaire
+    document.getElementById('formEvaluationCandidat').reset();
+    document.getElementById('scoreRange').value = 50;
+    document.getElementById('scoreAjuste').value = 50;
+    
+    // Afficher la modal
+    const modal = new bootstrap.Modal(document.getElementById('modalEvaluationCandidat'));
+    modal.show();
+  };
+
+  window.retenirCandidat = function(propositionId) {
+    console.log('Retenir candidat:', propositionId);
+    ouvrirModalDecision(propositionId, 'RETENIR');
+  };
+
+  window.rejeterCandidat = function(propositionId) {
+    console.log('Rejeter candidat:', propositionId);
+    ouvrirModalDecision(propositionId, 'REJETER');
+  };
+
+  function ouvrirModalDecision(propositionId, action) {
+    const modal = document.getElementById('modalDecisionCandidat');
+    const titre = document.getElementById('modalDecisionTitre');
+    const header = document.getElementById('modalDecisionHeader');
+    const btnConfirmer = document.getElementById('btnConfirmerDecision');
+    const divMotif = document.getElementById('divMotifRefus');
+    const divPriorite = document.getElementById('divPrioriteCandidat');
+    
+    document.getElementById('propositionIdDecision').value = propositionId;
+    document.getElementById('actionDecision').value = action;
+    
+    // Charger les infos candidat (simulation)
+    const row = document.querySelector(`tr[id*="${propositionId}"]`);
+    const candidatNom = row?.querySelector('.candidat-nom')?.textContent || 'Candidat';
+    
+    document.getElementById('candidatDecisionResume').innerHTML = `
+      <div class="alert alert-info">
+        <strong>Candidat:</strong> ${candidatNom}
+      </div>
+    `;
+    
+    if (action === 'RETENIR') {
+      titre.innerHTML = '<i class="fas fa-check"></i> Retenir le candidat';
+      header.className = 'modal-header bg-success text-white';
+      btnConfirmer.className = 'btn btn-success';
+      btnConfirmer.innerHTML = '<i class="fas fa-check"></i> Retenir ce candidat';
+      divMotif.style.display = 'none';
+      divPriorite.style.display = 'block';
+    } else {
+      titre.innerHTML = '<i class="fas fa-times"></i> Rejeter le candidat';
+      header.className = 'modal-header bg-danger text-white';
+      btnConfirmer.className = 'btn btn-danger';
+      btnConfirmer.innerHTML = '<i class="fas fa-times"></i> Rejeter ce candidat';
+      divMotif.style.display = 'block';
+      divPriorite.style.display = 'none';
+    }
+    
+    // Réinitialiser le formulaire
+    document.getElementById('formDecisionCandidat').reset();
+    
+    // Afficher la modal
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+  }
+
+  window.confirmerDecisionCandidat = function() {
+    const form = document.getElementById('formDecisionCandidat');
+    const formData = new FormData(form);
+    const action = document.getElementById('actionDecision').value;
+    
+    // Validation
+    const commentaire = document.getElementById('commentaireDecision').value.trim();
+    if (!commentaire) {
+      alert('Le commentaire est obligatoire');
+      return;
+    }
+    
+    if (action === 'REJETER') {
+      const motif = document.getElementById('motifRefus').value;
+      if (!motif) {
+        alert('Le motif de refus est obligatoire');
+        return;
+      }
+    }
+    
+    showLoading();
+    
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`{{ url_retenir_proposition }}`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('modalDecisionCandidat')).hide();
+        showToast('Succès', data.message, 'success');
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        showToast('Erreur', data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur décision candidat:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  // ================================================================
+  // FONCTIONS D'ÉVALUATION
+  // ================================================================
+  
+  window.updateScoreDisplay = function(value) {
+    document.getElementById('scoreAjuste').value = value;
+  };
+
+  window.updateScoreRange = function(value) {
+    document.getElementById('scoreRange').value = value;
+  };
+
+  window.sauvegarderEvaluation = function() {
+    const form = document.getElementById('formEvaluationCandidat');
+    const formData = new FormData(form);
+    
+    // Validation
+    const commentaire = document.getElementById('commentaireEvaluation').value.trim();
+    if (!commentaire) {
+      alert('Le commentaire d\'évaluation est obligatoire');
+      return;
+    }
+    
+    showLoading();
+    
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`{{ url_evaluer_proposition }}`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('modalEvaluationCandidat')).hide();
+        showToast('Succès', 'Évaluation sauvegardée avec succès', 'success');
+        
+        // Mettre à jour la ligne du tableau
+        const propositionId = document.getElementById('propositionIdEval').value;
+        const row = document.querySelector(`tr[id*="${propositionId}"]`);
+        if (row && data.nouveau_score) {
+          const scoreElement = row.querySelector('.score-principal');
+          if (scoreElement) {
+            scoreElement.textContent = data.nouveau_score;
+            scoreElement.className = `score-principal ${data.score_classe}`;
+          }
+        }
+        
+      } else {
+        showToast('Erreur', data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur sauvegarde évaluation:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  // ================================================================
+  // FONCTIONS D'AJOUT DE PROPOSITION
+  // ================================================================
+  
+  window.ouvrirAjoutProposition = function() {
+    console.log('Ouvrir ajout proposition');
+    
+    // Réinitialiser le formulaire
+    document.getElementById('formAjoutProposition').reset();
+    masquerInfosEmploye('candidat');
+    document.getElementById('btnSoumettreProposition').disabled = true;
+    
+    // Afficher la modal
+    const modal = new bootstrap.Modal(document.getElementById('modalAjoutProposition'));
+    modal.show();
+  };
+
+  function validerFormulaireProposition() {
+    const candidatId = getElement('candidatId')?.value;
+    const justification = getElement('justificationProposition')?.value?.trim();
+    
+    document.getElementById('btnSoumettreProposition').disabled = !(candidatId && justification && justification.length >= 10);
+  }
+
+  window.soumettreNouvelleProposition = function() {
+    const form = document.getElementById('formAjoutProposition');
+    const formData = new FormData(form);
+    
+    showLoading();
+    
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`{{ url_ajouter_proposition }}`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('modalAjoutProposition')).hide();
+        showToast('Succès', 'Proposition ajoutée avec succès', 'success');
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        showToast('Erreur', data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur ajout proposition:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  // ================================================================
+  // FONCTIONS D'AFFICHAGE DES DÉTAILS
+  // ================================================================
+  
+  window.voirScoreDetail = function(propositionId) {
+    console.log('Voir détail score proposition:', propositionId);
+    showLoading();
+    
+    fetch(`{{ url_scores_details }}?proposition_id=${propositionId}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('modalDetailScoreBody').innerHTML = data.html;
+        const modal = new bootstrap.Modal(document.getElementById('modalDetailScore'));
+        modal.show();
+      } else {
+        showToast('Erreur', 'Impossible de charger les détails du score', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur détail score:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  window.voirJustification = function(propositionId) {
+    console.log('Voir justification proposition:', propositionId);
+    showLoading();
+    
+    fetch(`/interim/ajax/justification-proposition/?proposition_id=${propositionId}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('modalJustificationBody').innerHTML = data.html;
+        const modal = new bootstrap.Modal(document.getElementById('modalJustification'));
+        modal.show();
+      } else {
+        showToast('Erreur', 'Impossible de charger la justification', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur justification:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  window.voirHistoriqueCandidat = function(candidatId) {
+    console.log('Voir historique candidat:', candidatId);
+    window.open(`/interim/candidat/${candidatId}/historique/`, '_blank');
+  };
+
+  // ================================================================
+  // FONCTIONS UTILITAIRES
+  // ================================================================
+  
+  function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+  }
+  
+  function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+  
+  function showToast(titre, message, type = 'info') {
+    try {
+      const toastContainer = document.querySelector('.toast-container');
+      if (!toastContainer) {
+        console.warn('⚠️ Toast container non trouvé');
+        return;
+      }
+      
+      const toastId = 'toast_' + Date.now();
+      
+      const bgClass = {
+        'success': 'bg-success',
+        'error': 'bg-danger',
+        'warning': 'bg-warning',
+        'info': 'bg-info'
+      }[type] || 'bg-info';
+      
+      const icon = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+      }[type] || 'fa-info-circle';
+      
+      const toastHtml = `
+        <div class="toast ${bgClass} text-white" id="${toastId}" role="alert">
+          <div class="toast-header ${bgClass} text-white">
+            <i class="fas ${icon} me-2"></i>
+            <strong class="me-auto">${titre}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+          </div>
+          <div class="toast-body">
+            ${message}
+          </div>
+        </div>
+      `;
+      
+      toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+      
+      const toastElement = document.getElementById(toastId);
+      
+      // Vérifier si Bootstrap est disponible
+      if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastElement, {
+          autohide: true,
+          delay: type === 'error' ? 8000 : 5000
+        });
+        
+        toast.show();
+        
+        // Nettoyer après fermeture
+        toastElement.addEventListener('hidden.bs.toast', function() {
+          this.remove();
+        });
+      } else {
+        // Fallback sans Bootstrap
+        console.warn('⚠️ Bootstrap non disponible, affichage toast simple');
+        toastElement.style.display = 'block';
+        toastElement.style.opacity = '1';
+        
+        // Auto-suppression après délai
+        setTimeout(() => {
+          if (toastElement.parentNode) {
+            toastElement.parentNode.removeChild(toastElement);
+          }
+        }, type === 'error' ? 8000 : 5000);
+      }
+    } catch (error) {
+      console.error('❌ Erreur dans showToast:', error);
+      // Fallback ultime: console.log
+      console.log(`${titre}: ${message}`);
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS D'ÉVALUATION EN MASSE
+  // ================================================================
+  
+  window.evaluationRapide = function(action) {
+    console.log('Évaluation rapide:', action, 'pour', propositionsSelectionnees.length, 'propositions');
+    
+    if (propositionsSelectionnees.length === 0) {
+      alert('Veuillez sélectionner au moins une proposition');
+      return;
+    }
+    
+    const commentaire = prompt(`Commentaire pour ${action.toLowerCase()} les propositions sélectionnées:`);
+    if (!commentaire) return;
+    
+    showLoading();
+    
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('commentaire', commentaire);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    propositionsSelectionnees.forEach(id => {
+      formData.append('propositions_ids[]', id);
+    });
+    
+    fetch('/interim/propositions/evaluation-masse/', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Succès', data.message, 'success');
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        showToast('Erreur', data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur évaluation masse:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  // ================================================================
+  // FONCTIONS AVANCÉES
+  // ================================================================
+
+  window.ajusterScore = function(propositionId) {
+    console.log('Ajuster score proposition:', propositionId);
+    
+    const nouveauScore = prompt('Nouveau score (0-100):');
+    if (!nouveauScore || isNaN(nouveauScore) || nouveauScore < 0 || nouveauScore > 100) {
+      alert('Score invalide. Veuillez entrer un nombre entre 0 et 100.');
+      return;
+    }
+    
+    const motif = prompt('Motif de l\'ajustement:');
+    if (!motif) return;
+    
+    showLoading();
+    
+    const formData = new FormData();
+    formData.append('proposition_id', propositionId);
+    formData.append('nouveau_score', nouveauScore);
+    formData.append('motif_ajustement', motif);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch('/interim/propositions/ajuster-score/', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Succès', 'Score ajusté avec succès', 'success');
+        
+        // Mettre à jour l'affichage du score
+        const row = document.querySelector(`tr[id*="${propositionId}"]`);
+        if (row) {
+          const scoreElement = row.querySelector('.score-principal');
+          if (scoreElement) {
+            scoreElement.textContent = nouveauScore;
+            scoreElement.className = `score-principal ${data.score_classe}`;
+          }
+        }
+      } else {
+        showToast('Erreur', data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur ajustement score:', error);
+      showToast('Erreur', 'Erreur de communication', 'error');
+    })
+    .finally(() => {
+      hideLoading();
+    });
+  };
+
+  // ================================================================
+  // INITIALISATION DES EVENT LISTENERS
+  // ================================================================
+
+  // Recherche de candidat avec debounce - VERSION DEBUG
+  const candidatMatriculeInput = document.getElementById('candidatMatricule');
+  console.log('🔍 Recherche input candidat:', candidatMatriculeInput);
+  
+  if (candidatMatriculeInput) {
+    console.log('✅ Input candidat trouvé, ajout des listeners');
+    
+    const debouncedSearchCandidat = debounce((matricule) => {
+      console.log('🚀 Appel debounced pour matricule:', matricule);
+      rechercherEmployeCandidat(matricule);
+    }, 500);
+
+    candidatMatriculeInput.addEventListener('input', function() {
+      const matricule = this.value.trim();
+      console.log('⌨️ Input event - matricule saisi:', matricule);
+      debouncedSearchCandidat(matricule);
+    });
+  } else {
+    console.error('❌ Input candidatMatricule non trouvé !');
+  }
+
+  // ================================================================
+  // FONCTION SPÉCIFIQUE POUR LA RECHERCHE DE CANDIDAT - VERSION DEBUG
+  // ================================================================
+
+  async function rechercherEmployeCandidat(matricule) {
+    console.log(`🔍 DEBUT rechercherEmployeCandidat: matricule="${matricule}"`);
+    
+    // Test de tous les éléments HTML
+    console.log('🧪 Test des éléments HTML:');
+    console.log('- candidat_info:', document.getElementById('candidat_info'));
+    console.log('- candidat_loading:', document.getElementById('candidat_loading'));
+    console.log('- candidat_error:', document.getElementById('candidat_error'));
+    console.log('- candidatId:', document.getElementById('candidatId'));
+    console.log('- candidat_nom_complet:', document.getElementById('candidat_nom_complet'));
+    
+    if (!matricule || matricule.length < 2) {
+      console.log(`❌ Matricule invalide: "${matricule}"`);
+      masquerInfosCandidatModal();
+      return;
+    }
+
+    // Vérifier le cache
+    const cacheKey = `${matricule}_candidat_modal`;
+    const cached = employeeCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      console.log(`💾 Cache hit pour ${matricule}`);
+      afficherInfosCandidatModal(cached.data);
+      return;
+    }
+
+    afficherChargementCandidatModal(true);
+    console.log(`🔍 Requête AJAX pour ${matricule}`);
+
+    try {
+      const requestData = {
+        matricule: matricule,
+        force_kelio_sync: false
+      };
+      
+      console.log(`📤 Envoi requête candidat:`, requestData);
+      console.log(`📤 CSRF Token:`, csrfToken);
+      
+      const response = await fetch('/interim/ajax/rechercher-employe/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      console.log(`📨 Status candidat: ${response.status} ${response.statusText}`);
+
+      // Si erreur CSRF, essayer avec FormData
+      if (response.status === 403) {
+        console.log('🔄 Tentative avec FormData après erreur CSRF...');
+        
+        const formData = new FormData();
+        formData.append('matricule', matricule);
+        formData.append('force_kelio_sync', 'false');
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        const retryResponse = await fetch('/interim/ajax/rechercher-employe/', {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        });
+        
+        console.log(`📨 Retry Status: ${retryResponse.status} ${retryResponse.statusText}`);
+        
+        if (!retryResponse.ok) {
+          throw new Error(`Erreur HTTP après retry ${retryResponse.status}: ${retryResponse.statusText}`);
+        }
+        
+        const retryResponseText = await retryResponse.text();
+        console.log(`📨 Retry Réponse:`, retryResponseText);
+        
+        try {
+          data = JSON.parse(retryResponseText);
+          console.log(`📨 Retry Données parsées:`, data);
+        } catch (parseError) {
+          console.error(`❌ Erreur parsing JSON retry:`, parseError);
+          throw new Error(`Réponse non-JSON: ${retryResponseText.substring(0, 100)}...`);
+        }
+      } else {
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const responseText = await response.text();
+        console.log(`📨 Réponse candidat brute:`, responseText);
+
+        try {
+          data = JSON.parse(responseText);
+          console.log(`📨 Données candidat parsées:`, data);
+        } catch (parseError) {
+          console.error(`❌ Erreur parsing JSON candidat:`, parseError);
+          console.error(`❌ Texte de réponse:`, responseText);
+          throw new Error(`Réponse non-JSON: ${responseText.substring(0, 100)}...`);
+        }
+      }
+
+      // Traitement de la réponse
+      if (data && data.success === true) {
+        console.log(`✅ Succès candidat détecté`);
+        
+        if (data.employe) {
+          console.log(`👤 Candidat trouvé:`, data.employe);
+          
+          // Mettre en cache
+          employeeCache.set(cacheKey, {
+            data: data,
+            timestamp: Date.now()
+          });
+
+          // Afficher les informations
+          console.log('🧪 AVANT afficherInfosCandidatModal');
+          try {
+            afficherInfosCandidatModal(data);
+            console.log('✅ afficherInfosCandidatModal exécutée');
+          } catch (errorAffichage) {
+            console.error('❌ Erreur dans afficherInfosCandidatModal:', errorAffichage);
+          }
+          
+          // Toast sans Bootstrap si nécessaire
+          try {
+            showToast('Succès', `Candidat ${matricule} trouvé avec succès`, 'success');
+          } catch (errorToast) {
+            console.warn('⚠️ Erreur toast (non critique):', errorToast);
+            // Notification alternative simple
+            console.log(`✅ Candidat ${matricule} trouvé avec succès`);
+          }
+          
+          // Calculer le score et vérifier disponibilité
+          setTimeout(() => {
+            console.log('⏰ Calcul score et disponibilité...');
+            try {
+              calculerScoreCandidat(data.employe.id);
+              verifierDisponibiliteCandidat(data.employe.id);
+            } catch (errorCalc) {
+              console.error('❌ Erreur calculs:', errorCalc);
+            }
+          }, 100);
+          
+        } else {
+          console.log(`❌ Pas de candidat dans la réponse`);
+          console.log(`❌ Structure data:`, Object.keys(data));
+          afficherErreurCandidatModal('Réponse invalide du serveur - pas d\'employé');
+        }
+        
+      } else if (data && data.success === false) {
+        console.log(`❌ Échec candidat explicite:`, data.error);
+        afficherErreurCandidatModal(data.error || 'Erreur du serveur');
+        
+      } else {
+        console.log(`❌ Structure de réponse candidat inattendue:`, data);
+        console.log(`❌ data.success:`, data?.success);
+        console.log(`❌ Toute la réponse:`, data);
+        afficherErreurCandidatModal('Réponse serveur invalide');
+      }
+
+    } catch (error) {
+      console.error('❌ ERREUR dans rechercherEmployeCandidat:', error);
+      
+      let errorMessage = 'Erreur de communication avec le serveur';
+      
+      if (error.message.includes('404')) {
+        errorMessage = 'Service de recherche non disponible';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Erreur serveur temporaire';
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Erreur de format de réponse';
+      }
+      
+      afficherErreurCandidatModal(errorMessage);
+      
+    } finally {
+      console.log(`🔍 FIN rechercherEmployeCandidat pour ${matricule}`);
+      afficherChargementCandidatModal(false);
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS D'AFFICHAGE SPÉCIFIQUES MODAL CANDIDAT - VERSION DEBUG
+  // ================================================================
+
+  function afficherInfosCandidatModal(data) {
+    console.log(`📝 === DEBUT afficherInfosCandidatModal ===`);
+    console.log(`📝 Data reçue:`, data);
+    
+    const employe = data.employe;
+    if (!employe) {
+      console.error(`❌ Pas de données candidat dans data.employe`);
+      console.error(`❌ Clés disponibles dans data:`, Object.keys(data));
+      return;
+    }
+
+    console.log(`📝 Données employé:`, employe);
+    console.log(`📝 Clés employé:`, Object.keys(employe));
+
+    // Tester tous les éléments avant manipulation
+    console.log('🧪 === TEST ÉLÉMENTS AVANT AFFICHAGE ===');
+    const candidatError = document.getElementById('candidat_error');
+    const candidatLoading = document.getElementById('candidat_loading');
+    const candidatInfo = document.getElementById('candidat_info');
+    const candidatId = document.getElementById('candidatId');
+    const nomElement = document.getElementById('candidat_nom_complet');
+    const matriculeElement = document.getElementById('candidat_matricule_display');
+    const sexeElement = document.getElementById('candidat_sexe');
+    const ancienneteElement = document.getElementById('candidat_anciennete');
+    const departementElement = document.getElementById('candidat_departement');
+    const siteElement = document.getElementById('candidat_site');
+    const posteElement = document.getElementById('candidat_poste');
+    const syncStatusElement = document.getElementById('candidat_sync_status');
+
+    console.log('- candidatError:', candidatError ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- candidatLoading:', candidatLoading ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- candidatInfo:', candidatInfo ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- candidatId:', candidatId ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- nomElement:', nomElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- matriculeElement:', matriculeElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- sexeElement:', sexeElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- ancienneteElement:', ancienneteElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- departementElement:', departementElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- siteElement:', siteElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- posteElement:', posteElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+    console.log('- syncStatusElement:', syncStatusElement ? '✅ TROUVÉ' : '❌ NON TROUVÉ');
+
+    // FORCER L'AFFICHAGE MÊME SI ÉLÉMENTS MANQUANTS
+    console.log('🔧 === FORÇAGE AFFICHAGE ===');
+
+    // Masquer erreurs et chargement
+    if (candidatError) {
+      candidatError.style.display = 'none';
+      console.log('✅ candidatError masqué');
+    }
+    if (candidatLoading) {
+      candidatLoading.style.display = 'none';
+      console.log('✅ candidatLoading masqué');
+    }
+
+    // Remplir les informations principales avec vérifications
+    if (nomElement) {
+      const nomValue = employe.nom_complet || employe.nom || 'Nom non disponible';
+      nomElement.textContent = nomValue;
+      console.log(`✅ Nom défini: "${nomValue}"`);
+    } else {
+      console.error('❌ nomElement (candidat_nom_complet) NON TROUVÉ !');
+    }
+    
+    if (matriculeElement) {
+      const matriculeValue = employe.matricule || '';
+      matriculeElement.textContent = matriculeValue;
+      console.log(`✅ Matricule défini: "${matriculeValue}"`);
+    } else {
+      console.error('❌ matriculeElement (candidat_matricule_display) NON TROUVÉ !');
+    }
+    
+    // Détails avec icônes
+    if (sexeElement && employe.sexe) {
+      const sexeValue = employe.sexe === 'M' ? '👨 Homme' : '👩 Femme';
+      sexeElement.textContent = sexeValue;
+      console.log(`✅ Sexe défini: "${sexeValue}"`);
+    }
+    
+    if (ancienneteElement && employe.anciennete) {
+      const ancienneteValue = `⏰ ${employe.anciennete}`;
+      ancienneteElement.textContent = ancienneteValue;
+      console.log(`✅ Ancienneté définie: "${ancienneteValue}"`);
+    }
+
+    // Informations organisationnelles
+    if (departementElement && employe.departement) {
+      const departementValue = `🏢 ${employe.departement}`;
+      departementElement.textContent = departementValue;
+      console.log(`✅ Département défini: "${departementValue}"`);
+    }
+    
+    if (siteElement && employe.site) {
+      const siteValue = `📍 ${employe.site}`;
+      siteElement.textContent = siteValue;
+      console.log(`✅ Site défini: "${siteValue}"`);
+    }
+    
+    if (posteElement && employe.poste) {
+      const posteValue = `💼 ${employe.poste}`;
+      posteElement.textContent = posteValue;
+      console.log(`✅ Poste défini: "${posteValue}"`);
+    }
+
+    // Statut de synchronisation
+    if (syncStatusElement && data.sync_info) {
+      if (data.sync_info.is_recent) {
+        syncStatusElement.textContent = 'Données à jour';
+        syncStatusElement.className = 'employee-sync-status sync-status-recent';
+      } else {
+        syncStatusElement.textContent = 'Données locales';
+        syncStatusElement.className = 'employee-sync-status sync-status-local';
+      }
+      console.log(`✅ Sync status défini`);
+    }
+
+    // Définir l'ID caché
+    if (candidatId && employe.id) {
+      candidatId.value = employe.id;
+      console.log(`✅ ID candidat défini: ${employe.id}`);
+    } else {
+      console.error('❌ candidatId NON TROUVÉ ou employe.id manquant !');
+      if (!candidatId) console.error('❌ Element candidatId non trouvé');
+      if (!employe.id) console.error('❌ employe.id manquant:', employe);
+    }
+
+    // FORCER L'AFFICHAGE DU CONTAINER
+    if (candidatInfo) {
+      candidatInfo.style.display = 'block';
+      candidatInfo.style.visibility = 'visible';
+      candidatInfo.style.opacity = '1';
+      console.log('✅ candidatInfo FORCÉ à être visible');
+      
+      // Test si réellement visible
+      const computedStyle = window.getComputedStyle(candidatInfo);
+      console.log('🧪 Style calculé candidatInfo:');
+      console.log('- display:', computedStyle.display);
+      console.log('- visibility:', computedStyle.visibility);
+      console.log('- opacity:', computedStyle.opacity);
+      console.log('- offsetHeight:', candidatInfo.offsetHeight);
+      console.log('- offsetWidth:', candidatInfo.offsetWidth);
+    } else {
+      console.error('❌ candidatInfo (candidat_info) NON TROUVÉ !');
+      
+      // Chercher tous les éléments qui pourraient correspondre
+      console.log('🔍 Recherche d\'éléments similaires:');
+      const allCandidatElements = document.querySelectorAll('[id*="candidat"]');
+      allCandidatElements.forEach(el => {
+        console.log(`- Trouvé: ${el.id} (${el.tagName})`);
+      });
+    }
+
+    // Déclencher la validation du formulaire
+    try {
+      validerFormulaireProposition();
+      console.log('✅ Validation formulaire déclenchée');
+    } catch (errorValidation) {
+      console.error('❌ Erreur validation formulaire:', errorValidation);
+    }
+    
+    console.log(`📝 === FIN afficherInfosCandidatModal ===`);
+  }
+
+  function afficherErreurCandidatModal(message) {
+    console.log(`❌ Affichage erreur candidat modal: ${message}`);
+    
+    const candidatInfo = document.getElementById('candidat_info');
+    const candidatLoading = document.getElementById('candidat_loading');
+    const candidatError = document.getElementById('candidat_error');
+    const candidatId = document.getElementById('candidatId');
+
+    console.log('🧪 Éléments pour erreur:');
+    console.log('- candidatInfo:', candidatInfo);
+    console.log('- candidatLoading:', candidatLoading);
+    console.log('- candidatError:', candidatError);
+    console.log('- candidatId:', candidatId);
+
+    if (candidatInfo) candidatInfo.style.display = 'none';
+    if (candidatLoading) candidatLoading.style.display = 'none';
+    
+    if (candidatError) {
+      const messageElement = candidatError.querySelector('.error-message');
+      console.log('- messageElement:', messageElement);
+      if (messageElement) {
+        messageElement.textContent = message;
+      }
+      candidatError.style.display = 'flex';
+      console.log('✅ Erreur affichée');
+    } else {
+      console.error('❌ candidatError non trouvé !');
+    }
+
+    // Vider l'ID caché
+    if (candidatId) {
+      candidatId.value = '';
+    }
+
+    // Déclencher la validation du formulaire
+    validerFormulaireProposition();
+  }
+
+  function afficherChargementCandidatModal(show) {
+    console.log(`⏳ Affichage chargement candidat: ${show}`);
+    
+    const candidatLoading = document.getElementById('candidat_loading');
+    const candidatInfo = document.getElementById('candidat_info');
+    const candidatError = document.getElementById('candidat_error');
+
+    console.log('🧪 Éléments pour chargement:');
+    console.log('- candidatLoading:', candidatLoading);
+    console.log('- candidatInfo:', candidatInfo);
+    console.log('- candidatError:', candidatError);
+
+    if (candidatLoading) {
+      candidatLoading.style.display = show ? 'flex' : 'none';
+      console.log(`✅ candidatLoading: ${show ? 'affiché' : 'masqué'}`);
+    } else {
+      console.error('❌ candidatLoading non trouvé !');
+    }
+    
+    if (show) {
+      if (candidatInfo) candidatInfo.style.display = 'none';
+      if (candidatError) candidatError.style.display = 'none';
+    }
+  }
+
+  function masquerInfosCandidatModal() {
+    console.log('🫥 Masquer infos candidat modal');
+    
+    const candidatInfo = document.getElementById('candidat_info');
+    const candidatError = document.getElementById('candidat_error');
+    const candidatLoading = document.getElementById('candidat_loading');
+    const candidatId = document.getElementById('candidatId');
+    const candidatScore = document.getElementById('candidat_score');
+    const candidatDisponibilite = document.getElementById('candidat_disponibilite');
+
+    console.log('🧪 Éléments à masquer:');
+    console.log('- candidatInfo:', candidatInfo);
+    console.log('- candidatError:', candidatError);
+    console.log('- candidatLoading:', candidatLoading);
+    console.log('- candidatId:', candidatId);
+    console.log('- candidatScore:', candidatScore);
+    console.log('- candidatDisponibilite:', candidatDisponibilite);
+
+    if (candidatInfo) candidatInfo.style.display = 'none';
+    if (candidatError) candidatError.style.display = 'none';
+    if (candidatLoading) candidatLoading.style.display = 'none';
+    if (candidatScore) candidatScore.style.display = 'none';
+    if (candidatDisponibilite) candidatDisponibilite.style.display = 'none';
+    
+    if (candidatId) {
+      candidatId.value = '';
+    }
+
+    // Déclencher la validation du formulaire
+    validerFormulaireProposition();
+  }
+
+  // Validation en temps réel du formulaire d'ajout
+  const justificationInput = getElement('justificationProposition');
+  if (justificationInput) {
+    justificationInput.addEventListener('input', validerFormulaireProposition);
+  }
+
+  // Initialiser les event listeners pour les checkboxes
+  document.querySelectorAll('.proposition-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectionCount);
+  });
+
+  // Auto-soumission des filtres avec délai
+  const filtreInputs = document.querySelectorAll('#filtresForm input, #filtresForm select');
+  let timeoutFiltres;
+  
+  filtreInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      clearTimeout(timeoutFiltres);
+      timeoutFiltres = setTimeout(() => {
+        console.log('Auto-soumission des filtres');
+        document.getElementById('filtresForm').submit();
+      }, 1000);
+    });
+  });
+
+  // Raccourcis clavier
+  document.addEventListener('keydown', function(e) {
+    // Ctrl+A : Sélectionner tout
+    if (e.ctrlKey && e.key === 'a') {
+      e.preventDefault();
+      const selectAllCheckbox = document.getElementById('selectAll');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = !selectAllCheckbox.checked;
+        toggleSelectAll(selectAllCheckbox);
+        console.log('Raccourci Ctrl+A utilisé');
+      }
+    }
+    
+    // F5 : Actualiser
+    if (e.key === 'F5') {
+      e.preventDefault();
+      console.log('Raccourci F5 - Actualisation');
+      window.location.reload();
+    }
+    
+    // Escape : Fermer les modales ouvertes
+    if (e.key === 'Escape') {
+      const modals = document.querySelectorAll('.modal.show');
+      modals.forEach(modal => {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+      });
+    }
+    
+    // N : Nouvelle proposition (si autorisé)
+    if (e.key === 'n' && !e.ctrlKey && !e.altKey) {
+      const btnAjouter = document.querySelector('[onclick="ouvrirAjoutProposition()"]');
+      if (btnAjouter && !btnAjouter.disabled) {
+        e.preventDefault();
+        ouvrirAjoutProposition();
+        console.log('Raccourci N - Nouvelle proposition');
+      }
+    }
+  });
+
+  // ================================================================
+  // FONCTIONS D'AMÉLIORATION UX
+  // ================================================================
+
+  // Confirmation avant navigation si des propositions sont sélectionnées
+  window.addEventListener('beforeunload', function(e) {
+    if (propositionsSelectionnees.length > 0) {
+      const message = `Vous avez ${propositionsSelectionnees.length} proposition(s) sélectionnée(s). Êtes-vous sûr de vouloir quitter cette page ?`;
+      e.returnValue = message;
+      return message;
+    }
+  });
+
+  // Tooltips Bootstrap
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Animation d'entrée pour les lignes du tableau
+  const rows = document.querySelectorAll('.table-propositions tbody tr');
+  rows.forEach((row, index) => {
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      row.style.transition = 'all 0.3s ease';
+      row.style.opacity = '1';
+      row.style.transform = 'translateY(0)';
+    }, index * 50);
+  });
+
+  // Auto-rafraîchissement toutes les 5 minutes
+  setInterval(() => {
+    console.log('Vérification automatique nouvelles propositions...');
+    fetch(window.location.href + '&ajax=1', {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.nouvelles_propositions && data.nouvelles_propositions > 0) {
+        showToast(
+          'Nouvelles propositions',
+          `${data.nouvelles_propositions} nouvelle(s) proposition(s) ajoutée(s)`,
+          'info'
+        );
+      }
+    })
+    .catch(error => {
+      console.log('Erreur vérification nouvelles propositions:', error);
+    });
+  }, 5 * 60 * 1000); // 5 minutes
+
+  // ================================================================
+  // FINALISATION DE L'INITIALISATION
+  // ================================================================
+
+  // Initialisation finale
+  updateSelectionCount();
+
+  // Gestion des erreurs globales
+  window.addEventListener('error', function(e) {
+    console.error('Erreur JavaScript globale:', e.error);
+    showToast('Erreur', 'Une erreur inattendue s\'est produite', 'error');
+  });
+
+  console.log('✅ Interface de gestion des propositions initialisée avec succès');
+});
+
+// ================================================================
+// FONCTIONS GLOBALES POUR COMPATIBILITÉ
+// ================================================================
+
+// Ces fonctions sont définies globalement pour être accessibles depuis les attributs onclick
+window.showLoading = function() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+};
+
+window.hideLoading = function() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+};
+
+window.showToast = function(titre, message, type = 'info') {
+  const toastContainer = document.querySelector('.toast-container');
+  const toastId = 'toast_' + Date.now();
+  
+  const bgClass = {
+    'success': 'bg-success',
+    'error': 'bg-danger',
+    'warning': 'bg-warning',
+    'info': 'bg-info'
+  }[type] || 'bg-info';
+  
+  const icon = {
+    'success': 'fa-check-circle',
+    'error': 'fa-exclamation-circle',
+    'warning': 'fa-exclamation-triangle',
+    'info': 'fa-info-circle'
+  }[type] || 'fa-info-circle';
+  
+  const toastHtml = `
+    <div class="toast ${bgClass} text-white" id="${toastId}" role="alert">
+      <div class="toast-header ${bgClass} text-white">
+        <i class="fas ${icon} me-2"></i>
+        <strong class="me-auto">${titre}</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body">
+        ${message}
+      </div>
+    </div>
+  `;
+  
+  toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+  
+  const toastElement = document.getElementById(toastId);
+  const toast = new bootstrap.Toast(toastElement, {
+    autohide: true,
+    delay: type === 'error' ? 8000 : 5000
+  });
+  
+  toast.show();
+  
+  // Nettoyer après fermeture
+  toastElement.addEventListener('hidden.bs.toast', function() {
+    this.remove();
+  });
+};
+
+console.log('🎯 Système de gestion des propositions prêt - Version avec recherche d\'employé améliorée');
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,3914 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Modifier demande {{ demande.numero_demande }}{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}">
+      <i class="fas fa-info-circle"></i>
+      <div class="alert-content">{{ message }}</div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Header -->
+<div class="detail-header">
+  <h1 class="page-title">
+    <i class="fas fa-edit"></i>
+    Modifier demande {{ demande.numero_demande }}
+    <span class="status-badge {{ demande.statut|lower }}">
+      {% if demande.statut == 'BROUILLON' %}
+        <i class="fas fa-edit"></i> Brouillon
+      {% elif demande.statut == 'SOUMISE' %}
+        <i class="fas fa-paper-plane"></i> Soumise
+      {% elif demande.statut == 'EN_VALIDATION' %}
+        <i class="fas fa-clock"></i> En validation
+      {% elif demande.statut == 'VALIDEE' %}
+        <i class="fas fa-check"></i> Validée
+      {% endif %}
+    </span>
+  </h1>
+  <div class="user-menu">
+    <a href="{% url 'demande_detail' demande.id %}" class="icon-btn" title="Voir la demande">
+      <i class="fas fa-eye"></i>
+    </a>
+    <button class="icon-btn" title="Notifications">
+      <i class="fas fa-bell"></i>
+    </button>
+    <div class="user-avatar">{{ profil_utilisateur.initiales }}</div>
+  </div>
+</div>
+
+<!-- Informational Alert -->
+<div class="alert alert-warning">
+  <i class="fas fa-exclamation-triangle fa-lg"></i>
+  <div class="alert-content">
+    <div class="alert-title">Modification d'une demande d'intérim</div>
+    <p>Vous modifiez la demande {{ demande.numero_demande }}. Les modifications seront sauvegardées et l'historique sera mis à jour. 
+       Attention : certaines modifications peuvent nécessiter une nouvelle validation.</p>
+  </div>
+</div>
+
+<!-- Changes Indicator -->
+<div class="changes-indicator" id="changesIndicator">
+  <div class="changes-title">
+    <i class="fas fa-edit"></i>
+    Modifications non sauvegardées
+  </div>
+  <ul class="changes-list" id="changesList">
+    <!-- Les modifications seront ajoutées ici via JavaScript -->
+  </ul>
+</div>
+
+<!-- Informations actuelles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations actuelles
+    </h2>
+    <div class="urgence-badge {{ demande.urgence|lower }}">
+      {% if demande.urgence == 'NORMALE' %}
+        <i class="fas fa-circle"></i> Normale
+      {% elif demande.urgence == 'MOYENNE' %}
+        <i class="fas fa-exclamation"></i> Moyenne
+      {% elif demande.urgence == 'ELEVEE' %}
+        <i class="fas fa-exclamation-triangle"></i> Élevée
+      {% elif demande.urgence == 'CRITIQUE' %}
+        <i class="fas fa-fire"></i> Critique
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Créée le</span>
+        <span class="info-value">{{ demande.created_at|date:"d/m/Y à H:i" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Dernière modification</span>
+        <span class="info-value">{{ demande.updated_at|date:"d/m/Y à H:i" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Personne à remplacer</span>
+        <span class="info-value">{{ demande.personne_remplacee.nom_complet }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Poste actuel</span>
+        <span class="info-value">{{ demande.poste.titre }} - {{ demande.poste.site.nom }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Période</span>
+        <span class="info-value">
+          {% if demande.date_debut and demande.date_fin %}
+            Du {{ demande.date_debut|date:"d/m/Y" }} au {{ demande.date_fin|date:"d/m/Y" }}
+          {% else %}
+            Dates non renseignées
+          {% endif %}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Motif actuel</span>
+        <span class="info-value">{{ demande.motif_absence.nom }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Propositions existantes -->
+{% if propositions_existantes %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-users"></i>
+      Propositions de candidats existantes
+      <span class="count-badge">{{ propositions_existantes|length }}</span>
+    </h2>
+    <div class="stats-badges">
+      {% if stats_propositions.en_attente %}
+        <span class="stat-badge en-attente">{{ stats_propositions.en_attente }} en attente</span>
+      {% endif %}
+      {% if stats_propositions.en_evaluation %}
+        <span class="stat-badge en-evaluation">{{ stats_propositions.en_evaluation }} en évaluation</span>
+      {% endif %}
+      {% if stats_propositions.retenues %}
+        <span class="stat-badge retenues">{{ stats_propositions.retenues }} retenues</span>
+      {% endif %}
+      {% if stats_propositions.selectionnee %}
+        <span class="stat-badge selectionnee">{{ stats_propositions.selectionnee }} sélectionnée</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle"></i>
+      <div class="alert-content">
+        <div class="alert-title">Gestion des propositions</div>
+        <p>Vous pouvez modifier, supprimer ou ajouter de nouvelles propositions. Les modifications affecteront le processus de validation.</p>
+      </div>
+    </div>
+    
+    <div class="propositions-management-container">
+      {% for proposition in propositions_existantes %}
+      <div class="proposition-management-item" data-proposition-id="{{ proposition.id }}">
+        <div class="proposition-header">
+          <div class="candidate-info">
+            <div class="candidate-avatar">{{ proposition.candidat_propose.initiales }}</div>
+            <div class="candidate-details">
+              <h4>{{ proposition.candidat_propose.nom_complet }}</h4>
+              <p><strong>Matricule :</strong> {{ proposition.candidat_propose.matricule }}</p>
+              <p><strong>Poste actuel :</strong> {{ proposition.candidat_propose.poste.titre|default:"Non renseigné" }}</p>
+              <p><strong>Département :</strong> {{ proposition.candidat_propose.departement.nom|default:"Non renseigné" }}</p>
+            </div>
+          </div>
+          
+          <div class="proposition-meta">
+            <div class="proposant-info">
+              <span class="proposant-label">Proposé par</span>
+              <span class="proposant-name">{{ proposition.proposant.nom_complet }}</span>
+              <span class="proposant-role">({{ proposition.proposant.get_type_profil_display }})</span>
+            </div>
+            
+            <div class="proposition-status">
+              <span class="status-badge {{ proposition.statut|lower }}">
+                {% if proposition.statut == 'SOUMISE' %}
+                  <i class="fas fa-clock"></i> En attente
+                {% elif proposition.statut == 'EN_EVALUATION' %}
+                  <i class="fas fa-search"></i> En évaluation
+                {% elif proposition.statut == 'RETENUE' %}
+                  <i class="fas fa-check"></i> Retenue
+                {% elif proposition.statut == 'REJETEE' %}
+                  <i class="fas fa-times"></i> Rejetée
+                {% elif proposition.statut == 'SELECTIONNEE' %}
+                  <i class="fas fa-star"></i> Sélectionnée
+                {% endif %}
+              </span>
+            </div>
+            
+            {% if proposition.score_total %}
+            <div class="score-display">
+              <span class="score-label">Score</span>
+              <span class="score-value score-{{ proposition.score_class }}">{{ proposition.score_total }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="source-display">
+              <span class="source-label">Source</span>
+              <span class="source-badge {{ proposition.source_proposition|lower }}">
+                {% if proposition.source_proposition == 'SYSTEME_AUTOMATIQUE' %}
+                  <i class="fas fa-robot"></i> Auto
+                {% elif proposition.source_proposition == 'CANDIDAT_SPECIFIQUE' %}
+                  <i class="fas fa-user-check"></i> Spécifique
+                {% elif proposition.source_proposition == 'DEMANDEUR_INITIAL' %}
+                  <i class="fas fa-user"></i> Demandeur
+                {% else %}
+                  <i class="fas fa-plus"></i> Manuel
+                {% endif %}
+              </span>
+            </div>
+          </div>
+          
+          <div class="proposition-actions">
+            {% if proposition.peut_etre_modifiee %}
+              <button type="button" class="btn btn-outline-small" onclick="togglePropositionEdit({{ proposition.id }})">
+                <i class="fas fa-edit"></i>
+                Modifier
+              </button>
+            {% endif %}
+            
+            {% if proposition.peut_etre_supprimee %}
+              <button type="button" class="btn btn-danger-small" onclick="supprimerProposition({{ proposition.id }})">
+                <i class="fas fa-trash"></i>
+                Supprimer
+              </button>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="proposition-content">
+          <div class="proposition-details">
+            <div class="justification-section">
+              <h5 class="subsection-title">
+                <i class="fas fa-comment"></i>
+                Justification
+              </h5>
+              <div class="justification-text">{{ proposition.justification }}</div>
+            </div>
+            
+            {% if proposition.competences_specifiques %}
+            <div class="competences-section">
+              <h5 class="subsection-title">
+                <i class="fas fa-cogs"></i>
+                Compétences spécifiques
+              </h5>
+              <div class="competences-text">{{ proposition.competences_specifiques }}</div>
+            </div>
+            {% endif %}
+            
+            {% if proposition.experience_pertinente %}
+            <div class="experience-section">
+              <h5 class="subsection-title">
+                <i class="fas fa-briefcase"></i>
+                Expérience pertinente
+              </h5>
+              <div class="experience-text">{{ proposition.experience_pertinente }}</div>
+            </div>
+            {% endif %}
+          </div>
+          
+          <!-- Formulaire d'édition (masqué par défaut) -->
+          <div class="proposition-edit-form" id="propositionEditForm{{ proposition.id }}" style="display: none;">
+            <h5 class="edit-form-title">
+              <i class="fas fa-edit"></i>
+              Modifier la proposition
+            </h5>
+            
+            <div class="form-group">
+              <label for="edit_candidat_{{ proposition.id }}" class="form-label">Candidat</label>
+              <div class="employee-search-container">
+                <input type="text" 
+                       id="edit_candidat_matricule_{{ proposition.id }}" 
+                       class="form-input employee-matricule-input"
+                       placeholder="Matricule du nouveau candidat..."
+                       value="{{ proposition.candidat_propose.matricule }}"
+                       data-original="{{ proposition.candidat_propose.matricule }}">
+                <input type="hidden" 
+                       id="edit_candidat_id_{{ proposition.id }}" 
+                       value="{{ proposition.candidat_propose.id }}"
+                       data-original="{{ proposition.candidat_propose.id }}">
+                
+                <div id="edit_candidat_info_{{ proposition.id }}" class="employee-info-display">
+                  <div class="employee-info-header">
+                    <i class="fas fa-user-check text-success"></i>
+                    <span class="employee-info-title">Candidat actuel</span>
+                  </div>
+                  <div class="employee-info-content">
+                    <div class="employee-info-row">
+                      <strong>{{ proposition.candidat_propose.nom_complet }}</strong>
+                      <span class="employee-matricule">{{ proposition.candidat_propose.matricule }}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div id="edit_candidat_error_{{ proposition.id }}" class="employee-error-display" style="display: none;">
+                  <i class="fas fa-exclamation-triangle text-danger"></i>
+                  <span class="error-message"></span>
+                </div>
+                
+                <div id="edit_candidat_loading_{{ proposition.id }}" class="employee-loading-display" style="display: none;">
+                  <i class="fas fa-spinner fa-spin text-primary"></i>
+                  <span>Recherche en cours...</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit_justification_{{ proposition.id }}" class="form-label required">Justification</label>
+              <textarea id="edit_justification_{{ proposition.id }}" 
+                        class="form-textarea"
+                        data-original="{{ proposition.justification }}">{{ proposition.justification }}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit_competences_{{ proposition.id }}" class="form-label">Compétences spécifiques</label>
+              <textarea id="edit_competences_{{ proposition.id }}" 
+                        class="form-textarea"
+                        data-original="{{ proposition.competences_specifiques }}">{{ proposition.competences_specifiques }}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit_experience_{{ proposition.id }}" class="form-label">Expérience pertinente</label>
+              <textarea id="edit_experience_{{ proposition.id }}" 
+                        class="form-textarea"
+                        data-original="{{ proposition.experience_pertinente }}">{{ proposition.experience_pertinente }}</textarea>
+            </div>
+            
+            <div class="edit-form-actions">
+              <button type="button" class="btn btn-outline" onclick="annulerModificationProposition({{ proposition.id }})">
+                <i class="fas fa-times"></i>
+                Annuler
+              </button>
+              <button type="button" class="btn btn-primary" onclick="sauvegarderModificationProposition({{ proposition.id }})">
+                <i class="fas fa-save"></i>
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+          
+          <div class="proposition-footer">
+            <span class="date-proposition">
+              <i class="fas fa-calendar"></i>
+              Proposé le {{ proposition.created_at|date:"d/m/Y à H:i" }}
+            </span>
+            
+            {% if proposition.candidat_propose == demande.candidat_selectionne %}
+            <span class="selection-indicator">
+              <i class="fas fa-check-circle text-success"></i>
+              Candidat sélectionné
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Formulaire de modification principal -->
+<form method="post" id="modificationForm" novalidate>
+  {% csrf_token %}
+  
+  <!-- Informations de base -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-edit"></i>
+        Modification des informations
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <!-- Département -->
+        <div class="form-group">
+          <label for="departement_id" class="form-label required">Département</label>
+          <select name="departement_id" id="departement_id" class="form-select" required data-original="{{ demande.poste.departement.id }}">
+            <option value="">Sélectionnez un département</option>
+            {% for dept in departements %}
+              <option value="{{ dept.id }}" {% if dept.id == demande.poste.departement.id %}selected{% endif %}>{{ dept.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Poste -->
+        <div class="form-group">
+          <label for="poste_id" class="form-label required">Poste à remplacer</label>
+          <select name="poste_id" id="poste_id" class="form-select" required data-original="{{ demande.poste.id }}">
+            <option value="{{ demande.poste.id }}" selected>{{ demande.poste.titre }} - {{ demande.poste.site.nom }}</option>
+          </select>
+        </div>
+
+        <!-- Personne à remplacer -->
+        <div class="form-group">
+          <label for="personne_remplacee_matricule" class="form-label required">
+            Personne à remplacer
+            <span class="form-help">Saisissez le matricule</span>
+          </label>
+          <div class="employee-search-container">
+            <input type="text" 
+                   name="personne_remplacee_matricule" 
+                   id="personne_remplacee_matricule" 
+                   class="form-input employee-matricule-input" 
+                   placeholder="Ex: EMP001, 12345..." 
+                   required 
+                   autocomplete="off"
+                   value="{{ demande.personne_remplacee.matricule }}"
+                   data-original="{{ demande.personne_remplacee.matricule }}">
+            <input type="hidden" name="personne_remplacee_id" id="personne_remplacee_id" value="{{ demande.personne_remplacee.id }}" data-original="{{ demande.personne_remplacee.id }}">
+            
+            <!-- Zone d'affichage des informations employé -->
+            <div id="personne_remplacee_info" class="employee-info-display">
+              <div class="employee-info-header">
+                <i class="fas fa-user-check text-success"></i>
+                <span class="employee-info-title">Employé actuel</span>
+                <span class="employee-sync-status sync-status-local">Données à jour</span>
+              </div>
+              <div class="employee-info-content">
+                <div class="employee-info-row">
+                  <strong>{{ demande.personne_remplacee.nom_complet }}</strong>
+                  <span class="employee-matricule">{{ demande.personne_remplacee.matricule }}</span>
+                </div>
+                <div class="employee-info-details">
+                  {% if demande.personne_remplacee.kelio_data.sexe %}
+                    <span class="employee-detail">{{ demande.personne_remplacee.kelio_data.sexe|yesno:"👨 Homme,👩 Femme" }}</span>
+                  {% endif %}
+                  {% if demande.personne_remplacee.anciennete %}
+                    <span class="employee-detail">⏰ {{ demande.personne_remplacee.anciennete }}</span>
+                  {% endif %}
+                </div>
+                <div class="employee-info-organization">
+                  <span class="org-info">🏢 {{ demande.personne_remplacee.departement.nom }}</span>
+                  <span class="org-info">📍 {{ demande.personne_remplacee.site.nom }}</span>
+                  <span class="org-info">💼 {{ demande.personne_remplacee.poste.titre }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Zone d'erreur -->
+            <div id="personne_remplacee_error" class="employee-error-display" style="display: none;">
+              <i class="fas fa-exclamation-triangle text-danger"></i>
+              <span class="error-message"></span>
+            </div>
+            
+            <!-- Indicateur de chargement -->
+            <div id="personne_remplacee_loading" class="employee-loading-display" style="display: none;">
+              <i class="fas fa-spinner fa-spin text-primary"></i>
+              <span>Recherche en cours...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Motif d'absence -->
+        <div class="form-group">
+          <label for="motif_absence_id" class="form-label required">Motif d'absence</label>
+          <select name="motif_absence_id" id="motif_absence_id" class="form-select" required data-original="{{ demande.motif_absence.id }}">
+            <option value="">Sélectionnez un motif</option>
+            {% for motif in motifs_absence %}
+              <option value="{{ motif.id }}" {% if motif.id == demande.motif_absence.id %}selected{% endif %}>{{ motif.nom }} ({{ motif.get_categorie_display }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Date de début -->
+        <div class="form-group">
+          <label for="date_debut" class="form-label required">Date de début</label>
+          <input type="date" name="date_debut" id="date_debut" class="form-input" required
+                 value="{{ demande.date_debut|date:'Y-m-d' }}" 
+                 data-original="{{ demande.date_debut|date:'Y-m-d' }}">
+        </div>
+
+        <!-- Date de fin -->
+        <div class="form-group">
+          <label for="date_fin" class="form-label required">Date de fin</label>
+          <input type="date" name="date_fin" id="date_fin" class="form-input" required
+                 value="{{ demande.date_fin|date:'Y-m-d' }}" 
+                 data-original="{{ demande.date_fin|date:'Y-m-d' }}">
+        </div>
+
+        <!-- Urgence -->
+        <div class="form-group">
+          <label for="urgence" class="form-label">Niveau d'urgence</label>
+          <select name="urgence" id="urgence" class="form-select" data-original="{{ demande.urgence }}">
+            {% for code, label in urgences %}
+              <option value="{{ code }}" {% if code == demande.urgence %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Nombre max de propositions -->
+        <div class="form-group">
+          <label for="nb_max_propositions" class="form-label">Nombre max de propositions par utilisateur</label>
+          <input type="number" name="nb_max_propositions" id="nb_max_propositions" 
+                 class="form-input" value="{{ demande.nb_max_propositions_par_utilisateur|default:3 }}" 
+                 min="1" max="10" data-original="{{ demande.nb_max_propositions_par_utilisateur|default:3 }}">
+          <div class="form-help">Nombre maximum de candidats qu'un utilisateur peut proposer</div>
+        </div>
+      </div>
+
+      <!-- Description du poste -->
+      <div class="form-group">
+        <label for="description_poste" class="form-label required">Description du poste et des missions</label>
+        <textarea name="description_poste" id="description_poste" class="form-textarea" required
+                  placeholder="Décrivez les principales missions et responsabilités du poste..."
+                  data-original="{{ demande.description_poste }}">{{ demande.description_poste }}</textarea>
+      </div>
+
+      <!-- Compétences indispensables -->
+      <div class="form-group">
+        <label for="competences_indispensables" class="form-label">Compétences indispensables</label>
+        <textarea name="competences_indispensables" id="competences_indispensables" class="form-textarea"
+                  placeholder="Listez les compétences absolument nécessaires pour ce poste..."
+                  data-original="{{ demande.competences_indispensables }}">{{ demande.competences_indispensables }}</textarea>
+      </div>
+
+      <!-- Instructions particulières -->
+      <div class="form-group">
+        <label for="instructions_particulieres" class="form-label">Instructions particulières</label>
+        <textarea name="instructions_particulieres" id="instructions_particulieres" class="form-textarea"
+                  placeholder="Ajoutez toute information spécifique ou instruction particulière..."
+                  data-original="{{ demande.instructions_particulieres }}">{{ demande.instructions_particulieres }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Proposition Automatique de Candidats -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-robot"></i>
+        Proposition automatique de candidats
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="fas fa-lightbulb"></i>
+        <div class="alert-content">
+          <div class="alert-title">Système de scoring intelligent</div>
+          <p>Notre système peut analyser automatiquement tous les candidats disponibles et calculer leur score de compatibilité basé sur les compétences, l'expérience, la disponibilité et la proximité géographique.</p>
+        </div>
+      </div>
+
+      <div class="auto-proposal-controls">
+        <button type="button" id="btnPropositionAuto" class="btn btn-primary">
+          <i class="fas fa-magic"></i>
+          Relancer la proposition automatique
+          <div class="loading-spinner" id="loadingAutoProposal">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+        </button>
+      </div>
+
+      <!-- Section des résultats automatiques -->
+      <div id="autoProposalResults" class="auto-proposal-results" style="display: none;">
+        
+        <!-- Filtres et contrôles -->
+        <div class="results-controls">
+          <div class="results-stats">
+            <span id="candidatsCount" class="stat-badge">0 candidats trouvés</span>
+            <span id="scoreRange" class="stat-badge">Score: 0-100</span>
+          </div>
+          <div class="results-filters">
+            <select id="filterDepartement" class="form-select-small">
+              <option value="">Tous départements</option>
+            </select>
+            <select id="filterScore" class="form-select-small">
+              <option value="">Tous scores</option>
+              <option value="80-100">Excellents (80-100)</option>
+              <option value="60-79">Bons (60-79)</option>
+              <option value="40-59">Corrects (40-59)</option>
+              <option value="0-39">Faibles (0-39)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tableau des candidats -->
+        <div class="candidates-table-container">
+          <table id="candidatesTable" class="candidates-table">
+            <thead>
+              <tr>
+                <th width="50">
+                  <input type="checkbox" id="selectAllCandidates" title="Sélectionner/Désélectionner tous">
+                </th>
+                <th width="60">Score</th>
+                <th>Candidat</th>
+                <th>Poste actuel</th>
+                <th>Département</th>
+                <th>Compétences clés</th>
+                <th>Disponibilité</th>
+                <th width="100">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="candidatesTableBody">
+              <!-- Les candidats seront ajoutés ici via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+          <div class="pagination-info">
+            <span id="paginationInfo">Affichage de 1-10 sur 100 candidats</span>
+          </div>
+          <div class="pagination-controls">
+            <button type="button" id="btnPrevPage" class="btn btn-outline-small">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span id="pageNumbers" class="page-numbers">
+              <!-- Les numéros de page seront générés ici -->
+            </span>
+            <button type="button" id="btnNextPage" class="btn btn-outline-small">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section de sélection et justification -->
+        <div id="candidateSelection" class="candidate-selection-section" style="display: none;">
+          <div class="alert alert-success">
+            <i class="fas fa-user-check"></i>
+            <div class="alert-content">
+              <div class="alert-title">Candidat sélectionné depuis la liste automatique</div>
+              <div id="selectedCandidateInfo" class="selected-candidate-info">
+                <!-- Informations du candidat sélectionné -->
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="justificationAutoCandidat" class="form-label required">Justification de votre choix</label>
+            <textarea name="justification_auto_candidat" id="justificationAutoCandidat" class="form-textarea" required
+                      placeholder="Expliquez pourquoi vous avez choisi ce candidat parmi la liste proposée..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="competencesSpecifiquesAuto" class="form-label">Compétences spécifiques pour cette mission</label>
+            <textarea name="competences_specifiques_auto" id="competencesSpecifiquesAuto" class="form-textarea"
+                      placeholder="Détaillez les compétences spécifiques de ce candidat pour cette mission..."></textarea>
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="auto-proposal-actions">
+          <button type="button" id="btnEnregistrerAuto" class="btn btn-success" style="display: none;">
+            <i class="fas fa-save"></i>
+            Remplacer par cette proposition automatique
+          </button>
+          <button type="button" id="btnPropositionSpecifique" class="btn btn-outline">
+            <i class="fas fa-user-plus"></i>
+            Proposition de candidat spécifique
+          </button>
+        </div>
+      </div>
+
+      <!-- Section proposition spécifique -->
+      <div id="specificProposalSection" class="specific-proposal-section" style="display: none;">
+        <div class="alert alert-warning">
+          <i class="fas fa-user-plus"></i>
+          <div class="alert-content">
+            <div class="alert-title">Proposition d'un candidat spécifique</div>
+            <p>Vous pouvez proposer un candidat qui ne figure pas dans la liste automatique ou que vous souhaitez privilégier.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <!-- Candidat spécifique -->
+          <div class="form-group">
+            <label for="candidatSpecifiqueMatricule" class="form-label required">
+              Matricule du candidat spécifique
+              <span class="form-help">Saisissez le matricule du candidat souhaité</span>
+            </label>
+            <div class="employee-search-container">
+              <input type="text" 
+                     name="candidat_specifique_matricule" 
+                     id="candidatSpecifiqueMatricule" 
+                     class="form-input employee-matricule-input" 
+                     placeholder="Ex: EMP003, 11111..." 
+                     autocomplete="off"
+                     required>
+              <input type="hidden" name="candidat_specifique_id" id="candidatSpecifiqueId">
+              
+              <!-- Zone d'affichage des informations candidat spécifique -->
+              <div id="candidat_specifique_info" class="employee-info-display" style="display: none;">
+                <div class="employee-info-header">
+                  <i class="fas fa-user-check text-success"></i>
+                  <span class="employee-info-title">Candidat spécifique trouvé</span>
+                  <span class="employee-sync-status" id="candidat_specifique_sync_status"></span>
+                </div>
+                <div class="employee-info-content">
+                  <div class="employee-info-row">
+                    <strong id="candidat_specifique_nom_complet"></strong>
+                    <span class="employee-matricule" id="candidat_specifique_matricule_display"></span>
+                  </div>
+                  <div class="employee-info-details">
+                    <span id="candidat_specifique_sexe" class="employee-detail"></span>
+                    <span id="candidat_specifique_anciennete" class="employee-detail"></span>
+                  </div>
+                  <div class="employee-info-organization">
+                    <span id="candidat_specifique_departement" class="org-info"></span>
+                    <span id="candidat_specifique_site" class="org-info"></span>
+                    <span id="candidat_specifique_poste" class="org-info"></span>
+                  </div>
+                </div>
+                
+                <!-- Score calculé du candidat spécifique -->
+                <div id="candidat_specifique_score" class="candidate-score-display">
+                  <span class="score-label">Score calculé:</span>
+                  <span id="candidat_specifique_score_value" class="score-value">--</span>
+                </div>
+              </div>
+              
+              <!-- Zone d'erreur candidat spécifique -->
+              <div id="candidat_specifique_error" class="employee-error-display" style="display: none;">
+                <i class="fas fa-exclamation-triangle text-danger"></i>
+                <span class="error-message"></span>
+              </div>
+              
+              <!-- Indicateur de chargement candidat spécifique -->
+              <div id="candidat_specifique_loading" class="employee-loading-display" style="display: none;">
+                <i class="fas fa-spinner fa-spin text-primary"></i>
+                <span>Recherche et calcul du score...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Justification candidat spécifique -->
+        <div class="form-group">
+          <label for="justificationSpecifique" class="form-label required">Justification de votre proposition spécifique</label>
+          <textarea name="justification_specifique" id="justificationSpecifique" class="form-textarea" required
+                    placeholder="Expliquez pourquoi vous proposez ce candidat spécifique..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="competencesSpecifiquesSpec" class="form-label">Compétences spécifiques du candidat</label>
+          <textarea name="competences_specifiques_spec" id="competencesSpecifiquesSpec" class="form-textarea"
+                    placeholder="Détaillez les compétences spécifiques de ce candidat..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="experiencePertinentSpec" class="form-label">Expérience pertinente</label>
+          <textarea name="experience_pertinente_spec" id="experiencePertinentSpec" class="form-textarea"
+                    placeholder="Décrivez l'expérience pertinente de ce candidat pour cette mission..."></textarea>
+        </div>
+
+        <!-- Bouton d'enregistrement final -->
+        <div class="specific-proposal-actions">
+          <button type="button" id="btnEnregistrerSpecifique" class="btn btn-success">
+            <i class="fas fa-save"></i>
+            Remplacer par cette proposition spécifique
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Proposition manuelle de candidat (optionnel) -->
+  {% if peut_proposer_candidat %}
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-user-plus"></i>
+        Ajouter une nouvelle proposition manuelle
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="toggle-section" id="toggleProposition">
+        <i class="fas fa-chevron-right"></i>
+        <span>Ajouter un candidat manuellement (sans scoring automatique)</span>
+      </div>
+      
+      <div class="proposition-content" id="propositionContent">
+        <div class="alert alert-info">
+          <i class="fas fa-lightbulb"></i>
+          <div class="alert-content">
+            Cette section permet d'ajouter une nouvelle proposition manuelle, sans utiliser le système de scoring automatique.
+            En tant que {{ profil_utilisateur.get_type_profil_display }}, vous pouvez proposer un candidat supplémentaire. 
+            Cette proposition sera intégrée au système de scoring avec un bonus selon votre rôle.
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <!-- Candidat proposé -->
+          <div class="form-group">
+            <label for="candidat_propose_matricule" class="form-label">
+              Candidat proposé
+              <span class="form-help">Saisissez le matricule du candidat</span>
+            </label>
+            <div class="employee-search-container">
+              <input type="text" 
+                     name="candidat_propose_matricule" 
+                     id="candidat_propose_matricule" 
+                     class="form-input employee-matricule-input" 
+                     placeholder="Ex: EMP002, 67890..." 
+                     autocomplete="off">
+              <input type="hidden" name="candidat_propose_id" id="candidat_propose_id">
+              
+              <!-- Zone d'affichage des informations candidat -->
+              <div id="candidat_propose_info" class="employee-info-display" style="display: none;">
+                <div class="employee-info-header">
+                  <i class="fas fa-user-check text-success"></i>
+                  <span class="employee-info-title">Candidat trouvé</span>
+                  <span class="employee-sync-status" id="candidat_propose_sync_status"></span>
+                </div>
+                <div class="employee-info-content">
+                  <div class="employee-info-row">
+                    <strong id="candidat_propose_nom_complet"></strong>
+                    <span class="employee-matricule" id="candidat_propose_matricule_display"></span>
+                  </div>
+                  <div class="employee-info-details">
+                    <span id="candidat_propose_sexe" class="employee-detail"></span>
+                    <span id="candidat_propose_anciennete" class="employee-detail"></span>
+                  </div>
+                  <div class="employee-info-organization">
+                    <span id="candidat_propose_departement" class="org-info"></span>
+                    <span id="candidat_propose_site" class="org-info"></span>
+                    <span id="candidat_propose_poste" class="org-info"></span>
+                  </div>
+                </div>
+                
+                <!-- Vérification disponibilité -->
+                <div id="candidat_propose_disponibilite" class="availability-indicator" style="display: none;">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Vérification de la disponibilité...
+                </div>
+              </div>
+              
+              <!-- Zone d'erreur candidat -->
+              <div id="candidat_propose_error" class="employee-error-display" style="display: none;">
+                <i class="fas fa-exclamation-triangle text-danger"></i>
+                <span class="error-message"></span>
+              </div>
+              
+              <!-- Indicateur de chargement candidat -->
+              <div id="candidat_propose_loading" class="employee-loading-display" style="display: none;">
+                <i class="fas fa-spinner fa-spin text-primary"></i>
+                <span>Recherche en cours...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compétences spécifiques -->
+          <div class="form-group">
+            <label for="competences_specifiques" class="form-label">Compétences spécifiques du candidat</label>
+            <textarea name="competences_specifiques" id="competences_specifiques" class="form-textarea"
+                      placeholder="Décrivez les compétences spécifiques de ce candidat pour ce poste..."></textarea>
+          </div>
+        </div>
+
+        <!-- Justification (obligatoire si candidat proposé) -->
+        <div class="form-group">
+          <label for="justification_proposition" class="form-label">Justification de la proposition</label>
+          <textarea name="justification_proposition" id="justification_proposition" class="form-textarea"
+                    placeholder="Justifiez pourquoi vous proposez ce candidat (obligatoire si candidat sélectionné)..."></textarea>
+          <div class="form-help">Cette justification est obligatoire si vous proposez un candidat</div>
+        </div>
+
+        <!-- Expérience pertinente -->
+        <div class="form-group">
+          <label for="experience_pertinente" class="form-label">Expérience pertinente</label>
+          <textarea name="experience_pertinente" id="experience_pertinente" class="form-textarea"
+                    placeholder="Décrivez l'expérience pertinente du candidat pour cette mission..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Justification des modifications -->
+  <div class="card-container">
+    <div class="card-header">
+      <h2 class="card-title">
+        <i class="fas fa-comment"></i>
+        Justification des modifications
+      </h2>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="justification_modification" class="form-label required">Motif de la modification</label>
+        <textarea name="justification_modification" id="justification_modification" class="form-textarea" required
+                  placeholder="Expliquez pourquoi vous modifiez cette demande (obligatoire)..."></textarea>
+        <div class="form-help">Cette justification sera ajoutée à l'historique de la demande</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" name="notifier_parties_prenantes" value="1" checked style="margin-right: 0.5rem;">
+          Notifier les parties prenantes des modifications
+        </label>
+        <div class="form-help">Les personnes impliquées dans le processus seront informées des changements</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-bar">
+    <div class="action-group">
+      <a href="{% url 'demande_detail' demande.id %}" class="btn btn-outline">
+        <i class="fas fa-times"></i>
+        Annuler
+      </a>
+      <button type="button" class="btn btn-warning" id="resetBtn">
+        <i class="fas fa-undo"></i>
+        Réinitialiser
+      </button>
+    </div>
+    <div class="action-group">
+      <button type="button" class="btn btn-outline" id="previewBtn">
+        <i class="fas fa-eye"></i>
+        Aperçu des modifications
+      </button>
+      <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+        <i class="fas fa-save"></i>
+        Sauvegarder les modifications
+        <div class="loading-spinner" id="loadingSpinner">
+          <i class="fas fa-spinner fa-spin"></i>
+        </div>
+      </button>
+    </div>
+  </div>
+</form>
+
+<!-- Variables JavaScript pour les propositions -->
+<script>
+window.propositionsData = {
+  demande_id: {{ demande.id }},
+  propositions_existantes: [
+    {% for prop in propositions_existantes %}
+    {
+      id: {{ prop.id }},
+      candidat_id: {{ prop.candidat_propose.id }},
+      proposant_id: {{ prop.proposant.id }},
+      peut_etre_modifiee: {{ prop.peut_etre_modifiee|yesno:"true,false" }},
+      peut_etre_supprimee: {{ prop.peut_etre_supprimee|yesno:"true,false" }}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+};
+</script>
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES SPÉCIFIQUES À LA MODIFICATION DE DEMANDE AVEC PROPOSITIONS
+================================================================ */
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.page-title .status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.count-badge {
+  background-color: var(--primary);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+
+.stats-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.stat-badge.en-attente {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.stat-badge.en-evaluation {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.stat-badge.retenues {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.stat-badge.selectionnee {
+  background-color: #ede9fe;
+  color: #7c3aed;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-menu .icon-btn {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.user-menu .icon-btn:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Changes tracking */
+.changes-indicator {
+  background-color: var(--warning-light);
+  border: 1px solid var(--warning);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+.changes-indicator.show {
+  display: block;
+}
+
+.changes-indicator .changes-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.changes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.changes-list li {
+  color: #92400e;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.changes-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--warning);
+}
+
+/* ================================================================
+   STYLES POUR LA GESTION DES PROPOSITIONS
+================================================================ */
+
+.propositions-management-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.proposition-management-item {
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: white;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.proposition-management-item:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.proposition-management-item.selected {
+  border-color: var(--secondary);
+  background-color: var(--secondary-light);
+}
+
+.proposition-management-item.being-deleted {
+  border-color: var(--danger);
+  background-color: var(--danger-light);
+  opacity: 0.7;
+}
+
+.proposition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.candidate-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.candidate-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.candidate-details h4 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 1.125rem;
+}
+
+.candidate-details p {
+  margin: 0.25rem 0 0 0;
+  color: var(--gray-600);
+  font-size: 0.875rem;
+}
+
+.proposition-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.proposant-info {
+  text-align: right;
+}
+
+.proposant-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.proposant-name {
+  display: block;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.proposant-role {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.proposition-status {
+  margin: 0.5rem 0;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.score-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.score-value.score-excellent { background-color: #10b981; }
+.score-value.score-good { background-color: #3b82f6; }
+.score-value.score-average { background-color: #f59e0b; }
+.score-value.score-poor { background-color: #ef4444; }
+
+.source-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.source-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.source-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.source-badge.systeme_automatique {
+  background-color: #e0f2fe;
+  color: #0277bd;
+}
+
+.source-badge.candidat_specifique {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.source-badge.demandeur_initial {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.proposition-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-outline-small,
+.btn-danger-small {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.btn-outline-small {
+  color: var(--primary);
+  background-color: transparent;
+  border-color: var(--primary);
+}
+
+.btn-outline-small:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-danger-small {
+  color: var(--danger);
+  background-color: transparent;
+  border-color: var(--danger);
+}
+
+.btn-danger-small:hover {
+  background-color: var(--danger);
+  color: white;
+}
+
+.proposition-content {
+  border-top: 1px solid var(--gray-200);
+  padding-top: 1rem;
+}
+
+.proposition-details {
+  margin-bottom: 1rem;
+}
+
+.subsection-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.justification-text,
+.competences-text,
+.experience-text {
+  background-color: var(--gray-50);
+  padding: 0.75rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--primary);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.proposition-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-200);
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.selection-indicator {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+/* ================================================================
+   STYLES POUR L'ÉDITION DES PROPOSITIONS
+================================================================ */
+
+.proposition-edit-form {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--gray-50);
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+}
+
+.edit-form-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-badge.soumise {
+  background-color: var(--info-light);
+  color: var(--info);
+}
+
+.status-badge.en_evaluation {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.retenue {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.status-badge.rejetee {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.status-badge.selectionnee {
+  background-color: #ede9fe;
+  color: #7c3aed;
+}
+
+.status-badge.en-validation {
+  background-color: var(--warning-light);
+  color: #92400e;
+}
+
+.status-badge.validee {
+  background-color: var(--success-light);
+  color: var(--secondary-dark);
+}
+
+/* Urgence Badges */
+.urgence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.urgence-badge.normale {
+  background-color: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.urgence-badge.moyenne {
+  background-color: var(--info-light);
+  color: var(--info);
+}
+
+.urgence-badge.elevee {
+  background-color: var(--warning-light);
+  color: #92400e;
+}
+
+.urgence-badge.critique {
+  background-color: var(--danger-light);
+  color: var(--danger);
+}
+
+/* ================================================================
+   STYLES POUR LA PROPOSITION AUTOMATIQUE DE CANDIDATS
+================================================================ */
+
+.auto-proposal-controls {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auto-proposal-results {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e9ecef;
+}
+
+.results-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.results-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.results-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-select-small {
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  min-width: 150px;
+}
+
+/* Tableau des candidats */
+.candidates-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.candidates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.candidates-table th {
+  background-color: #f8f9fa;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.candidates-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.candidates-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.candidates-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.candidates-table tbody tr.selected {
+  background-color: #e3f2fd;
+  border-left: 4px solid #007bff;
+}
+
+/* Score dans le tableau */
+.candidate-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.candidate-score.excellent { background-color: #28a745; }
+.candidate-score.good { background-color: #17a2b8; }
+.candidate-score.average { background-color: #ffc107; color: #212529; }
+.candidate-score.poor { background-color: #dc3545; }
+
+/* Informations candidat dans le tableau */
+.candidate-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.candidate-name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.candidate-matricule {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-family: monospace;
+}
+
+.candidate-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.candidate-poste {
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.candidate-anciennete {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.candidate-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.skill-tag {
+  padding: 0.125rem 0.5rem;
+  background-color: #e9ecef;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #495057;
+}
+
+.availability-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.availability-status.available {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.availability-status.partial {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.availability-status.unavailable {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.page-number {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: white;
+  color: #495057;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.page-number:hover {
+  background-color: #e9ecef;
+}
+
+.page-number.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.btn-outline-small {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #6c757d;
+  color: #6c757d;
+  background-color: transparent;
+}
+
+.btn-outline-small:hover:not(:disabled) {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-outline-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Section de sélection de candidat */
+.candidate-selection-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  background-color: #f8fff9;
+}
+
+.selected-candidate-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.selected-candidate-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.selected-candidate-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.selected-candidate-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #495057;
+}
+
+.selected-candidate-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+/* Actions de proposition automatique */
+.auto-proposal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Section proposition spécifique */
+.specific-proposal-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  background-color: #fffef5;
+}
+
+.candidate-score-display {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.score-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.score-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 1rem;
+  color: white;
+  background-color: #6c757d;
+}
+
+.specific-proposal-actions {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* ================================================================
+   STYLES POUR LA RECHERCHE D'EMPLOYÉS
+================================================================ */
+
+.employee-search-container {
+  position: relative;
+}
+
+.employee-matricule-input {
+  padding-right: 40px;
+}
+
+.employee-info-display {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #28a745;
+  border-radius: var(--border-radius, 4px);
+  background-color: #f8fff9;
+}
+
+.employee-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.employee-info-title {
+  color: #155724;
+}
+
+.employee-sync-status {
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sync-status-local {
+  background-color: #6c757d;
+  color: white;
+}
+
+.employee-info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.employee-matricule {
+  padding: 0.25rem 0.5rem;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.employee-info-details {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.employee-detail {
+  padding: 0.25rem 0.5rem;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #1565c0;
+}
+
+.employee-info-organization {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.org-info {
+  padding: 0.25rem 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.employee-error-display {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #dc3545;
+  border-radius: var(--border-radius, 4px);
+  background-color: #f8d7da;
+  color: #721c24;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.employee-loading-display {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #007bff;
+  border-radius: var(--border-radius, 4px);
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.availability-indicator {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.availability-indicator.available {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.availability-indicator.unavailable {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.availability-indicator.loading {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+/* ================================================================
+   STYLES POUR LA SECTION PROPOSITION
+================================================================ */
+
+.toggle-section {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  color: var(--primary);
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  background-color: var(--primary-light);
+  transition: all 0.2s;
+}
+
+.toggle-section:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+.toggle-section i {
+  transition: transform 0.2s;
+}
+
+.toggle-section.expanded i {
+  transform: rotate(90deg);
+}
+
+.proposition-content {
+  display: none;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+  margin-top: 1rem;
+}
+
+.proposition-content.show {
+  display: block;
+}
+
+/* ================================================================
+   STYLES GÉNÉRAUX DU FORMULAIRE
+================================================================ */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-label.required::after {
+  content: " *";
+  color: #dc3545;
+}
+
+.form-help {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: 0;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.btn-success {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+}
+
+.btn-warning {
+  color: white;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  display: none;
+}
+
+.loading-spinner.show {
+  display: inline-block;
+}
+
+/* Action Bar */
+.action-bar {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  position: sticky;
+  bottom: 1rem;
+  z-index: 10;
+}
+
+.action-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.info-value {
+  font-size: 1rem;
+  color: var(--gray-900);
+  font-weight: 400;
+}
+
+/* Helper Classes */
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-primary {
+  color: #007bff !important;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .proposition-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .proposition-meta {
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .proposition-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .candidate-info {
+    width: 100%;
+  }
+  
+  .employee-info-details,
+  .employee-info-organization {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .employee-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .detail-header,
+  .card-header,
+  .action-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .action-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .action-bar .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .card-header,
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .edit-form-actions {
+    flex-direction: column;
+  }
+  
+  .results-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .results-filters {
+    justify-content: stretch;
+  }
+  
+  .form-select-small {
+    min-width: auto;
+    flex: 1;
+  }
+  
+  .candidates-table-container {
+    overflow-x: auto;
+  }
+  
+  .candidates-table {
+    min-width: 800px;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .auto-proposal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .selected-candidate-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .selected-candidate-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .action-bar,
+  .user-menu,
+  .changes-indicator,
+  .proposition-actions,
+  .edit-form-actions {
+    display: none !important;
+  }
+  
+  .card-container {
+    box-shadow: none;
+    border: 1px solid var(--gray-300);
+    break-inside: avoid;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Initialisation du formulaire de modification avec gestion des propositions');
+
+  // ================================================================
+  // VARIABLES GLOBALES
+  // ================================================================
+  
+  const form = document.getElementById('modificationForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const previewBtn = document.getElementById('previewBtn');
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  const changesIndicator = document.getElementById('changesIndicator');
+  const changesList = document.getElementById('changesList');
+  
+  let originalValues = {};
+  let hasChanges = false;
+  let propositionsToDelete = [];
+  let propositionsModified = {};
+  
+  // Variables pour proposition automatique
+  let candidatsAutomatiques = [];
+  let candidatsFiltres = [];
+  let candidatSelectionne = null;
+  let candidatSpecifique = null;
+  let paginationActuelle = {
+    page: 1,
+    taille: 10,
+    total: 0
+  };
+  
+  // Cache pour les recherches d'employés
+  const employeeCache = new Map();
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // ================================================================
+  // FONCTIONS UTILITAIRES
+  // ================================================================
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  function showNotification(message, type = 'info') {
+    console.log(`📢 Notification ${type}: ${message}`);
+    
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type}`;
+    notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 350px; animation: slideIn 0.3s ease;';
+    notification.innerHTML = `
+      <i class="fas fa-info-circle"></i>
+      <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }
+    }, 4000);
+  }
+
+  function getElement(id, required = false) {
+    const element = document.getElementById(id);
+    if (!element && required) {
+      console.error(`❌ Élément requis non trouvé: ${id}`);
+    }
+    return element;
+  }
+
+  function setElementContent(id, content, fallback = '') {
+    const element = getElement(id);
+    if (element) {
+      element.textContent = content || fallback;
+      return true;
+    }
+    return false;
+  }
+
+  function setElementDisplay(id, show) {
+    const element = getElement(id);
+    if (element) {
+      element.style.display = show ? 'block' : 'none';
+      return true;
+    }
+    return false;
+  }
+
+  // ================================================================
+  // FONCTIONS DE GESTION DES CHANGEMENTS
+  // ================================================================
+
+  function saveOriginalValues() {
+    const formElements = form.querySelectorAll('[data-original]');
+    formElements.forEach(element => {
+      originalValues[element.name || element.id] = element.getAttribute('data-original') || element.value;
+    });
+    console.log('Valeurs originales sauvegardées:', originalValues);
+  }
+
+  function detectChanges() {
+    const changes = [];
+    hasChanges = false;
+    
+    const formElements = form.querySelectorAll('[data-original]');
+    formElements.forEach(element => {
+      const fieldName = element.name || element.id;
+      const originalValue = element.getAttribute('data-original') || '';
+      const currentValue = element.value || '';
+      
+      if (originalValue !== currentValue) {
+        hasChanges = true;
+        changes.push(`${fieldName}: "${originalValue}" → "${currentValue}"`);
+      }
+    });
+    
+    // Afficher l'indicateur de changements
+    if (hasChanges && changes.length > 0) {
+      changesList.innerHTML = '';
+      changes.forEach(change => {
+        const li = document.createElement('li');
+        li.textContent = change;
+        changesList.appendChild(li);
+      });
+      changesIndicator.classList.add('show');
+    } else {
+      changesIndicator.classList.remove('show');
+    }
+    
+    // Activer/désactiver le bouton de soumission
+    if (submitBtn) {
+      submitBtn.disabled = !hasChanges;
+    }
+    
+    return hasChanges;
+  }
+
+  function resetForm() {
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser le formulaire ? Toutes les modifications non sauvegardées seront perdues.')) {
+      const formElements = form.querySelectorAll('[data-original]');
+      formElements.forEach(element => {
+        const originalValue = element.getAttribute('data-original') || '';
+        element.value = originalValue;
+        
+        // Déclencher l'événement change pour les champs spéciaux
+        if (element.tagName === 'SELECT') {
+          element.dispatchEvent(new Event('change'));
+        }
+      });
+      
+      // Réinitialiser les propositions
+      propositionsToDelete = [];
+      propositionsModified = {};
+      
+      // Masquer l'indicateur de changements
+      hasChanges = false;
+      changesIndicator.classList.remove('show');
+      
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+      
+      showNotification('Formulaire réinitialisé', 'info');
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS DE RECHERCHE D'EMPLOYÉ
+  // ================================================================
+
+  async function rechercherEmploye(matricule, type) {
+    console.log(`🔍 DEBUT rechercherEmploye: matricule="${matricule}", type="${type}"`);
+    
+    if (!matricule || matricule.length < 2) {
+      console.log(`❌ Matricule invalide: "${matricule}"`);
+      masquerInfosEmploye(type);
+      return;
+    }
+
+    // Vérifier le cache
+    const cacheKey = `${matricule}_${type}`;
+    const cached = employeeCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      console.log(`💾 Cache hit pour ${matricule}`);
+      afficherInfosEmploye(cached.data, type);
+      return;
+    }
+
+    afficherChargementEmploye(type, true);
+    console.log(`🔍 Requête AJAX pour ${matricule}`);
+
+    try {
+      const requestData = {
+        matricule: matricule,
+        force_kelio_sync: false
+      };
+      
+      console.log(`📤 Envoi requête:`, requestData);
+      
+      const response = await fetch('/interim/ajax/rechercher-employe/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      console.log(`📨 Status: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log(`📨 Réponse brute (${responseText.length} chars):`, responseText.substring(0, 200) + '...');
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log(`📨 Données parsées:`, data);
+      } catch (parseError) {
+        console.error(`❌ Erreur parsing JSON:`, parseError);
+        throw new Error(`Réponse non-JSON: ${responseText.substring(0, 100)}...`);
+      }
+
+      // Traitement de la réponse
+      if (data && data.success === true) {
+        console.log(`✅ Succès détecté`);
+        
+        if (data.employe) {
+          console.log(`👤 Employé trouvé:`, data.employe);
+          
+          // Mettre en cache
+          employeeCache.set(cacheKey, {
+            data: data,
+            timestamp: Date.now()
+          });
+
+          // Afficher les informations
+          afficherInfosEmploye(data, type);
+          showNotification(`Employé ${matricule} trouvé avec succès`, 'success');
+          
+          // Si c'est un candidat spécifique, calculer le score
+          if (type === 'candidat_specifique') {
+            setTimeout(() => calculerScoreCandidatSpecifique(data.employe.id), 100);
+          }
+          
+        } else {
+          console.log(`❌ Pas d'employé dans la réponse`);
+          afficherErreurEmploye('Réponse invalide du serveur', type);
+        }
+        
+      } else if (data && data.success === false) {
+        console.log(`❌ Échec explicite:`, data.error);
+        afficherErreurEmploye(data.error || 'Erreur du serveur', type);
+        
+      } else {
+        console.log(`❌ Structure de réponse inattendue:`, data);
+        afficherErreurEmploye('Réponse serveur invalide', type);
+      }
+
+    } catch (error) {
+      console.error('❌ ERREUR dans rechercherEmploye:', error);
+      
+      let errorMessage = 'Erreur de communication avec le serveur';
+      
+      if (error.message.includes('404')) {
+        errorMessage = 'Service de recherche non disponible';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Erreur serveur temporaire';
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Erreur de format de réponse';
+      }
+      
+      afficherErreurEmploye(errorMessage, type);
+      
+    } finally {
+      console.log(`🔍 FIN rechercherEmploye pour ${matricule}`);
+      afficherChargementEmploye(type, false);
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS D'AFFICHAGE
+  // ================================================================
+
+  function afficherInfosEmploye(data, type) {
+    console.log(`📝 DEBUT afficherInfosEmploye pour type: ${type}`, data);
+    
+    const employe = data.employe;
+    if (!employe) {
+      console.error(`❌ Pas de données employé`);
+      return;
+    }
+
+    // Masquer erreurs et chargement
+    setElementDisplay(`${type}_error`, false);
+    setElementDisplay(`${type}_loading`, false);
+
+    // Remplir les informations principales
+    setElementContent(`${type}_nom_complet`, employe.nom_complet, 'Nom non disponible');
+    setElementContent(`${type}_matricule_display`, employe.matricule);
+    
+    // Détails avec icônes
+    if (employe.sexe) {
+      setElementContent(`${type}_sexe`, employe.sexe === 'M' ? '👨 Homme' : '👩 Femme');
+    }
+    
+    if (employe.anciennete) {
+      setElementContent(`${type}_anciennete`, `⏰ ${employe.anciennete}`);
+    }
+
+    // Informations organisationnelles
+    if (employe.departement) {
+      setElementContent(`${type}_departement`, `🏢 ${employe.departement}`);
+    }
+    
+    if (employe.site) {
+      setElementContent(`${type}_site`, `📍 ${employe.site}`);
+    }
+    
+    if (employe.poste) {
+      setElementContent(`${type}_poste`, `💼 ${employe.poste}`);
+    }
+
+    // Statut de synchronisation
+    const syncStatusElement = getElement(`${type}_sync_status`);
+    if (syncStatusElement && data.sync_info) {
+      if (data.sync_info.is_recent) {
+        syncStatusElement.textContent = 'Données à jour';
+        syncStatusElement.className = 'employee-sync-status sync-status-recent';
+      } else {
+        syncStatusElement.textContent = 'Données locales';
+        syncStatusElement.className = 'employee-sync-status sync-status-local';
+      }
+    }
+
+    // Définir l'ID caché
+    const hiddenInput = getElement(`${type}_id`);
+    if (hiddenInput && employe.id) {
+      hiddenInput.value = employe.id;
+      console.log(`✅ ID caché défini: ${employe.id}`);
+    }
+
+    // Afficher le container principal
+    setElementDisplay(`${type}_info`, true);
+
+    // Vérifier la disponibilité pour les candidats
+    if (type === 'candidat_propose') {
+      setTimeout(verifierDisponibiliteCandidat, 100);
+    }
+    
+    console.log(`📝 FIN afficherInfosEmploye pour ${type}`);
+  }
+
+  function afficherErreurEmploye(message, type) {
+    console.log(`❌ Affichage erreur pour ${type}: ${message}`);
+    
+    setElementDisplay(`${type}_info`, false);
+    setElementDisplay(`${type}_loading`, false);
+    
+    const errorContainer = getElement(`${type}_error`);
+    if (errorContainer) {
+      const messageElement = errorContainer.querySelector('.error-message');
+      if (messageElement) {
+        messageElement.textContent = message;
+      }
+      errorContainer.style.display = 'flex';
+    }
+
+    // Vider l'ID caché
+    const hiddenInput = getElement(`${type}_id`);
+    if (hiddenInput) {
+      hiddenInput.value = '';
+    }
+  }
+
+  function afficherChargementEmploye(type, show) {
+    setElementDisplay(`${type}_loading`, show);
+    if (show) {
+      setElementDisplay(`${type}_info`, false);
+      setElementDisplay(`${type}_error`, false);
+    }
+  }
+
+  function masquerInfosEmploye(type) {
+    setElementDisplay(`${type}_info`, false);
+    setElementDisplay(`${type}_error`, false);
+    setElementDisplay(`${type}_loading`, false);
+    
+    const hiddenInput = getElement(`${type}_id`);
+    if (hiddenInput) {
+      hiddenInput.value = '';
+    }
+  }
+
+  // ================================================================
+  // GESTION DES PROPOSITIONS EXISTANTES
+  // ================================================================
+
+  function togglePropositionEdit(propositionId) {
+    const editForm = getElement(`propositionEditForm${propositionId}`);
+    if (editForm) {
+      const isVisible = editForm.style.display !== 'none';
+      editForm.style.display = isVisible ? 'none' : 'block';
+      
+      if (!isVisible) {
+        // Initialiser les recherches d'employés pour cette proposition
+        const candidatInput = getElement(`edit_candidat_matricule_${propositionId}`);
+        if (candidatInput) {
+          const debouncedSearch = debounce((matricule) => {
+            rechercherEmployeProposition(matricule, propositionId);
+          }, 500);
+
+          candidatInput.addEventListener('input', function() {
+            const matricule = this.value.trim();
+            debouncedSearch(matricule);
+          });
+        }
+      }
+    }
+  }
+
+  function annulerModificationProposition(propositionId) {
+    const editForm = getElement(`propositionEditForm${propositionId}`);
+    if (editForm) {
+      // Restaurer les valeurs originales
+      const inputs = editForm.querySelectorAll('[data-original]');
+      inputs.forEach(input => {
+        input.value = input.getAttribute('data-original') || '';
+      });
+      
+      editForm.style.display = 'none';
+    }
+  }
+
+  function sauvegarderModificationProposition(propositionId) {
+    const editForm = getElement(`propositionEditForm${propositionId}`);
+    if (!editForm) return;
+
+    // Récupérer les nouvelles valeurs
+    const nouveauCandidatId = getElement(`edit_candidat_id_${propositionId}`)?.value;
+    const nouvelleJustification = getElement(`edit_justification_${propositionId}`)?.value?.trim();
+    const nouvellesCompetences = getElement(`edit_competences_${propositionId}`)?.value?.trim();
+    const nouvelleExperience = getElement(`edit_experience_${propositionId}`)?.value?.trim();
+
+    // Validation
+    if (!nouvelleJustification) {
+      alert('La justification est obligatoire');
+      getElement(`edit_justification_${propositionId}`)?.focus();
+      return;
+    }
+
+    // Marquer comme modifiée
+    propositionsModified[propositionId] = {
+      candidat_id: nouveauCandidatId,
+      justification: nouvelleJustification,
+      competences: nouvellesCompetences,
+      experience: nouvelleExperience
+    };
+
+    // Masquer le formulaire d'édition
+    editForm.style.display = 'none';
+    
+    // Marquer visuellement comme modifiée
+    const propositionItem = document.querySelector(`[data-proposition-id="${propositionId}"]`);
+    if (propositionItem) {
+      propositionItem.classList.add('modified');
+    }
+
+    // Déclencher la détection de changements
+    detectChanges();
+    
+    showNotification('Proposition marquée comme modifiée', 'info');
+  }
+
+  function supprimerProposition(propositionId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette proposition ?')) {
+      // Ajouter à la liste des propositions à supprimer
+      if (!propositionsToDelete.includes(propositionId)) {
+        propositionsToDelete.push(propositionId);
+      }
+      
+      // Marquer visuellement comme supprimée
+      const propositionItem = document.querySelector(`[data-proposition-id="${propositionId}"]`);
+      if (propositionItem) {
+        propositionItem.classList.add('being-deleted');
+        propositionItem.style.opacity = '0.5';
+      }
+
+      // Déclencher la détection de changements
+      detectChanges();
+      
+      showNotification('Proposition marquée pour suppression', 'warning');
+    }
+  }
+
+  async function rechercherEmployeProposition(matricule, propositionId) {
+    if (!matricule || matricule.length < 2) {
+      setElementDisplay(`edit_candidat_info_${propositionId}`, false);
+      setElementDisplay(`edit_candidat_error_${propositionId}`, false);
+      return;
+    }
+
+    setElementDisplay(`edit_candidat_loading_${propositionId}`, true);
+    setElementDisplay(`edit_candidat_info_${propositionId}`, false);
+    setElementDisplay(`edit_candidat_error_${propositionId}`, false);
+
+    try {
+      const response = await fetch('/interim/ajax/rechercher-employe/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          matricule: matricule,
+          force_kelio_sync: false
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.employe) {
+          // Mettre à jour l'ID caché
+          const hiddenInput = getElement(`edit_candidat_id_${propositionId}`);
+          if (hiddenInput) {
+            hiddenInput.value = data.employe.id;
+          }
+          
+          // Afficher les informations
+          const infoContainer = getElement(`edit_candidat_info_${propositionId}`);
+          if (infoContainer) {
+            infoContainer.innerHTML = `
+              <div class="employee-info-header">
+                <i class="fas fa-user-check text-success"></i>
+                <span class="employee-info-title">Nouveau candidat trouvé</span>
+              </div>
+              <div class="employee-info-content">
+                <div class="employee-info-row">
+                  <strong>${data.employe.nom_complet}</strong>
+                  <span class="employee-matricule">${data.employe.matricule}</span>
+                </div>
+              </div>
+            `;
+            infoContainer.style.display = 'block';
+          }
+        } else {
+          // Afficher erreur
+          const errorContainer = getElement(`edit_candidat_error_${propositionId}`);
+          if (errorContainer) {
+            errorContainer.querySelector('.error-message').textContent = data.error || 'Employé non trouvé';
+            errorContainer.style.display = 'flex';
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erreur recherche employé proposition:', error);
+    } finally {
+      setElementDisplay(`edit_candidat_loading_${propositionId}`, false);
+    }
+  }
+
+  // ================================================================
+  // FONCTIONS PROPOSITION AUTOMATIQUE
+  // ================================================================
+
+  async function propositionAutomatique() {
+    console.log('🤖 DEBUT propositionAutomatique');
+    
+    // Validation des données requises
+    const formData = {
+      personne_remplacee_id: getElement('personne_remplacee_id')?.value,
+      poste_id: getElement('poste_id')?.value,
+      date_debut: getElement('date_debut')?.value,
+      date_fin: getElement('date_fin')?.value,
+      description_poste: getElement('description_poste')?.value,
+      competences_indispensables: getElement('competences_indispensables')?.value,
+      urgence: getElement('urgence')?.value
+    };
+
+    if (!formData.personne_remplacee_id || !formData.poste_id || !formData.date_debut || !formData.date_fin) {
+      alert('Veuillez remplir les informations de base avant de demander une proposition automatique');
+      return;
+    }
+
+    const btnPropositionAuto = getElement('btnPropositionAuto');
+    const loadingAutoProposal = getElement('loadingAutoProposal');
+    
+    // Afficher le loading
+    if (btnPropositionAuto) btnPropositionAuto.disabled = true;
+    if (loadingAutoProposal) loadingAutoProposal.classList.add('show');
+
+    try {
+      const response = await fetch('/interim/ajax/proposition-automatique/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        candidatsAutomatiques = data.candidats || [];
+        candidatsFiltres = [...candidatsAutomatiques];
+        
+        afficherResultatsPropositionAuto(data);
+        showNotification(`${candidatsAutomatiques.length} candidats trouvés et analysés`, 'success');
+        
+      } else {
+        throw new Error(data.error || 'Erreur lors de la proposition automatique');
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur proposition automatique:', error);
+      alert('Erreur lors de la proposition automatique: ' + error.message);
+      
+    } finally {
+      if (btnPropositionAuto) btnPropositionAuto.disabled = false;
+      if (loadingAutoProposal) loadingAutoProposal.classList.remove('show');
+    }
+  }
+
+  function afficherResultatsPropositionAuto(data) {
+    console.log('📊 Affichage résultats proposition automatique', data);
+    
+    // Afficher la section des résultats
+    setElementDisplay('autoProposalResults', true);
+    
+    // Mettre à jour les statistiques
+    setElementContent('candidatsCount', `${candidatsAutomatiques.length} candidats trouvés`);
+    
+    if (candidatsAutomatiques.length > 0) {
+      const scores = candidatsAutomatiques.map(c => c.score);
+      const minScore = Math.min(...scores);
+      const maxScore = Math.max(...scores);
+      setElementContent('scoreRange', `Score: ${minScore}-${maxScore}`);
+    }
+    
+    // Remplir les filtres départements
+    const filterDepartement = getElement('filterDepartement');
+    if (filterDepartement) {
+      const departements = [...new Set(candidatsAutomatiques.map(c => c.departement).filter(d => d))];
+      filterDepartement.innerHTML = '<option value="">Tous départements</option>';
+      departements.forEach(dept => {
+        filterDepartement.innerHTML += `<option value="${dept}">${dept}</option>`;
+      });
+    }
+    
+    // Afficher le tableau
+    afficherTableauCandidats();
+  }
+
+  function afficherTableauCandidats() {
+    const tableBody = getElement('candidatesTableBody');
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = '';
+    
+    // Pagination
+    const debut = (paginationActuelle.page - 1) * paginationActuelle.taille;
+    const fin = debut + paginationActuelle.taille;
+    const candidatsPagines = candidatsFiltres.slice(debut, fin);
+    
+    candidatsPagines.forEach(candidat => {
+      const row = creerLigneCandidatTableau(candidat);
+      tableBody.appendChild(row);
+    });
+    
+    // Mettre à jour la pagination
+    mettreAJourPagination();
+  }
+
+  function creerLigneCandidatTableau(candidat) {
+    const row = document.createElement('tr');
+    row.dataset.candidatId = candidat.id;
+    
+    // Score coloré
+    let scoreClass = 'poor';
+    if (candidat.score >= 80) scoreClass = 'excellent';
+    else if (candidat.score >= 60) scoreClass = 'good';
+    else if (candidat.score >= 40) scoreClass = 'average';
+    
+    // Disponibilité
+    const disponibiliteClass = candidat.disponibilite?.disponible ? 'available' : 'unavailable';
+    const disponibiliteTexte = candidat.disponibilite?.raison || 'À vérifier';
+    
+    // Compétences
+    const competencesHtml = candidat.competences_cles?.slice(0, 3).map(comp => 
+      `<span class="skill-tag">${comp}</span>`
+    ).join('') || '<span class="skill-tag">Aucune</span>';
+    
+    row.innerHTML = `
+      <td>
+        <input type="radio" name="candidat_auto_selection" value="${candidat.id}" 
+               onchange="selectionnerCandidatAuto(${candidat.id})">
+      </td>
+      <td>
+        <div class="candidate-score ${scoreClass}">${candidat.score}</div>
+      </td>
+      <td>
+        <div class="candidate-info">
+          <div class="candidate-name">${candidat.nom_complet}</div>
+          <div class="candidate-matricule">${candidat.matricule}</div>
+        </div>
+      </td>
+      <td>
+        <div class="candidate-details">
+          <div class="candidate-poste">${candidat.poste_actuel || 'Non renseigné'}</div>
+          <div class="candidate-anciennete">${candidat.anciennete || 'Non renseignée'}</div>
+        </div>
+      </td>
+      <td>${candidat.departement || 'Non renseigné'}</td>
+      <td>
+        <div class="candidate-skills">${competencesHtml}</div>
+      </td>
+      <td>
+        <div class="availability-status ${disponibiliteClass}">
+          <i class="fas fa-${candidat.disponibilite?.disponible ? 'check' : 'times'}"></i>
+          ${disponibiliteTexte}
+        </div>
+      </td>
+      <td>
+        <button type="button" class="btn btn-outline-small" onclick="voirDetailCandidat(${candidat.id})">
+          <i class="fas fa-eye"></i>
+        </button>
+      </td>
+    `;
+    
+    return row;
+  }
+
+  function mettreAJourPagination() {
+    const total = candidatsFiltres.length;
+    const totalPages = Math.ceil(total / paginationActuelle.taille);
+    paginationActuelle.total = total;
+    
+    // Info pagination
+    const debut = (paginationActuelle.page - 1) * paginationActuelle.taille + 1;
+    const fin = Math.min(debut + paginationActuelle.taille - 1, total);
+    setElementContent('paginationInfo', `Affichage de ${debut}-${fin} sur ${total} candidats`);
+    
+    // Boutons précédent/suivant
+    const btnPrev = getElement('btnPrevPage');
+    const btnNext = getElement('btnNextPage');
+    
+    if (btnPrev) {
+      btnPrev.disabled = paginationActuelle.page <= 1;
+    }
+    if (btnNext) {
+      btnNext.disabled = paginationActuelle.page >= totalPages;
+    }
+    
+    // Numéros de pages
+    const pageNumbers = getElement('pageNumbers');
+    if (pageNumbers) {
+      pageNumbers.innerHTML = '';
+      
+      const maxPages = 5;
+      let startPage = Math.max(1, paginationActuelle.page - Math.floor(maxPages / 2));
+      let endPage = Math.min(totalPages, startPage + maxPages - 1);
+      
+      if (endPage - startPage + 1 < maxPages) {
+        startPage = Math.max(1, endPage - maxPages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `page-number ${i === paginationActuelle.page ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => changerPage(i);
+        pageNumbers.appendChild(pageBtn);
+      }
+    }
+  }
+
+  function changerPage(page) {
+    paginationActuelle.page = page;
+    afficherTableauCandidats();
+  }
+
+  function selectionnerCandidatAuto(candidatId) {
+    console.log('✅ Sélection candidat automatique:', candidatId);
+    
+    candidatSelectionne = candidatsAutomatiques.find(c => c.id === candidatId);
+    if (!candidatSelectionne) {
+      console.error('Candidat non trouvé:', candidatId);
+      return;
+    }
+    
+    // Marquer la ligne comme sélectionnée
+    const rows = document.querySelectorAll('#candidatesTableBody tr');
+    rows.forEach(row => {
+      row.classList.remove('selected');
+      if (row.dataset.candidatId === candidatId.toString()) {
+        row.classList.add('selected');
+      }
+    });
+    
+    // Afficher la section de sélection
+    afficherSectionSelectionCandidat();
+  }
+
+  function afficherSectionSelectionCandidat() {
+    if (!candidatSelectionne) return;
+    
+    setElementDisplay('candidateSelection', true);
+    
+    // Score coloré
+    let scoreClass = 'poor';
+    if (candidatSelectionne.score >= 80) scoreClass = 'excellent';
+    else if (candidatSelectionne.score >= 60) scoreClass = 'good';
+    else if (candidatSelectionne.score >= 40) scoreClass = 'average';
+    
+    const selectedCandidateInfo = getElement('selectedCandidateInfo');
+    if (selectedCandidateInfo) {
+      selectedCandidateInfo.innerHTML = `
+        <div class="selected-candidate-header">
+          <div class="selected-candidate-score ${scoreClass}">${candidatSelectionne.score}</div>
+          <div class="selected-candidate-details">
+            <h4>${candidatSelectionne.nom_complet}</h4>
+            <p>Matricule: ${candidatSelectionne.matricule}</p>
+          </div>
+        </div>
+        <div class="selected-candidate-meta">
+          <div class="meta-item"><strong>Poste:</strong> ${candidatSelectionne.poste_actuel || 'Non renseigné'}</div>
+          <div class="meta-item"><strong>Département:</strong> ${candidatSelectionne.departement || 'Non renseigné'}</div>
+          <div class="meta-item"><strong>Ancienneté:</strong> ${candidatSelectionne.anciennete || 'Non renseignée'}</div>
+          <div class="meta-item"><strong>Disponibilité:</strong> ${candidatSelectionne.disponibilite?.raison || 'À vérifier'}</div>
+        </div>
+      `;
+    }
+    
+    // Afficher le bouton d'enregistrement
+    setElementDisplay('btnEnregistrerAuto', true);
+  }
+
+  // ================================================================
+  // FONCTIONS CANDIDAT SPÉCIFIQUE
+  // ================================================================
+
+  async function calculerScoreCandidatSpecifique(candidatId) {
+    const formData = {
+      candidat_id: candidatId,
+      personne_remplacee_id: getElement('personne_remplacee_id')?.value,
+      poste_id: getElement('poste_id')?.value,
+      date_debut: getElement('date_debut')?.value,
+      date_fin: getElement('date_fin')?.value,
+      description_poste: getElement('description_poste')?.value,
+      competences_indispensables: getElement('competences_indispensables')?.value
+    };
+
+    if (!formData.personne_remplacee_id || !formData.poste_id || !formData.date_debut || !formData.date_fin) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/interim/ajax/calculer-score-candidat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          afficherScoreCandidatSpecifique(data.score);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur calcul score candidat spécifique:', error);
+    }
+  }
+
+  function afficherScoreCandidatSpecifique(score) {
+    const scoreElement = getElement('candidat_specifique_score_value');
+    if (!scoreElement) return;
+    
+    let scoreClass = 'poor';
+    if (score >= 80) scoreClass = 'excellent';
+    else if (score >= 60) scoreClass = 'good';
+    else if (score >= 40) scoreClass = 'average';
+    
+    scoreElement.textContent = score;
+    scoreElement.className = `score-value candidate-score ${scoreClass}`;
+    
+    setElementDisplay('candidat_specifique_score', true);
+  }
+
+  // ================================================================
+  // FONCTIONS DE FILTRAGE
+  // ================================================================
+
+  function appliquerFiltres() {
+    const filterDept = getElement('filterDepartement')?.value;
+    const filterScore = getElement('filterScore')?.value;
+    
+    candidatsFiltres = candidatsAutomatiques.filter(candidat => {
+      // Filtre département
+      if (filterDept && candidat.departement !== filterDept) {
+        return false;
+      }
+      
+      // Filtre score
+      if (filterScore) {
+        const [minScore, maxScore] = filterScore.split('-').map(Number);
+        if (candidat.score < minScore || candidat.score > maxScore) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    // Réinitialiser la pagination
+    paginationActuelle.page = 1;
+    afficherTableauCandidats();
+    
+    setElementContent('candidatsCount', `${candidatsFiltres.length} candidats affichés`);
+  }
+
+  // ================================================================
+  // FONCTIONS D'ENREGISTREMENT
+  // ================================================================
+
+  async function enregistrerPropositionAutomatique() {
+    if (!candidatSelectionne) {
+      alert('Veuillez sélectionner un candidat');
+      return;
+    }
+
+    const justification = getElement('justificationAutoCandidat')?.value?.trim();
+    if (!justification) {
+      alert('La justification est obligatoire');
+      getElement('justificationAutoCandidat')?.focus();
+      return;
+    }
+
+    const formData = {
+      action: 'enregistrer_proposition_auto',
+      candidat_selectionne_id: candidatSelectionne.id,
+      justification: justification,
+      competences_specifiques: getElement('competencesSpecifiquesAuto')?.value?.trim() || '',
+      liste_candidats: candidatsAutomatiques,
+      // Reprendre les données du formulaire
+      personne_remplacee_id: getElement('personne_remplacee_id')?.value,
+      poste_id: getElement('poste_id')?.value,
+      motif_absence_id: getElement('motif_absence_id')?.value,
+      date_debut: getElement('date_debut')?.value,
+      date_fin: getElement('date_fin')?.value,
+      urgence: getElement('urgence')?.value,
+      description_poste: getElement('description_poste')?.value,
+      competences_indispensables: getElement('competences_indispensables')?.value,
+      instructions_particulieres: getElement('instructions_particulieres')?.value,
+      nb_max_propositions: getElement('nb_max_propositions')?.value,
+      justification_modification: getElement('justification_modification')?.value?.trim()
+    };
+
+    if (!formData.justification_modification) {
+      alert('La justification des modifications est obligatoire');
+      getElement('justification_modification')?.focus();
+      return;
+    }
+
+    await enregistrerDemande(formData);
+  }
+
+  async function enregistrerPropositionSpecifique() {
+    const candidatSpecifiqueId = getElement('candidatSpecifiqueId')?.value;
+    const justification = getElement('justificationSpecifique')?.value?.trim();
+
+    if (!candidatSpecifiqueId) {
+      alert('Veuillez sélectionner un candidat spécifique');
+      getElement('candidatSpecifiqueMatricule')?.focus();
+      return;
+    }
+
+    if (!justification) {
+      alert('La justification est obligatoire');
+      getElement('justificationSpecifique')?.focus();
+      return;
+    }
+
+    const justificationModification = getElement('justification_modification')?.value?.trim();
+    if (!justificationModification) {
+      alert('La justification des modifications est obligatoire');
+      getElement('justification_modification')?.focus();
+      return;
+    }
+
+    const formData = {
+      action: 'enregistrer_proposition_specifique',
+      candidat_specifique_id: candidatSpecifiqueId,
+      justification: justification,
+      competences_specifiques: getElement('competencesSpecifiquesSpec')?.value?.trim() || '',
+      experience_pertinente: getElement('experiencePertinentSpec')?.value?.trim() || '',
+      liste_candidats: candidatsAutomatiques, // Inclure la liste si elle existe
+      // Reprendre les données du formulaire
+      personne_remplacee_id: getElement('personne_remplacee_id')?.value,
+      poste_id: getElement('poste_id')?.value,
+      motif_absence_id: getElement('motif_absence_id')?.value,
+      date_debut: getElement('date_debut')?.value,
+      date_fin: getElement('date_fin')?.value,
+      urgence: getElement('urgence')?.value,
+      description_poste: getElement('description_poste')?.value,
+      competences_indispensables: getElement('competences_indispensables')?.value,
+      instructions_particulieres: getElement('instructions_particulieres')?.value,
+      nb_max_propositions: getElement('nb_max_propositions')?.value,
+      justification_modification: justificationModification
+    };
+
+    await enregistrerDemande(formData);
+  }
+
+  async function enregistrerDemande(formData) {
+    const btnEnregistrer = formData.action === 'enregistrer_proposition_auto' 
+      ? getElement('btnEnregistrerAuto') 
+      : getElement('btnEnregistrerSpecifique');
+    
+    if (btnEnregistrer) btnEnregistrer.disabled = true;
+
+    try {
+      const response = await fetch(form.action || window.location.href, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showNotification(`Demande ${data.numero_demande} modifiée avec succès !`, 'success');
+        
+        if (data.redirect_url) {
+          setTimeout(() => {
+            window.location.href = data.redirect_url;
+          }, 1000);
+        }
+      } else {
+        throw new Error(data.error || 'Une erreur est survenue');
+      }
+
+    } catch (error) {
+      console.error('Erreur enregistrement:', error);
+      alert('Erreur: ' + error.message);
+      
+    } finally {
+      if (btnEnregistrer) btnEnregistrer.disabled = false;
+    }
+  }
+
+  // ================================================================
+  // VÉRIFICATION DE DISPONIBILITÉ
+  // ================================================================
+
+  function verifierDisponibiliteCandidat() {
+    const candidatId = getElement('candidat_propose_id')?.value;
+    const dateDebut = getElement('date_debut')?.value;
+    const dateFin = getElement('date_fin')?.value;
+    const disponibiliteElement = getElement('candidat_propose_disponibilite');
+
+    if (!candidatId || !dateDebut || !dateFin || !disponibiliteElement) {
+      if (disponibiliteElement) {
+        disponibiliteElement.style.display = 'none';
+      }
+      return;
+    }
+
+    disponibiliteElement.style.display = 'flex';
+    disponibiliteElement.className = 'availability-indicator loading';
+    disponibiliteElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vérification...';
+
+    fetch(`/interim/ajax/verifier-disponibilite-candidat/?candidat_id=${candidatId}&date_debut=${dateDebut}&date_fin=${dateFin}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.disponible) {
+          disponibiliteElement.className = 'availability-indicator available';
+          disponibiliteElement.innerHTML = '<i class="fas fa-check"></i> ' + data.raison;
+        } else {
+          disponibiliteElement.className = 'availability-indicator unavailable';
+          disponibiliteElement.innerHTML = '<i class="fas fa-times"></i> ' + data.raison;
+        }
+      })
+      .catch(error => {
+        console.error('Erreur vérification disponibilité:', error);
+        disponibiliteElement.className = 'availability-indicator unavailable';
+        disponibiliteElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erreur de vérification';
+      });
+  }
+
+  // ================================================================
+  // EVENT LISTENERS
+  // ================================================================
+
+  // Sauvegarder les valeurs originales au chargement
+  saveOriginalValues();
+
+  // Surveiller les changements dans le formulaire
+  const formInputs = form.querySelectorAll('input, select, textarea');
+  formInputs.forEach(input => {
+    input.addEventListener('input', detectChanges);
+    input.addEventListener('change', detectChanges);
+  });
+
+  // Bouton de réinitialisation
+  if (resetBtn) {
+    resetBtn.addEventListener('click', resetForm);
+  }
+
+  // Toggle section proposition manuelle
+  const toggleProposition = getElement('toggleProposition');
+  const propositionContent = getElement('propositionContent');
+  
+  if (toggleProposition && propositionContent) {
+    toggleProposition.addEventListener('click', function() {
+      propositionContent.classList.toggle('show');
+      toggleProposition.classList.toggle('expanded');
+    });
+  }
+
+  // Bouton proposition automatique
+  const btnPropositionAuto = getElement('btnPropositionAuto');
+  if (btnPropositionAuto) {
+    btnPropositionAuto.addEventListener('click', propositionAutomatique);
+  }
+
+  // Bouton proposition spécifique
+  const btnPropositionSpecifique = getElement('btnPropositionSpecifique');
+  if (btnPropositionSpecifique) {
+    btnPropositionSpecifique.addEventListener('click', function() {
+      setElementDisplay('specificProposalSection', true);
+    });
+  }
+
+  // Boutons d'enregistrement
+  const btnEnregistrerAuto = getElement('btnEnregistrerAuto');
+  if (btnEnregistrerAuto) {
+    btnEnregistrerAuto.addEventListener('click', enregistrerPropositionAutomatique);
+  }
+
+  const btnEnregistrerSpecifique = getElement('btnEnregistrerSpecifique');
+  if (btnEnregistrerSpecifique) {
+    btnEnregistrerSpecifique.addEventListener('click', enregistrerPropositionSpecifique);
+  }
+
+  // Filtres
+  const filterDepartement = getElement('filterDepartement');
+  const filterScore = getElement('filterScore');
+  
+  if (filterDepartement) {
+    filterDepartement.addEventListener('change', appliquerFiltres);
+  }
+  if (filterScore) {
+    filterScore.addEventListener('change', appliquerFiltres);
+  }
+
+  // Pagination
+  const btnPrevPage = getElement('btnPrevPage');
+  const btnNextPage = getElement('btnNextPage');
+  
+  if (btnPrevPage) {
+    btnPrevPage.addEventListener('click', () => {
+      if (paginationActuelle.page > 1) {
+        changerPage(paginationActuelle.page - 1);
+      }
+    });
+  }
+  
+  if (btnNextPage) {
+    btnNextPage.addEventListener('click', () => {
+      const totalPages = Math.ceil(candidatsFiltres.length / paginationActuelle.taille);
+      if (paginationActuelle.page < totalPages) {
+        changerPage(paginationActuelle.page + 1);
+      }
+    });
+  }
+
+  // Recherche d'employés avec debounce
+  const personneMatriculeInput = getElement('personne_remplacee_matricule');
+  const candidatMatriculeInput = getElement('candidat_propose_matricule');
+  const candidatSpecifiqueMatriculeInput = getElement('candidatSpecifiqueMatricule');
+
+  if (personneMatriculeInput) {
+    const debouncedSearchPersonne = debounce((matricule) => {
+      rechercherEmploye(matricule, 'personne_remplacee');
+    }, 500);
+
+    personneMatriculeInput.addEventListener('input', function() {
+      const matricule = this.value.trim();
+      debouncedSearchPersonne(matricule);
+      detectChanges();
+    });
+  }
+
+  if (candidatMatriculeInput) {
+    const debouncedSearchCandidat = debounce((matricule) => {
+      rechercherEmploye(matricule, 'candidat_propose');
+    }, 500);
+
+    candidatMatriculeInput.addEventListener('input', function() {
+      const matricule = this.value.trim();
+      debouncedSearchCandidat(matricule);
+    });
+  }
+
+  if (candidatSpecifiqueMatriculeInput) {
+    const debouncedSearchCandidatSpecifique = debounce((matricule) => {
+      rechercherEmploye(matricule, 'candidat_specifique');
+    }, 500);
+
+    candidatSpecifiqueMatriculeInput.addEventListener('input', function() {
+      const matricule = this.value.trim();
+      debouncedSearchCandidatSpecifique(matricule);
+    });
+  }
+
+  // Cascade département -> postes
+  const departementSelect = getElement('departement_id');
+  const posteSelect = getElement('poste_id');
+
+  if (departementSelect && posteSelect) {
+    departementSelect.addEventListener('change', function() {
+      const departementId = this.value;
+      
+      posteSelect.innerHTML = '<option value="">Chargement...</option>';
+      
+      if (departementId) {
+        fetch(`/interim/ajax/postes-by-departement/?departement_id=${departementId}`)
+          .then(response => response.json())
+          .then(data => {
+            posteSelect.innerHTML = '<option value="">Sélectionnez un poste</option>';
+            if (data.postes) {
+              data.postes.forEach(poste => {
+                const siteInfo = poste.site__nom ? ` - ${poste.site__nom}` : '';
+                posteSelect.innerHTML += `<option value="${poste.id}">${poste.titre}${siteInfo}</option>`;
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Erreur chargement postes:', error);
+            posteSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+          });
+      } else {
+        posteSelect.innerHTML = '<option value="">Sélectionnez d\'abord un département</option>';
+      }
+      
+      detectChanges();
+    });
+  }
+
+  // Validation des dates
+  const dateDebutInput = getElement('date_debut');
+  const dateFinInput = getElement('date_fin');
+
+  if (dateDebutInput && dateFinInput) {
+    dateDebutInput.addEventListener('change', function() {
+      const dateDebut = new Date(this.value);
+      const dateFin = new Date(dateFinInput.value);
+      
+      if (dateFin && dateDebut > dateFin) {
+        alert('La date de début doit être antérieure à la date de fin');
+        this.value = '';
+      } else {
+        dateFinInput.min = this.value;
+        verifierDisponibiliteCandidat();
+      }
+      detectChanges();
+    });
+
+    dateFinInput.addEventListener('change', function() {
+      const dateDebut = new Date(dateDebutInput.value);
+      const dateFin = new Date(this.value);
+      
+      if (dateDebut && dateFin < dateDebut) {
+        alert('La date de fin doit être postérieure à la date de début');
+        this.value = '';
+      } else {
+        verifierDisponibiliteCandidat();
+      }
+      detectChanges();
+    });
+  }
+
+  // ================================================================
+  // SOUMISSION DU FORMULAIRE CLASSIQUE
+  // ================================================================
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      console.log('📝 Soumission du formulaire classique');
+
+      // Validation des champs requis
+      const requiredFields = form.querySelectorAll('[required]');
+      let allValid = true;
+
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          field.style.borderColor = '#dc3545';
+          allValid = false;
+        } else {
+          field.style.borderColor = '';
+        }
+      });
+
+      if (!allValid) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+      }
+
+      // Validation justification obligatoire
+      const justificationModification = getElement('justification_modification')?.value?.trim();
+      if (!justificationModification) {
+        alert('La justification des modifications est obligatoire');
+        getElement('justification_modification')?.focus();
+        return;
+      }
+
+      // Validation proposition candidat manuelle
+      const candidatId = getElement('candidat_propose_id')?.value;
+      const justification = getElement('justification_proposition')?.value?.trim();
+
+      if (candidatId && !justification) {
+        alert('La justification est obligatoire si vous proposez un candidat');
+        getElement('justification_proposition')?.focus();
+        return;
+      }
+
+      // Validation des dates
+      if (dateDebutInput && dateFinInput) {
+        const dateDebut = new Date(dateDebutInput.value);
+        const dateFin = new Date(dateFinInput.value);
+        
+        if (dateDebut >= dateFin) {
+          alert('La date de début doit être antérieure à la date de fin');
+          return;
+        }
+      }
+
+      // Désactiver le bouton et afficher le spinner
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+      if (loadingSpinner) {
+        loadingSpinner.classList.add('show');
+      }
+
+      // Préparer les données du formulaire
+      const formData = new FormData(form);
+      
+      // Ajouter les propositions à supprimer
+      propositionsToDelete.forEach(id => {
+        formData.append('supprimer_propositions', id);
+      });
+      
+      // Ajouter les propositions modifiées
+      Object.keys(propositionsModified).forEach(propId => {
+        const prop = propositionsModified[propId];
+        formData.append(`proposition_${propId}_candidat_id`, prop.candidat_id);
+        formData.append(`proposition_${propId}_justification`, prop.justification);
+        formData.append(`proposition_${propId}_competences`, prop.competences);
+        formData.append(`proposition_${propId}_experience`, prop.experience);
+      });
+
+      // Soumission AJAX classique
+      fetch(form.action || window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showNotification('Demande modifiée avec succès !', 'success');
+          
+          if (data.redirect_url) {
+            setTimeout(() => {
+              window.location.href = data.redirect_url;
+            }, 1000);
+          }
+        } else {
+          alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+        }
+      })
+      .catch(error => {
+        console.error('Erreur soumission:', error);
+        alert('Erreur de communication avec le serveur');
+      })
+      .finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+        if (loadingSpinner) {
+          loadingSpinner.classList.remove('show');
+        }
+      });
+    });
+  }
+
+  // ================================================================
+  // FONCTIONS GLOBALES POUR LES ÉVÉNEMENTS ONCLICK
+  // ================================================================
+
+  window.togglePropositionEdit = togglePropositionEdit;
+  window.annulerModificationProposition = annulerModificationProposition;
+  window.sauvegarderModificationProposition = sauvegarderModificationProposition;
+  window.supprimerProposition = supprimerProposition;
+  window.selectionnerCandidatAuto = selectionnerCandidatAuto;
+  
+  window.voirDetailCandidat = function(candidatId) {
+    const candidat = candidatsAutomatiques.find(c => c.id === candidatId);
+    if (candidat) {
+      alert(`Détails du candidat:\n\nNom: ${candidat.nom_complet}\nMatricule: ${candidat.matricule}\nScore: ${candidat.score}\nPoste: ${candidat.poste_actuel || 'Non renseigné'}\nDépartement: ${candidat.departement || 'Non renseigné'}`);
+    }
+  };
+
+  // ================================================================
+  // AMÉLIORATIONS UX
+  // ================================================================
+
+  // Auto-resize des textareas
+  const textareas = document.querySelectorAll('.form-textarea');
+  textareas.forEach(textarea => {
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+  });
+
+  // Focus sur le premier champ requis vide
+  const firstRequiredEmpty = form?.querySelector('[required]:not([value])');
+  if (firstRequiredEmpty) {
+    firstRequiredEmpty.focus();
+  }
+
+  console.log('✅ Formulaire de modification avec gestion des propositions initialisé avec succès');
+});
+
+// ================================================================
+// STYLES D'ANIMATION POUR LES NOTIFICATIONS
+// ================================================================
+
+const animationStyles = document.createElement('style');
+animationStyles.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  .modified {
+    border-color: #ffc107 !important;
+    background-color: #fffef5;
+  }
+`;
+document.head.appendChild(animationStyles);
+</script>
+{% endblock extra_js %}

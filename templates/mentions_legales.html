@@ -1,0 +1,1275 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Mentions légales{% endblock %}
+
+{% block page_title %}Mentions légales{% endblock %}
+
+{% block content %}
+<div class="legal-page">
+  <!-- En-tête de la page -->
+  <div class="legal-header">
+    <div class="legal-header-content">
+      <h1>Mentions légales</h1>
+      <p class="legal-subtitle">
+        Informations légales concernant l'application Interim365 et ses conditions d'utilisation
+      </p>
+      <div class="legal-meta">
+        <span class="legal-version">Version 1.0.0</span>
+        <span class="legal-date">Dernière mise à jour : {% now "d/m/Y" %}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="legal-content">
+    
+    <!-- Section 1: Identification de l'éditeur -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-building"></i>
+          1. Identification de l'éditeur
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="company-info">
+          <h3>Propriétaire et éditeur du logiciel</h3>
+          <div class="company-card primary">
+            <div class="company-logo">
+              <i class="fas fa-code"></i>
+            </div>
+            <div class="company-details">
+              <h4>IA'CHAIN</h4>
+              <p class="company-description">
+                Entreprise informatique spécialisée dans l'Intégration de Solutions Progicielles, 
+                les Solutions d'Intelligence Artificielle, les Solutions de Blockchain, 
+                le Développement Informatique et les Conseils en Cyber-sécurité.
+              </p>
+              <div class="company-legal">
+                <div class="legal-item">
+                  <span class="label">RCCM :</span>
+                  <span class="value">CI-ABJ-02024A10-02562</span>
+                </div>
+                <div class="legal-item">
+                  <span class="label">DFE :</span>
+                  <span class="value">2403413 B</span>
+                </div>
+                <div class="legal-item">
+                  <span class="label">Site web :</span>
+                  <span class="value">
+                    <a href="https://www.iachain.io" target="_blank" rel="noopener">
+                      www.iachain.io
+                    </a>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="company-info">
+          <h3>Distributeur exclusif</h3>
+          <div class="company-card secondary">
+            <div class="company-logo">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="company-details">
+              <h4>SAFESECUR AFRIQUE</h4>
+              <p class="company-description">
+                Distributeur exclusif de la solution Interim365 sur le territoire africain.
+              </p>
+              <div class="company-legal">
+                <div class="legal-item">
+                  <span class="label">Statut :</span>
+                  <span class="value">Distributeur exclusif</span>
+                </div>
+                <div class="legal-item">
+                  <span class="label">Zone géographique :</span>
+                  <span class="value">Afrique</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Description du service -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-laptop-code"></i>
+          2. Description du service
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="service-description">
+          <p>
+            <strong>Interim365</strong> est une application tierce de la suite logicielle 
+            <strong>Kelio SIRH</strong>, conçue pour optimiser la gestion des remplacements 
+            et intérims au sein des entreprises.
+          </p>
+          
+          <div class="service-features">
+            <h3>Fonctionnalités principales :</h3>
+            <ul class="features-list">
+              <li>
+                <i class="fas fa-check"></i>
+                Gestion des demandes d'intérim et de remplacement
+              </li>
+              <li>
+                <i class="fas fa-check"></i>
+                Suivi des compétences et disponibilités des employés
+              </li>
+              <li>
+                <i class="fas fa-check"></i>
+                Workflow de validation et d'approbation
+              </li>
+              <li>
+                <i class="fas fa-check"></i>
+                Interface avec les systèmes Kelio existants
+              </li>
+              <li>
+                <i class="fas fa-check"></i>
+                Tableaux de bord et reporting avancés
+              </li>
+            </ul>
+          </div>
+
+          <div class="technical-specs">
+            <h3>Spécifications techniques :</h3>
+            <div class="specs-grid">
+              <div class="spec-item">
+                <span class="spec-label">Type d'application :</span>
+                <span class="spec-value">Application web tierce</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Intégration :</span>
+                <span class="spec-value">Suite Kelio SIRH</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Déploiement :</span>
+                <span class="spec-value">On-premise chez le client</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Version actuelle :</span>
+                <span class="spec-value">1.0.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Propriété intellectuelle -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-copyright"></i>
+          3. Propriété intellectuelle
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="ip-notice">
+          <div class="notice-box important">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="notice-content">
+              <h3>Droits exclusifs d'IA'CHAIN</h3>
+              <p>
+                L'application <strong>Interim365</strong>, incluant son code source, 
+                sa documentation, ses algorithmes, son interface utilisateur et tous 
+                les éléments qui la composent, est la <strong>propriété intellectuelle 
+                exclusive d'IA'CHAIN</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="rights-details">
+            <h3>Étendue des droits :</h3>
+            <ul class="rights-list">
+              <li>
+                <i class="fas fa-lock"></i>
+                <strong>Code source :</strong> Propriété exclusive d'IA'CHAIN
+              </li>
+              <li>
+                <i class="fas fa-lock"></i>
+                <strong>Algorithmes :</strong> Développés et protégés par IA'CHAIN
+              </li>
+              <li>
+                <i class="fas fa-lock"></i>
+                <strong>Interface utilisateur :</strong> Design et ergonomie sous droits d'auteur
+              </li>
+              <li>
+                <i class="fas fa-lock"></i>
+                <strong>Documentation :</strong> Protégée par les droits d'auteur
+              </li>
+              <li>
+                <i class="fas fa-lock"></i>
+                <strong>Marque "Interim365" :</strong> Propriété d'IA'CHAIN
+              </li>
+            </ul>
+          </div>
+
+          <div class="restrictions">
+            <h3>Restrictions d'utilisation :</h3>
+            <div class="restriction-box">
+              <p>
+                Il est strictement interdit de reproduire, copier, modifier, distribuer, 
+                vendre ou exploiter tout ou partie de l'application sans l'autorisation 
+                écrite préalable d'IA'CHAIN.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Protection des données -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-database"></i>
+          4. Protection et propriété des données
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="data-protection">
+          <div class="notice-box success">
+            <i class="fas fa-shield-alt"></i>
+            <div class="notice-content">
+              <h3>Propriété des données client</h3>
+              <p>
+                Toutes les données saisies, générées ou stockées dans l'application 
+                <strong>demeurent la propriété exclusive du client</strong>. 
+                IA'CHAIN et SAFESECUR AFRIQUE n'ont aucun droit sur ces données.
+              </p>
+            </div>
+          </div>
+
+          <div class="data-principles">
+            <h3>Principes de protection des données :</h3>
+            
+            <div class="principle-item">
+              <div class="principle-icon">
+                <i class="fas fa-home"></i>
+              </div>
+              <div class="principle-content">
+                <h4>Hébergement local</h4>
+                <p>
+                  L'application et les bases de données sont hébergées exclusivement 
+                  chez le client, garantissant un contrôle total sur les données.
+                </p>
+              </div>
+            </div>
+
+            <div class="principle-item">
+              <div class="principle-icon">
+                <i class="fas fa-user-shield"></i>
+              </div>
+              <div class="principle-content">
+                <h4>Confidentialité</h4>
+                <p>
+                  Aucune donnée client n'est transmise vers des serveurs externes 
+                  ou des tiers sans autorisation explicite du client.
+                </p>
+              </div>
+            </div>
+
+            <div class="principle-item">
+              <div class="principle-icon">
+                <i class="fas fa-key"></i>
+              </div>
+              <div class="principle-content">
+                <h4>Accès contrôlé</h4>
+                <p>
+                  Seuls les utilisateurs autorisés par le client peuvent accéder 
+                  aux données de l'application.
+                </p>
+              </div>
+            </div>
+
+            <div class="principle-item">
+              <div class="principle-icon">
+                <i class="fas fa-archive"></i>
+              </div>
+              <div class="principle-content">
+                <h4>Sauvegarde et archivage</h4>
+                <p>
+                  La responsabilité des sauvegardes et de l'archivage des données 
+                  incombe entièrement au client.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gdpr-compliance">
+            <h3>Conformité RGPD :</h3>
+            <p>
+              L'application est conçue pour faciliter la conformité aux réglementations 
+              sur la protection des données personnelles (RGPD, lois locales). 
+              Le client reste responsable de la mise en œuvre des mesures appropriées.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Conditions d'utilisation -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-file-contract"></i>
+          5. Conditions d'utilisation
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="terms-of-use">
+          <div class="terms-section">
+            <h3>Licence d'utilisation :</h3>
+            <p>
+              L'utilisation d'Interim365 est soumise à l'obtention d'une licence 
+              auprès d'IA'CHAIN ou de son distributeur autorisé SAFESECUR AFRIQUE.
+            </p>
+          </div>
+
+          <div class="terms-section">
+            <h3>Obligations de l'utilisateur :</h3>
+            <ul class="obligations-list">
+              <li>Utiliser l'application conformément à sa destination</li>
+              <li>Respecter les droits de propriété intellectuelle</li>
+              <li>Ne pas tenter de reverse engineering du code</li>
+              <li>Maintenir la confidentialité des accès</li>
+              <li>Signaler tout dysfonctionnement ou problème de sécurité</li>
+            </ul>
+          </div>
+
+          <div class="terms-section">
+            <h3>Limitations de responsabilité :</h3>
+            <p>
+              IA'CHAIN et SAFESECUR AFRIQUE ne sauraient être tenus responsables 
+              des dommages indirects, de la perte de données ou des interruptions 
+              de service résultant d'une utilisation inappropriée de l'application.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Support et contact -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-headset"></i>
+          6. Support et contact
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="support-info">
+          <div class="contact-grid">
+            <div class="contact-card">
+              <div class="contact-header">
+                <i class="fas fa-tools"></i>
+                <h3>Support technique</h3>
+              </div>
+              <div class="contact-content">
+                <p>Pour toute question technique ou problème d'utilisation :</p>
+                <div class="contact-details">
+                  <div class="contact-item">
+                    <i class="fas fa-globe"></i>
+                    <a href="https://www.iachain.io/contact/" target="_blank">
+                      www.iachain.io/contact/
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="contact-card">
+              <div class="contact-header">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Questions commerciales</h3>
+              </div>
+              <div class="contact-content">
+                <p>Pour les demandes de licence et informations commerciales :</p>
+                <div class="contact-details">
+                  <div class="contact-item">
+                    <i class="fas fa-building"></i>
+                    <span>SAFESECUR AFRIQUE</span>
+                  </div>
+                  <div class="contact-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Distributeur exclusif pour l'Afrique</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Dispositions générales -->
+    <section class="legal-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-balance-scale"></i>
+          7. Dispositions générales
+        </h2>
+      </div>
+      <div class="section-content">
+        <div class="general-provisions">
+          <div class="provision-item">
+            <h3>Droit applicable :</h3>
+            <p>
+              Les présentes mentions légales sont régies par le droit ivoirien. 
+              Tout litige sera soumis aux tribunaux compétents d'Abidjan.
+            </p>
+          </div>
+
+          <div class="provision-item">
+            <h3>Modifications :</h3>
+            <p>
+              IA'CHAIN se réserve le droit de modifier ces mentions légales à tout moment. 
+              Les utilisateurs seront informés des modifications importantes.
+            </p>
+          </div>
+
+          <div class="provision-item">
+            <h3>Séparabilité :</h3>
+            <p>
+              Si une clause de ces mentions légales était déclarée nulle ou inapplicable, 
+              les autres clauses conserveraient leur pleine validité.
+            </p>
+          </div>
+
+          <div class="provision-item">
+            <h3>Contact juridique :</h3>
+            <p>
+              Pour toute question relative aux aspects juridiques de l'application, 
+              vous pouvez contacter IA'CHAIN via son site web officiel.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Pied de page des mentions légales -->
+  <div class="legal-footer">
+    <div class="footer-content">
+      <div class="copyright-notice">
+        <i class="fas fa-copyright"></i>
+        <span>
+          {% now "Y" %} IA'CHAIN - Tous droits réservés. 
+          Interim365 est une marque d'IA'CHAIN.
+        </span>
+      </div>
+      <div class="footer-links">
+        <a href="{% url 'index' %}" class="footer-link">
+          <i class="fas fa-home"></i>
+          Retour à l'accueil
+        </a>
+        <a href="https://www.iachain.io" target="_blank" class="footer-link">
+          <i class="fas fa-external-link-alt"></i>
+          Site IA'CHAIN
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ================================================================
+   STYLES POUR LA PAGE MENTIONS LÉGALES
+================================================================ */
+
+:root {
+  --primary: #007bff;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
+  --light: #f8f9fa;
+  --dark: #343a40;
+  --border-radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.legal-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  line-height: 1.6;
+}
+
+/* ================================================================
+   EN-TÊTE DE LA PAGE
+================================================================ */
+
+.legal-header {
+  text-align: center;
+  padding: 3rem 0;
+  margin-bottom: 3rem;
+  background: linear-gradient(135deg, var(--primary), #0056b3);
+  color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.legal-header-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.legal-subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.legal-meta {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.legal-version,
+.legal-date {
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  backdrop-filter: blur(10px);
+}
+
+/* ================================================================
+   CONTENU PRINCIPAL
+================================================================ */
+
+.legal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.legal-section {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.legal-section:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.section-header {
+  background: var(--light);
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-header i {
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.section-content {
+  padding: 2rem;
+}
+
+/* ================================================================
+   INFORMATIONS DES ENTREPRISES
+================================================================ */
+
+.company-info {
+  margin-bottom: 2rem;
+}
+
+.company-info:last-child {
+  margin-bottom: 0;
+}
+
+.company-info h3 {
+  color: var(--dark);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.company-card {
+  display: flex;
+  gap: 1.5rem;
+  padding: 2rem;
+  border: 2px solid #dee2e6;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.company-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.company-card.primary {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, #f8f9ff, white);
+}
+
+.company-card.secondary {
+  border-color: var(--success);
+  background: linear-gradient(135deg, #f0fff4, white);
+}
+
+.company-logo {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.company-card.primary .company-logo {
+  background: var(--primary);
+}
+
+.company-card.secondary .company-logo {
+  background: var(--success);
+}
+
+.company-details {
+  flex: 1;
+}
+
+.company-details h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: var(--dark);
+  font-weight: 600;
+}
+
+.company-description {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.company-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legal-item {
+  display: flex;
+  gap: 1rem;
+}
+
+.legal-item .label {
+  font-weight: 600;
+  color: var(--dark);
+  min-width: 80px;
+}
+
+.legal-item .value {
+  color: #495057;
+}
+
+.legal-item .value a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.legal-item .value a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* ================================================================
+   DESCRIPTION DU SERVICE
+================================================================ */
+
+.service-description p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: #495057;
+}
+
+.service-features h3,
+.technical-specs h3 {
+  color: var(--dark);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.features-list li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.features-list li:last-child {
+  border-bottom: none;
+}
+
+.features-list i {
+  color: var(--success);
+  font-size: 1.1rem;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  background: var(--light);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+}
+
+.spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spec-label {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 0.9rem;
+}
+
+.spec-value {
+  color: #495057;
+  font-size: 1rem;
+}
+
+/* ================================================================
+   BOÎTES DE NOTIFICATION
+================================================================ */
+
+.notice-box {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  border-left: 4px solid;
+}
+
+.notice-box.important {
+  background: #fff3cd;
+  border-left-color: var(--warning);
+}
+
+.notice-box.success {
+  background: #d4edda;
+  border-left-color: var(--success);
+}
+
+.notice-box i {
+  font-size: 1.5rem;
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.notice-box.important i {
+  color: var(--warning);
+}
+
+.notice-box.success i {
+  color: var(--success);
+}
+
+.notice-content {
+  flex: 1;
+}
+
+.notice-content h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+
+.notice-content p {
+  margin: 0;
+  color: #495057;
+  line-height: 1.6;
+}
+
+/* ================================================================
+   LISTES DE DROITS ET RESTRICTIONS
+================================================================ */
+
+.rights-list,
+.obligations-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.rights-list li,
+.obligations-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.rights-list li:last-child,
+.obligations-list li:last-child {
+  border-bottom: none;
+}
+
+.rights-list i {
+  color: var(--danger);
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.rights-details h3,
+.restrictions h3 {
+  color: var(--dark);
+  margin: 2rem 0 1rem 0;
+  font-size: 1.2rem;
+}
+
+.restriction-box {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  color: #721c24;
+  font-weight: 500;
+}
+
+/* ================================================================
+   PRINCIPES DE PROTECTION DES DONNÉES
+================================================================ */
+
+.data-principles {
+  margin: 2rem 0;
+}
+
+.principle-item {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--light);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--info);
+}
+
+.principle-icon {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--info);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.principle-content h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--dark);
+  font-size: 1.1rem;
+}
+
+.principle-content p {
+  margin: 0;
+  color: #495057;
+  line-height: 1.6;
+}
+
+.gdpr-compliance {
+  background: #e7f3ff;
+  border: 1px solid #b3d7ff;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.gdpr-compliance h3 {
+  margin: 0 0 1rem 0;
+  color: var(--primary);
+}
+
+.gdpr-compliance p {
+  margin: 0;
+  color: #495057;
+  line-height: 1.6;
+}
+
+/* ================================================================
+   CONDITIONS D'UTILISATION
+================================================================ */
+
+.terms-section {
+  margin-bottom: 2rem;
+}
+
+.terms-section h3 {
+  color: var(--dark);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+}
+
+.terms-section p {
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* ================================================================
+   SUPPORT ET CONTACT
+================================================================ */
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.contact-card {
+  border: 2px solid #dee2e6;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.contact-header {
+  background: var(--primary);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.contact-header i {
+  font-size: 1.5rem;
+}
+
+.contact-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.contact-content {
+  padding: 1.5rem;
+}
+
+.contact-content p {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #495057;
+}
+
+.contact-item i {
+  color: var(--primary);
+  width: 20px;
+}
+
+.contact-item a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.contact-item a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* ================================================================
+   DISPOSITIONS GÉNÉRALES
+================================================================ */
+
+.general-provisions {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.provision-item {
+  padding: 1.5rem;
+  border-left: 4px solid var(--primary);
+  background: linear-gradient(135deg, #f8f9ff, white);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.provision-item h3 {
+  margin: 0 0 1rem 0;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.provision-item p {
+  margin: 0;
+  color: #495057;
+  line-height: 1.6;
+}
+
+/* ================================================================
+   PIED DE PAGE DES MENTIONS LÉGALES
+================================================================ */
+
+.legal-footer {
+  margin-top: 4rem;
+  padding: 2rem 0;
+  background: var(--dark);
+  color: white;
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.copyright-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #adb5bd;
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #007bff;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 992px) {
+  .company-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .specs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .legal-header {
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .legal-header-content h1 {
+    font-size: 2rem;
+  }
+  
+  .legal-subtitle {
+    font-size: 1rem;
+  }
+  
+  .legal-meta {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .section-content {
+    padding: 1.5rem;
+  }
+  
+  .principle-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 1rem;
+  }
+  
+  .footer-links {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .legal-page {
+    padding: 0 0.5rem;
+  }
+  
+  .section-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1.3rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .section-content {
+    padding: 1rem;
+  }
+  
+  .company-card {
+    padding: 1.5rem;
+  }
+  
+  .legal-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .legal-item .label {
+    min-width: auto;
+    font-size: 0.9rem;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.legal-section {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.legal-section:nth-child(1) { animation-delay: 0.1s; }
+.legal-section:nth-child(2) { animation-delay: 0.2s; }
+.legal-section:nth-child(3) { animation-delay: 0.3s; }
+.legal-section:nth-child(4) { animation-delay: 0.4s; }
+.legal-section:nth-child(5) { animation-delay: 0.5s; }
+.legal-section:nth-child(6) { animation-delay: 0.6s; }
+.legal-section:nth-child(7) { animation-delay: 0.7s; }
+
+/* ================================================================
+   MODE IMPRESSION
+================================================================ */
+
+@media print {
+  .legal-header {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  .legal-section {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+  
+  .company-card,
+  .notice-box,
+  .principle-item {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  
+  .footer-link {
+    display: none !important;
+  }
+  
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+}
+</style>
+{% endblock content %}

@@ -1,0 +1,1690 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Mes missions d'intérim{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header mes missions -->
+<div class="missions-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-0">
+          <i class="fas fa-briefcase"></i>
+          Mes missions d'intérim
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-user"></i> {{ profil_utilisateur.nom_complet }}
+          - {{ profil_utilisateur.get_type_profil_display }}
+          <span class="matricule-badge">{{ profil_utilisateur.matricule }}</span>
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'index' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour au tableau de bord
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques des missions -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Statistiques de mes missions
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-briefcase"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.total }}</div>
+          <div class="stat-label">Mission{{ stats.total|pluralize }} totale{{ stats.total|pluralize }}</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.en_cours }}</div>
+          <div class="stat-label">En cours</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.terminees }}</div>
+          <div class="stat-label">Terminée{{ stats.terminees|pluralize }}</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-plus"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.planifiees }}</div>
+          <div class="stat-label">Planifiée{{ stats.planifiees|pluralize }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Filtres et recherche
+    </h2>
+  </div>
+  <div class="card-body">
+    <form method="get" class="filter-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="statut" class="form-label">Statut mission</label>
+          <select name="statut" id="statut" class="form-select">
+            <option value="">Tous les statuts</option>
+            <option value="PLANIFIEE" {% if request.GET.statut == 'PLANIFIEE' %}selected{% endif %}>📅 Planifiée</option>
+            <option value="EN_COURS" {% if request.GET.statut == 'EN_COURS' %}selected{% endif %}>🟢 En cours</option>
+            <option value="TERMINEE" {% if request.GET.statut == 'TERMINEE' %}selected{% endif %}>✅ Terminée</option>
+            <option value="ANNULEE" {% if request.GET.statut == 'ANNULEE' %}selected{% endif %}>❌ Annulée</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="date_debut" class="form-label">Date début</label>
+          <input type="date" name="date_debut" id="date_debut" class="form-input" 
+                 value="{{ request.GET.date_debut|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="date_fin" class="form-label">Date fin</label>
+          <input type="date" name="date_fin" id="date_fin" class="form-input" 
+                 value="{{ request.GET.date_fin|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="recherche" class="form-label">Recherche</label>
+          <input type="text" name="recherche" id="recherche" class="form-input" 
+                 placeholder="Poste, site, numéro demande..." 
+                 value="{{ request.GET.recherche|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="ordre" class="form-label">Tri</label>
+          <select name="ordre" id="ordre" class="form-select">
+            <option value="-created_at" {% if request.GET.ordre == '-created_at' %}selected{% endif %}>Plus récente d'abord</option>
+            <option value="created_at" {% if request.GET.ordre == 'created_at' %}selected{% endif %}>Plus ancienne d'abord</option>
+            <option value="-demande_interim__date_debut" {% if request.GET.ordre == '-demande_interim__date_debut' %}selected{% endif %}>Date début décroissante</option>
+            <option value="demande_interim__date_debut" {% if request.GET.ordre == 'demande_interim__date_debut' %}selected{% endif %}>Date début croissante</option>
+            <option value="statut" {% if request.GET.ordre == 'statut' %}selected{% endif %}>Statut A-Z</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              Filtrer
+            </button>
+            <a href="?" class="btn btn-outline">
+              <i class="fas fa-undo"></i>
+              Réinitialiser
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Liste des missions -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-list"></i>
+      Mes missions
+      {% if missions.paginator.count %}
+        <span class="count-badge">{{ missions.paginator.count }}</span>
+      {% endif %}
+    </h2>
+  </div>
+  <div class="card-body">
+    {% if missions %}
+      <div class="missions-timeline">
+        {% for mission in missions %}
+        <div class="mission-timeline-item">
+          <div class="mission-marker">
+            <div class="mission-status-icon">
+              {% if mission.statut == 'EN_COURS' %}
+                <i class="fas fa-play"></i>
+              {% elif mission.statut == 'PLANIFIEE' %}
+                <i class="fas fa-calendar"></i>
+              {% elif mission.statut == 'TERMINEE' %}
+                <i class="fas fa-check"></i>
+              {% else %}
+                <i class="fas fa-times"></i>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="mission-content">
+            <!-- En-tête de la mission -->
+            <div class="mission-header">
+              <div class="mission-title">
+                <h3>{{ mission.demande_interim.poste.titre }}</h3>
+                <div class="mission-numero">{{ mission.demande_interim.numero_demande }}</div>
+              </div>
+              <div class="mission-statut">
+                <span class="statut-badge {{ mission.statut|lower }}">
+                  {% if mission.statut == 'EN_COURS' %}
+                    🟢 En cours
+                  {% elif mission.statut == 'PLANIFIEE' %}
+                    📅 Planifiée
+                  {% elif mission.statut == 'TERMINEE' %}
+                    ✅ Terminée
+                  {% else %}
+                    ❌ {{ mission.get_statut_display }}
+                  {% endif %}
+                </span>
+                {% if mission.demande_interim.urgence != 'NORMALE' %}
+                <span class="urgence-badge {{ mission.demande_interim.urgence|lower }}">
+                  {% if mission.demande_interim.urgence == 'CRITIQUE' %}
+                    🚨 Critique
+                  {% elif mission.demande_interim.urgence == 'ELEVEE' %}
+                    ⚠️ Élevée
+                  {% else %}
+                    🟡 {{ mission.demande_interim.get_urgence_display }}
+                  {% endif %}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Détails de la mission -->
+            <div class="mission-details">
+              <div class="details-grid">
+                <div class="detail-item">
+                  <div class="detail-label">🏗️ Site</div>
+                  <div class="detail-value">{{ mission.demande_interim.poste.site.nom }}</div>
+                </div>
+                
+                <div class="detail-item">
+                  <div class="detail-label">🏢 Département</div>
+                  <div class="detail-value">{{ mission.demande_interim.poste.departement.nom }}</div>
+                </div>
+                
+                <div class="detail-item">
+                  <div class="detail-label">👤 Demandeur</div>
+                  <div class="detail-value">{{ mission.demande_interim.demandeur.nom_complet }}</div>
+                </div>
+                
+                <div class="detail-item">
+                  <div class="detail-label">🔄 Remplace</div>
+                  <div class="detail-value">{{ mission.demande_interim.personne_remplacee.nom_complet }}</div>
+                </div>
+                
+                {% if mission.demande_interim.date_debut and mission.demande_interim.date_fin %}
+                <div class="detail-item">
+                  <div class="detail-label">📅 Période</div>
+                  <div class="detail-value">
+                    {{ mission.demande_interim.date_debut|date:"d/m/Y" }} - {{ mission.demande_interim.date_fin|date:"d/m/Y" }}
+                    <small>({{ mission.demande_interim.duree_mission }} jour{{ mission.demande_interim.duree_mission|pluralize }})</small>
+                  </div>
+                </div>
+                {% endif %}
+                
+                <div class="detail-item">
+                  <div class="detail-label">🏷️ Motif</div>
+                  <div class="detail-value">{{ mission.demande_interim.motif_absence.nom }}</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Description du poste si disponible -->
+            {% if mission.demande_interim.description_poste %}
+            <div class="mission-description">
+              <h4><i class="fas fa-info-circle"></i> Description du poste</h4>
+              <p>{{ mission.demande_interim.description_poste|truncatewords:50 }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Instructions particulières si disponibles -->
+            {% if mission.demande_interim.instructions_particulieres %}
+            <div class="mission-instructions">
+              <h4><i class="fas fa-exclamation-triangle"></i> Instructions particulières</h4>
+              <p>{{ mission.demande_interim.instructions_particulieres|truncatewords:30 }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Métadonnées de la mission -->
+            <div class="mission-meta">
+              <div class="meta-item">
+                <i class="fas fa-calendar-plus"></i>
+                Mission créée le {{ mission.created_at|date:"d/m/Y à H:i" }}
+              </div>
+              {% if mission.date_acceptation %}
+              <div class="meta-item">
+                <i class="fas fa-handshake"></i>
+                Acceptée le {{ mission.date_acceptation|date:"d/m/Y à H:i" }}
+              </div>
+              {% endif %}
+              {% if mission.date_debut_effective %}
+              <div class="meta-item">
+                <i class="fas fa-play"></i>
+                Démarrée le {{ mission.date_debut_effective|date:"d/m/Y" }}
+              </div>
+              {% endif %}
+              {% if mission.date_fin_effective %}
+              <div class="meta-item">
+                <i class="fas fa-stop"></i>
+                Terminée le {{ mission.date_fin_effective|date:"d/m/Y" }}
+              </div>
+              {% endif %}
+            </div>
+            
+            <!-- Actions disponibles -->
+            <div class="mission-actions">
+              <a href="#" class="btn btn-sm btn-primary" onclick="voirDetailsMission('{{ mission.id }}')">
+                <i class="fas fa-eye"></i>
+                Voir détails
+              </a>
+              
+              {% if mission.statut == 'PLANIFIEE' %}
+              <button class="btn btn-sm btn-success" onclick="accepterMission('{{ mission.id }}')">
+                <i class="fas fa-check"></i>
+                Accepter
+              </button>
+              <button class="btn btn-sm btn-warning" onclick="refuserMission('{{ mission.id }}')">
+                <i class="fas fa-times"></i>
+                Refuser
+              </button>
+              {% endif %}
+              
+              {% if mission.statut == 'EN_COURS' %}
+              <button class="btn btn-sm btn-info" onclick="signalerProbleme('{{ mission.id }}')">
+                <i class="fas fa-exclamation-circle"></i>
+                Signaler un problème
+              </button>
+              {% endif %}
+              
+              {% if mission.statut == 'TERMINEE' %}
+              <button class="btn btn-sm btn-outline" onclick="evaluerMission('{{ mission.id }}')">
+                <i class="fas fa-star"></i>
+                Évaluer
+              </button>
+              {% endif %}
+              
+              <button class="btn btn-sm btn-outline" onclick="imprimerMission('{{ mission.id }}')">
+                <i class="fas fa-print"></i>
+                Imprimer
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if missions.paginator.num_pages > 1 %}
+      <div class="pagination-container">
+        <div class="pagination-info">
+          Page {{ missions.number }} sur {{ missions.paginator.num_pages }} 
+          ({{ missions.start_index }}-{{ missions.end_index }} sur {{ missions.paginator.count }} mission{{ missions.paginator.count|pluralize }})
+        </div>
+        <div class="pagination-controls">
+          {% if missions.has_previous %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ missions.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          {% endif %}
+          
+          <span class="pagination-current">{{ missions.number }}</span>
+          
+          {% if missions.has_next %}
+            <a href="?page={{ missions.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ missions.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-briefcase fa-4x text-muted mb-3"></i>
+        <h4>Aucune mission trouvée</h4>
+        <p class="text-muted">
+          {% if request.GET.recherche or request.GET.statut or request.GET.date_debut or request.GET.date_fin %}
+            Aucune mission ne correspond à vos critères de recherche.
+            <br>Essayez de modifier vos filtres ou d'élargir la période.
+          {% else %}
+            Vous n'avez pas encore de missions d'intérim.
+            <br>Les missions qui vous seront attribuées apparaîtront ici.
+          {% endif %}
+        </p>
+        {% if request.GET.recherche or request.GET.statut or request.GET.date_debut or request.GET.date_fin %}
+        <a href="?" class="btn btn-primary">
+          <i class="fas fa-undo"></i>
+          Effacer les filtres
+        </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Actions disponibles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      <a href="{% url 'index' %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Tableau de bord</div>
+          <div class="action-description">
+            Retour au tableau de bord principal
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'employe_detail' profil_utilisateur.matricule %}" class="action-card secondary">
+        <div class="action-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Mon profil</div>
+          <div class="action-description">
+            Voir mon profil complet
+          </div>
+        </div>
+      </a>
+      
+      <button type="button" class="action-card info" onclick="exporterMissions()">
+        <div class="action-icon">
+          <i class="fas fa-file-export"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Exporter</div>
+          <div class="action-description">
+            Exporter mes missions en Excel
+          </div>
+        </div>
+      </button>
+      
+      <button type="button" class="action-card refresh" onclick="window.location.reload()">
+        <div class="action-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Actualiser</div>
+          <div class="action-description">
+            Recharger la liste des missions
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles spécifiques aux missions - couleur orange pour différencier */
+.missions-header {
+  background: linear-gradient(135deg, #fd7e14, #e55b00);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.matricule-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: #fd7e14;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* Statistiques */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #fd7e14;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #fd7e14;
+  min-width: 50px;
+  text-align: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #212529;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Timeline des missions */
+.missions-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.missions-timeline::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #fd7e14, #dee2e6);
+}
+
+.mission-timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 3rem;
+}
+
+.mission-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fd7e14;
+  border: 4px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+.mission-status-icon {
+  color: white;
+  font-size: 1.2rem;
+}
+
+.mission-content {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.mission-content:hover {
+  border-color: #fd7e14;
+  box-shadow: 0 4px 12px rgba(253, 126, 20, 0.1);
+}
+
+.mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.mission-title {
+  flex: 1;
+  min-width: 250px;
+}
+
+.mission-title h3 {
+  margin: 0 0 0.5rem 0;
+  color: #495057;
+  font-size: 1.25rem;
+}
+
+.mission-numero {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.mission-statut {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.statut-badge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statut-badge.planifiee {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.statut-badge.en_cours {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.statut-badge.terminee {
+  background-color: #e2e3e5;
+  color: #495057;
+}
+
+.statut-badge.annulee {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.urgence-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+/* Détails de mission */
+.mission-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.detail-value {
+  color: #495057;
+  font-weight: 500;
+}
+
+.detail-value small {
+  color: #6c757d;
+  font-weight: normal;
+}
+
+/* Description et instructions */
+.mission-description,
+.mission-instructions {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.mission-description h4,
+.mission-instructions h4 {
+  margin: 0 0 0.75rem 0;
+  color: #495057;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mission-description p,
+.mission-instructions p {
+  margin: 0;
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* Métadonnées */
+.mission-meta {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-left: 3px solid #fd7e14;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.meta-item:last-child {
+  margin-bottom: 0;
+}
+
+.meta-item i {
+  color: #fd7e14;
+  width: 16px;
+}
+
+/* Actions */
+.mission-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+/* Form styles */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-input, .form-select {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: 0;
+  border-color: #fd7e14;
+  box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-current {
+  padding: 0.5rem 0.75rem;
+  background: #fd7e14;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.primary {
+  border-color: #fd7e14;
+  color: #8b4513;
+}
+
+.action-card.primary:hover {
+  background-color: #ffeaa7;
+  color: #8b4513;
+}
+
+.action-card.secondary {
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.action-card.secondary:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.action-card.info {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.action-card.refresh {
+  border-color: #28a745;
+  color: #155724;
+}
+
+.action-card.refresh:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #fd7e14;
+  border-color: #fd7e14;
+}
+
+.btn-primary:hover {
+  background-color: #e55b00;
+  border-color: #dc5200;
+  color: white;
+}
+
+.btn-success {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+  color: white;
+}
+
+.btn-warning {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  color: #212529;
+}
+
+.btn-info {
+  color: white;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  color: white;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-state h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state .text-muted {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-container {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.card-container:nth-child(even) {
+  animation-delay: 0.1s;
+}
+
+.mission-timeline-item {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.mission-timeline-item:nth-child(even) {
+  animation-delay: 0.1s;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .missions-header {
+    padding: 1rem 0;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mission-timeline-item {
+    padding-left: 2rem;
+  }
+  
+  .mission-marker {
+    left: -1.25rem;
+    width: 30px;
+    height: 30px;
+  }
+  
+  .mission-status-icon {
+    font-size: 1rem;
+  }
+  
+  .mission-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mission-actions {
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('💼 Page mes missions d\'intérim initialisée');
+  
+  // Animation d'entrée progressive pour les missions
+  const missionItems = document.querySelectorAll('.mission-timeline-item');
+  missionItems.forEach((item, index) => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(-20px)';
+    
+    setTimeout(() => {
+      item.style.transition = 'all 0.5s ease';
+      item.style.opacity = '1';
+      item.style.transform = 'translateX(0)';
+    }, index * 150);
+  });
+  
+  // Animation des statistiques
+  animerStatistiques();
+  
+  // Auto-submit du formulaire de filtres avec debounce
+  let filterTimeout;
+  const filterInputs = document.querySelectorAll('#recherche, #statut, #date_debut, #date_fin, #ordre');
+  
+  filterInputs.forEach(input => {
+    input.addEventListener('input', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 500);
+    });
+    
+    input.addEventListener('change', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 200);
+    });
+  });
+  
+  // Effet de hover pour les missions
+  const missionContents = document.querySelectorAll('.mission-content');
+  missionContents.forEach(content => {
+    content.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.01)';
+    });
+    
+    content.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  });
+  
+  console.log('✅ Interactions missions initialisées');
+});
+
+// Animation des statistiques
+function animerStatistiques() {
+  const statNumbers = document.querySelectorAll('.stat-number');
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const element = entry.target;
+        const finalValue = parseInt(element.textContent) || 0;
+        
+        if (finalValue > 0) {
+          animerCompteur(element, finalValue);
+        }
+        
+        observer.unobserve(element);
+      }
+    });
+  });
+  
+  statNumbers.forEach(number => observer.observe(number));
+}
+
+// Animation du compteur
+function animerCompteur(element, finalValue) {
+  let currentValue = 0;
+  const increment = Math.ceil(finalValue / 20);
+  
+  const timer = setInterval(() => {
+    currentValue += increment;
+    if (currentValue >= finalValue) {
+      currentValue = finalValue;
+      clearInterval(timer);
+    }
+    
+    element.textContent = currentValue;
+  }, 50);
+}
+
+// Fonction pour voir les détails d'une mission
+function voirDetailsMission(missionId) {
+  console.log('Affichage des détails de la mission:', missionId);
+  // Implémentation future : modal ou redirection vers page détaillée
+}
+
+// Fonction pour accepter une mission
+function accepterMission(missionId) {
+  const confirmation = confirm('Êtes-vous sûr de vouloir accepter cette mission ?');
+  if (confirmation) {
+    console.log('Acceptation de la mission:', missionId);
+    
+    // Simuler l'appel API
+    const button = document.querySelector(`[onclick="accepterMission('${missionId}')"]`);
+    if (button) {
+      const hideLoading = showLoading(button);
+      
+      setTimeout(() => {
+        hideLoading();
+        
+        // Notification de succès
+        showNotification('Mission acceptée avec succès !', 'success');
+        
+        // Recharger la page après un délai
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }, 2000);
+    }
+  }
+}
+
+// Fonction pour refuser une mission
+function refuserMission(missionId) {
+  const raison = prompt('Veuillez indiquer la raison du refus (optionnel) :');
+  if (raison !== null) { // L'utilisateur n'a pas annulé
+    console.log('Refus de la mission:', missionId, 'Raison:', raison);
+    
+    // Simuler l'appel API
+    const button = document.querySelector(`[onclick="refuserMission('${missionId}')"]`);
+    if (button) {
+      const hideLoading = showLoading(button);
+      
+      setTimeout(() => {
+        hideLoading();
+        
+        // Notification de succès
+        showNotification('Mission refusée. Le demandeur sera notifié.', 'warning');
+        
+        // Recharger la page après un délai
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }, 2000);
+    }
+  }
+}
+
+// Fonction pour signaler un problème
+function signalerProbleme(missionId) {
+  const probleme = prompt('Décrivez le problème rencontré :');
+  if (probleme && probleme.trim()) {
+    console.log('Signalement problème mission:', missionId, 'Problème:', probleme);
+    
+    // Simuler l'appel API
+    const button = document.querySelector(`[onclick="signalerProbleme('${missionId}')"]`);
+    if (button) {
+      const hideLoading = showLoading(button);
+      
+      setTimeout(() => {
+        hideLoading();
+        
+        // Notification de succès
+        showNotification('Problème signalé. L\'équipe sera notifiée.', 'info');
+      }, 1500);
+    }
+  }
+}
+
+// Fonction pour évaluer une mission
+function evaluerMission(missionId) {
+  console.log('Évaluation de la mission:', missionId);
+  
+  // Créer une modal d'évaluation
+  const modal = document.createElement('div');
+  modal.className = 'evaluation-modal';
+  modal.innerHTML = `
+    <div class="evaluation-modal-content">
+      <div class="evaluation-modal-header">
+        <h3>Évaluer la mission</h3>
+        <button onclick="fermerModalEvaluation()" class="btn-close">&times;</button>
+      </div>
+      <div class="evaluation-modal-body">
+        <div class="evaluation-form">
+          <div class="form-group">
+            <label>Note globale (1-5 étoiles)</label>
+            <div class="stars-rating" id="stars-rating">
+              <span class="star" data-rating="1">★</span>
+              <span class="star" data-rating="2">★</span>
+              <span class="star" data-rating="3">★</span>
+              <span class="star" data-rating="4">★</span>
+              <span class="star" data-rating="5">★</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Commentaire (optionnel)</label>
+            <textarea id="evaluation-commentaire" placeholder="Votre retour sur cette mission..."></textarea>
+          </div>
+          <div class="evaluation-actions">
+            <button onclick="soumettreEvaluation('${missionId}')" class="btn btn-primary">Envoyer l'évaluation</button>
+            <button onclick="fermerModalEvaluation()" class="btn btn-outline">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Styles de la modal
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Gestion des étoiles
+  const stars = modal.querySelectorAll('.star');
+  let selectedRating = 0;
+  
+  stars.forEach(star => {
+    star.addEventListener('click', function() {
+      selectedRating = parseInt(this.dataset.rating);
+      updateStars(stars, selectedRating);
+    });
+    
+    star.addEventListener('mouseenter', function() {
+      const rating = parseInt(this.dataset.rating);
+      updateStars(stars, rating);
+    });
+  });
+  
+  modal.addEventListener('mouseleave', function() {
+    updateStars(stars, selectedRating);
+  });
+}
+
+// Mettre à jour l'affichage des étoiles
+function updateStars(stars, rating) {
+  stars.forEach((star, index) => {
+    if (index < rating) {
+      star.style.color = '#ffc107';
+    } else {
+      star.style.color = '#dee2e6';
+    }
+  });
+}
+
+// Fermer la modal d'évaluation
+function fermerModalEvaluation() {
+  const modal = document.querySelector('.evaluation-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Soumettre l'évaluation
+function soumettreEvaluation(missionId) {
+  const rating = document.querySelectorAll('.star[style*="rgb(255, 193, 7)"]').length;
+  const commentaire = document.getElementById('evaluation-commentaire').value;
+  
+  if (rating === 0) {
+    alert('Veuillez sélectionner une note.');
+    return;
+  }
+  
+  console.log('Évaluation soumise:', { missionId, rating, commentaire });
+  
+  // Simuler l'envoi
+  setTimeout(() => {
+    fermerModalEvaluation();
+    showNotification('Évaluation envoyée avec succès !', 'success');
+  }, 1000);
+}
+
+// Fonction d'impression d'une mission
+function imprimerMission(missionId) {
+  console.log('Impression de la mission:', missionId);
+  window.print();
+}
+
+// Fonction d'export des missions
+function exporterMissions() {
+  const exportBtn = document.querySelector('[onclick="exporterMissions()"]');
+  if (exportBtn) {
+    const hideLoading = showLoading(exportBtn);
+    
+    setTimeout(() => {
+      hideLoading();
+      showNotification('Export terminé avec succès !', 'success');
+    }, 2000);
+  }
+}
+
+// Utilitaires
+function showLoading(button) {
+  const icon = button.querySelector('i');
+  const originalClass = icon.className;
+  icon.className = 'fas fa-spinner fa-spin';
+  button.disabled = true;
+  
+  return function hideLoading() {
+    icon.className = originalClass;
+    button.disabled = false;
+  };
+}
+
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    animation: slideInRight 0.3s ease;
+    max-width: 400px;
+  `;
+  
+  const colors = {
+    success: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
+    warning: { bg: '#fff3cd', color: '#856404', border: '#ffeaa7' },
+    info: { bg: '#d1ecf1', color: '#0c5460', border: '#bee5eb' },
+    error: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' }
+  };
+  
+  const style = colors[type] || colors.info;
+  notification.style.backgroundColor = style.bg;
+  notification.style.color = style.color;
+  notification.style.border = `1px solid ${style.border}`;
+  
+  const icons = {
+    success: 'fas fa-check-circle',
+    warning: 'fas fa-exclamation-triangle',
+    info: 'fas fa-info-circle',
+    error: 'fas fa-times-circle'
+  };
+  
+  notification.innerHTML = `<i class="${icons[type] || icons.info}"></i> ${message}`;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 4000);
+}
+
+// Gestion des raccourcis clavier
+document.addEventListener('keydown', function(e) {
+  // Échap pour fermer les modals
+  if (e.key === 'Escape') {
+    fermerModalEvaluation();
+  }
+  
+  // Ctrl+P pour imprimer
+  if (e.ctrlKey && e.key === 'p') {
+    e.preventDefault();
+    window.print();
+  }
+  
+  // Ctrl+E pour exporter
+  if (e.ctrlKey && e.key === 'e') {
+    e.preventDefault();
+    exporterMissions();
+  }
+});
+
+// Filtrage rapide par statut
+function filtrerParStatut(statut) {
+  const statutSelect = document.getElementById('statut');
+  if (statutSelect) {
+    statutSelect.value = statut;
+    statutSelect.form.submit();
+  }
+}
+
+// Styles CSS pour les modals et notifications
+const styleSheet = document.createElement('style');
+styleSheet.innerHTML = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.9); }
+  }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  .evaluation-modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  
+  .evaluation-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+  }
+  
+  .evaluation-modal-header h3 {
+    margin: 0;
+    color: #495057;
+  }
+  
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .btn-close:hover {
+    color: #495057;
+  }
+  
+  .evaluation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .evaluation-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .evaluation-form label {
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .stars-rating {
+    display: flex;
+    gap: 0.25rem;
+    font-size: 2rem;
+  }
+  
+  .star {
+    cursor: pointer;
+    color: #dee2e6;
+    transition: color 0.2s ease;
+  }
+  
+  .star:hover {
+    color: #ffc107;
+  }
+  
+  #evaluation-commentaire {
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  #evaluation-commentaire:focus {
+    outline: 0;
+    border-color: #fd7e14;
+    box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25);
+  }
+  
+  .evaluation-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+  
+  .notification {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .notification i {
+    font-size: 1.1rem;
+  }
+`;
+document.head.appendChild(styleSheet);
+</script>
+{% endblock extra_js %}

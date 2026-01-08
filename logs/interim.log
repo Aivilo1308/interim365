@@ -1,0 +1,13 @@
+INFO 2025-06-22 21:38:26,320 autoreload 33116 37276 Watching for file changes with StatReloader
+INFO 2025-06-22 21:43:25,072 autoreload 33116 37276 D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
+INFO 2025-06-22 21:43:25,510 autoreload 28480 13448 Watching for file changes with StatReloader
+INFO 2025-06-22 21:50:53,942 autoreload 28480 13448 D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
+INFO 2025-06-22 21:50:54,559 autoreload 27780 25508 Watching for file changes with StatReloader
+INFO 2025-06-22 21:52:07,359 autoreload 27780 25508 D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
+INFO 2025-06-22 21:52:07,900 autoreload 37692 30984 Watching for file changes with StatReloader
+INFO 2025-06-22 21:52:47,877 autoreload 37692 30984 D:\DevProjects\Python\interim365\interim365\urls.py changed, reloading.
+INFO 2025-06-22 21:52:48,332 autoreload 18808 23256 Watching for file changes with StatReloader
+INFO 2025-06-22 21:59:24,439 autoreload 18808 23256 D:\DevProjects\Python\interim365\mainapp\views.py changed, reloading.
+INFO 2025-06-22 21:59:24,999 autoreload 33128 24648 Watching for file changes with StatReloader
+INFO 2025-06-22 22:04:46,143 autoreload 33128 24648 D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
+# Test écriture repair_logs - 2025-06-22 22:47:03.062518+00:00

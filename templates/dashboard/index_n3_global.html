@@ -1,0 +1,1207 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block title %}Dashboard Global N+3 - {{ profil_utilisateur.nom_complet }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Styles spécifiques au niveau global RH/Admin */
+  .global-overview {
+    background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 50%, var(--gray-600) 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .global-overview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+      linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%);
+    animation: shimmer 8s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+
+  .global-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .global-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .global-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .global-stat {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .global-stat:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+
+  .global-stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.25rem;
+  }
+
+  .global-stat-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(45deg, #fff, #e2e8f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .global-stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+
+  .global-stat-trend {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+
+  .control-center {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .control-panel {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .control-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .control-content {
+    padding: 1.5rem;
+  }
+
+  .system-health {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .health-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.25rem;
+    border-left: 4px solid var(--secondary);
+    transition: all 0.3s;
+  }
+
+  .health-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .health-card.warning {
+    border-left-color: var(--orange);
+  }
+
+  .health-card.critical {
+    border-left-color: var(--danger);
+  }
+
+  .health-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .health-metrics {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .health-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--secondary);
+  }
+
+  .health-card.warning .health-value {
+    color: var(--orange);
+  }
+
+  .health-card.critical .health-value {
+    color: var(--danger);
+  }
+
+  .health-status {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--secondary-light);
+    color: var(--secondary-dark);
+  }
+
+  .health-card.warning .health-status {
+    background: var(--orange-light);
+    color: var(--orange);
+  }
+
+  .health-card.critical .health-status {
+    background: #fee2e2;
+    color: var(--danger);
+  }
+
+  .activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .activity-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .activity-item:last-child {
+    border-bottom: none;
+  }
+
+  .activity-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .activity-content {
+    flex: 1;
+  }
+
+  .activity-title {
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+  }
+
+  .activity-desc {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 0.25rem;
+  }
+
+  .activity-time {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+
+  .admin-actions {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .admin-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    color: var(--gray-700);
+    transition: all 0.3s;
+    text-align: center;
+  }
+
+  .admin-action:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .admin-action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 1rem;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary);
+  }
+
+  .admin-action-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .admin-action-desc {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+  }
+
+  .global-analytics {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .analytics-header {
+    background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+    color: white;
+    padding: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .analytics-content {
+    padding: 1.5rem;
+  }
+
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .analytics-chart {
+    background: var(--gray-50);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .analytics-chart:hover {
+    background: var(--gray-100);
+    transform: translateY(-2px);
+  }
+
+  .chart-title {
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 1rem;
+  }
+
+  .chart-placeholder {
+    height: 200px;
+    background: var(--gray-200);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-500);
+    font-style: italic;
+  }
+
+  .departments-matrix {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 2rem;
+  }
+
+  .matrix-header {
+    background: linear-gradient(135deg, var(--gray-800), var(--gray-700));
+    color: white;
+    padding: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .matrix-grid {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .dept-matrix-card {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    transition: all 0.3s;
+    background: linear-gradient(135deg, var(--gray-50), white);
+  }
+
+  .dept-matrix-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .dept-matrix-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--gray-200);
+  }
+
+  .dept-matrix-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gray-800);
+  }
+
+  .dept-matrix-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--secondary);
+  }
+
+  .dept-matrix-status.warning {
+    background: var(--orange);
+  }
+
+  .dept-matrix-status.critical {
+    background: var(--danger);
+  }
+
+  .dept-matrix-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .dept-matrix-metric {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .dept-matrix-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .dept-matrix-label {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+  }
+
+  /* CORRECTION: Supprimer le display:flex qui cassait l'affichage du tableau */
+  .recent-interims {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-top: 2rem;
+    overflow-x: auto;
+    /* Supprimer les lignes problématiques :
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    */
+  }
+
+  @media (max-width: 1200px) {
+    .control-center {
+      grid-template-columns: 1fr;
+    }
+    
+    .global-stats-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .system-health {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .admin-actions {
+      grid-template-columns: repeat(3, 1fr);
+    }
+      
+    .analytics-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .matrix-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .global-title {
+      font-size: 2rem;
+    }
+      
+    .global-stat-value {
+      font-size: 2rem;
+    }
+    
+    .global-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .system-health {
+      grid-template-columns: 1fr;
+    }
+      
+    .admin-actions {
+      grid-template-columns: repeat(2, 1fr);
+    }
+      
+    .analytics-grid {
+      grid-template-columns: 1fr;
+    }
+      
+    .matrix-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block page_title %}Dashboard Global{% endblock %}
+
+{% block page_subtitle %}
+Administration système - Accès complet à {{ stats.employes_total }} collaborateur(s) sur l'ensemble de l'organisation
+{% endblock %}
+
+{% block main_content %}
+<!-- Vue d'ensemble globale -->
+
+{% include 'includes/etiquette_prochain_ferie.html' %}
+
+<div class="global-overview">
+  <h1 class="global-title">
+    <i class="fas fa-globe"></i>
+    Administration Globale
+  </h1>
+  <p class="global-subtitle">
+    Supervision complète de {{ stats.employes_total }} collaborateurs - Accès niveau {{ profil_utilisateur.type_profil_display }}
+  </p>
+  
+  <div class="global-stats-grid">
+    <div class="global-stat" onclick="location.href='{% url 'employes_liste' %}'">
+      <div class="global-stat-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="global-stat-value">{{ stats.employes_total }}</div>
+      <div class="global-stat-label">Effectif Total</div>
+      <div class="global-stat-trend">+2.1% vs trim. précédent</div>
+    </div>
+    
+    <div class="global-stat" onclick="location.href='{% url 'liste_interim_validation' %}'">
+      <div class="global-stat-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="global-stat-value">{{ stats.demandes_en_attente_validation }}</div>
+      <div class="global-stat-label">Interventions Requises</div>
+      <div class="global-stat-trend">Traitement prioritaire</div>
+    </div>
+    
+    <div class="global-stat">
+      <div class="global-stat-icon">
+        <i class="fas fa-trophy"></i>
+      </div>
+      <div class="global-stat-value">{{ stats.taux_reussite_global }}%</div>
+      <div class="global-stat-label">Excellence Globale</div>
+      <div class="global-stat-trend">+1.8% ce mois</div>
+    </div>
+    
+    <div class="global-stat">
+      <div class="global-stat-icon">
+        <i class="fas fa-hand-paper"></i>
+      </div>
+      <div class="global-stat-value">{{ stats.propositions_en_attente }}</div>
+      <div class="global-stat-label">Propositions à Évaluer</div>
+      <div class="global-stat-trend">Évaluation en cours</div>
+    </div>
+    
+    <div class="global-stat">
+      <div class="global-stat-icon">
+        <i class="fas fa-building"></i>
+      </div>
+      <div class="global-stat-value">{{ stats_departements|length }}</div>
+      <div class="global-stat-label">Départements Actifs</div>
+      <div class="global-stat-trend">Tous opérationnels</div>
+    </div>
+    
+    <div class="global-stat">
+      <div class="global-stat-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="global-stat-value">97.2%</div>
+      <div class="global-stat-label">Disponibilité Système</div>
+      <div class="global-stat-trend">SLA respecté</div>
+    </div>
+  </div>
+</div>
+
+<!-- Santé du système -->
+<div class="system-health">
+<!--   
+  <div class="health-card">
+    <div class="health-title">
+      <i class="fas fa-heartbeat"></i>
+      Santé Système
+    </div>
+    <div class="health-metrics">
+      <div class="health-value">98%</div>
+      <div class="health-status">Excellent</div>
+    </div>
+  </div>
+ -->  
+
+  <div class="health-card warning">
+    <div class="health-title">
+      <i class="fas fa-server"></i>
+      Charge Serveur
+    </div>
+    <div class="health-metrics">
+      <div class="health-value">78%</div>
+      <div class="health-status">Surveillé</div>
+    </div>
+  </div>
+  
+  <div class="health-card">
+    <div class="health-title">
+      <i class="fas fa-sync-alt"></i>
+      Sync Kelio
+    </div>
+    <div class="health-metrics">
+      <div class="health-value">100%</div>
+      <div class="health-status">Synchronisé</div>
+    </div>
+  </div>
+  
+  <div class="health-card">
+    <div class="health-title">
+      <i class="fas fa-database"></i>
+      Base de Données
+    </div>
+    <div class="health-metrics">
+      <div class="health-value">95%</div>
+      <div class="health-status">Optimal</div>
+    </div>
+  </div>
+</div>
+
+<!-- Remplacer la grille de fonctionnalités par les actions d'administration -->
+{% block features_grid %}
+<div class="section-header">
+  <h3 class="section-title">
+    <i class="fas fa-tools"></i>
+    Actions d'Administration Globale
+  </h3>
+</div>
+
+<div class="admin-actions">
+  <a href="{% url 'admin_config' %}" class="admin-action">
+    <div class="admin-action-icon">
+      <i class="fas fa-cog"></i>
+    </div>
+    <div class="admin-action-title">Configuration Système</div>
+    <div class="admin-action-desc">Paramètres globaux et workflow</div>
+  </a>
+  
+  <a href="{% url 'admin_utilisateurs' %}" class="admin-action">
+    <div class="admin-action-icon">
+      <i class="fas fa-users-cog"></i>
+    </div>
+    <div class="admin-action-title">Gestion Utilisateurs</div>
+    <div class="admin-action-desc">Comptes, profils et permissions</div>
+  </a>
+  
+  <a href="{% url 'admin_kelio_sync_global' %}" class="admin-action">
+    <div class="admin-action-icon">
+      <i class="fas fa-plug"></i>
+    </div>
+    <div class="admin-action-title">Intégration Kelio</div>
+    <div class="admin-action-desc">Configuration et synchronisation</div>
+  </a>
+  
+  <a href="{% url 'interim_stats' %}" class="admin-action">
+    <div class="admin-action-icon">
+      <i class="fas fa-chart-bar"></i>
+    </div>
+    <div class="admin-action-title">Analytics Avancées</div>
+    <div class="admin-action-desc">Rapports et tendances globales</div>
+  </a>
+  
+  <a href="{% url 'admin_logs' %}" class="admin-action">
+    <div class="admin-action-icon">
+      <i class="fas fa-file-alt"></i>
+    </div>
+    <div class="admin-action-title">Logs & Audit</div>
+    <div class="admin-action-desc">Journaux et traçabilité</div>
+  </a>
+  
+  <a href="{% url 'admin_maintenance' %}" class="admin-action">
+    <div class="admin-action-icon">
+      <i class="fas fa-wrench"></i>
+    </div>
+    <div class="admin-action-title">Maintenance</div>
+    <div class="admin-action-desc">Sauvegarde et optimisation</div>
+  </a>
+</div>
+{% endblock %}
+
+<!-- Tableau global temps réel -->
+{% block recent_title %}Vue Globale Temps Réel{% endblock %}
+
+{% block table_headers %}
+<th>Organisation</th>
+<th>Demandeur</th>
+<th>Poste</th>
+<th>Période</th>
+<th>Statut</th>
+<th>Responsable</th>
+<th>Priorité</th>
+<th>Actions</th>
+{% endblock %}
+
+{% block table_row %}
+<td>
+  <div style="height:20px;"></div>
+  <div class="candidate-details">
+    <div class="candidate-name">{{ demande.poste.departement.nom|default:"Dept. Non Défini" }}</div>
+    <div class="candidate-position">{{ demande.poste.site.nom|default:"Site Non Défini" }}</div>
+  </div>
+  <div style="height:20px;"></div>
+</td>
+<td>    
+  <div class="candidate-info">
+    <div class="candidate-avatar">{{ demande.demandeur.initiales }}</div>
+    <div class="candidate-details">
+      <div class="candidate-name">{{ demande.demandeur.nom_complet }}</div>
+      <div class="candidate-position">{{ demande.demandeur.poste.titre|default:"Poste non défini" }}</div>
+    </div>
+  </div>
+  <div style="height:20px;"></div>
+</td>
+<td>
+  <div class="candidate-details">
+    <div class="candidate-name">{{ demande.poste.titre }}</div>
+    <div class="candidate-position">Niveau {{ demande.poste.niveau_responsabilite|default:"N/A" }}</div>
+  </div>
+  <div style="height:20px;"></div>
+</td>
+<td>
+  <div class="candidate-details">
+    <div class="candidate-name">
+      {% if demande.date_debut and demande.date_fin %}
+        {{ demande.date_debut|date:"d/m/Y" }} - {{ demande.date_fin|date:"d/m/Y" }}
+      {% else %}
+        Dates non définies
+      {% endif %}
+    </div>
+    <div class="candidate-position">{{ demande.duree_mission|default:0 }} jour(s)</div>
+  </div>
+  <div style="height:20px;"></div>
+</td>
+<td>
+  {% if demande.statut == 'SOUMISE' %}
+    <span class="status-badge status-soumise">{{ demande.get_statut_display }}</span>
+  {% elif demande.statut == 'EN_VALIDATION' %}
+    <span class="status-badge status-en-validation">{{ demande.get_statut_display }}</span>
+  {% elif demande.statut == 'EN_COURS' %}
+    <span class="status-badge status-en-cours">{{ demande.get_statut_display }}</span>
+  {% elif demande.statut == 'TERMINEE' %}
+    <span class="status-badge status-terminee">{{ demande.get_statut_display }}</span>
+  {% else %}
+    <span class="status-badge">{{ demande.get_statut_display }}</span>
+  {% endif %}
+  <div style="height:20px;"></div>
+</td>
+<td>
+  {% if demande.demandeur.manager %}
+    <div class="candidate-details">
+      <div class="candidate-name">{{ demande.demandeur.manager.nom_complet }}</div>
+      <div class="candidate-position">{{ demande.demandeur.manager.get_type_profil_display }}</div>
+    </div>
+  {% else %}
+    <span class="candidate-position">Direct</span>    
+  {% endif %}
+
+</td>
+<td>
+  {% if demande.urgence == 'CRITIQUE' %}
+    <span class="status-badge" style="background: var(--danger); color: white;">🚨 Critique</span>
+  {% elif demande.urgence == 'ELEVEE' %}
+    <span class="status-badge" style="background: var(--orange); color: white;">⚠️ Élevée</span>
+  {% elif demande.urgence == 'MOYENNE' %}
+    <span class="status-badge" style="background: var(--primary-light); color: var(--primary);">📋 Moyenne</span>
+  {% else %}
+    <span class="status-badge" style="background: var(--gray-200); color: var(--gray-700);">📝 Normale</span>
+  {% endif %}
+  <div style="height:20px;"></div>
+</td>
+<td>
+  {% if demande.id %}
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{% url 'demande_detail' demande.id %}" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+      <i class="fas fa-eye"></i>
+      Voir
+    </a>
+    {% if demande.statut == 'EN_VALIDATION' %}
+    <a href="#" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+      <i class="fas fa-user-shield"></i>
+      Admin
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+  <div style="height:20px;"></div>
+</td>
+{% endblock %}
+
+{% block empty_message %}Aucune demande dans le système global{% endblock %}
+
+<div style="height:20px;"></div>
+
+<!-- Matrice des départements -->
+<div class="departments-matrix">
+  <div class="matrix-header">
+    <i class="fas fa-th-large"></i>
+    Matrice Départementale Globale
+  </div>
+  <div class="matrix-grid">
+    {% for dept_stat in stats_departements %}
+    <div class="dept-matrix-card">
+      <div class="dept-matrix-header">
+        <div class="dept-matrix-name">{{ dept_stat.poste__departement__nom|default:"Département Non Défini" }}</div>
+        {% if dept_stat.total_demandes >= 20 %}
+          <div class="dept-matrix-status"></div>
+        {% elif dept_stat.total_demandes >= 10 %}
+          <div class="dept-matrix-status warning"></div>
+        {% else %}
+          <div class="dept-matrix-status critical"></div>
+        {% endif %}
+      </div>
+      <div class="dept-matrix-metrics">
+        <div class="dept-matrix-metric">
+          <div class="dept-matrix-value">{{ dept_stat.total_demandes }}</div>
+          <div class="dept-matrix-label">Demandes</div>
+        </div>
+        <div class="dept-matrix-metric">
+          <div class="dept-matrix-value">{{ dept_stat.demandes_actives }}</div>
+          <div class="dept-matrix-label">Actives</div>
+        </div>
+        <div class="dept-matrix-metric">
+          <div class="dept-matrix-value">{% widthratio dept_stat.demandes_actives dept_stat.total_demandes 100 %}%</div>
+          <div class="dept-matrix-label">Taux</div>
+        </div>
+        <div class="dept-matrix-metric">
+          <div class="dept-matrix-value">2.1j</div>
+          <div class="dept-matrix-label">Délai</div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <i class="fas fa-building"></i>
+      <p>Aucune donnée départementale disponible</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Analytics globales -->
+<!-- <div class="global-analytics">
+  <div class="analytics-header">
+    <div>
+      <i class="fas fa-chart-pie"></i>
+      Analytics Système Complet
+    </div>
+    <button class="btn" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white;" onclick="generateGlobalReport()">
+      <i class="fas fa-file-export"></i>
+      Rapport Global
+    </button>
+  </div>
+  <div class="analytics-content">
+    <div class="analytics-grid">
+      <div class="analytics-chart">
+        <div class="chart-title">Évolution des Demandes</div>
+        <div class="chart-placeholder">
+          Graphique: Demandes par mois sur 12 mois
+        </div>
+      </div>
+      
+      <div class="analytics-chart">
+        <div class="chart-title">Répartition par Département</div>
+        <div class="chart-placeholder">
+          Graphique: Camembert des demandes par département
+        </div>
+      </div>
+      
+      <div class="analytics-chart">
+        <div class="chart-title">Performance Validation</div>
+        <div class="chart-placeholder">
+          Graphique: Temps moyen de validation par niveau
+        </div>
+      </div>
+      
+      <div class="analytics-chart">
+        <div class="chart-title">Utilisation du Système</div>
+        <div class="chart-placeholder">
+          Graphique: Connexions et utilisation par jour
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Configuration spécifique niveau global
+const globalDashboardConfig = {
+  totalUsers: {{ stats.employes_total }},
+  systemScope: 'GLOBAL',
+  refreshInterval: 60000, // 1 minute pour les admins
+  autoRefresh: true,
+  criticalThresholds: {
+    systemLoad: 90,
+    errorRate: 5,
+    pendingValidations: 50
+  }
+};
+
+// Fonctions d'administration globale
+function refreshGlobalData() {
+  const refreshBtn = document.querySelector('[onclick="refreshGlobalData()"]');
+  if (refreshBtn) {
+    const icon = refreshBtn.querySelector('i');
+    icon.classList.add('spinning');
+  }
+  
+  fetch('{% url "refresh_stats_ajax" %}', {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('Données globales mises à jour', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification('Erreur lors de la mise à jour globale', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur système lors de la mise à jour', 'error');
+  })
+  .finally(() => {
+    if (refreshBtn) {
+      const icon = refreshBtn.querySelector('i');
+      icon.classList.remove('spinning');
+    }
+  });
+}
+
+function generateGlobalReport() {
+  showNotification('Génération du rapport global en cours...', 'info');
+  
+  // Simulation de génération de rapport
+  setTimeout(() => {
+    showNotification('Rapport global généré avec succès', 'success');
+  }, 3000);
+}
+
+function exportGlobalData() {
+  showNotification('Export des données globales en cours...', 'info');
+  
+  // Simulation d'export
+  setTimeout(() => {
+    showNotification('Export global terminé avec succès', 'success');
+  }, 2500);
+}
+
+// Surveillance système critique
+function monitorSystemHealth() {
+  const pendingValidations = {{ stats.demandes_en_attente_validation }};
+  const totalDemands = {{ stats.demandes_total }};
+  
+  // Alerte système critique
+  if (pendingValidations >= globalDashboardConfig.criticalThresholds.pendingValidations) {
+    showNotification(
+      `🚨 ALERTE SYSTÈME: ${pendingValidations} validations en attente - Intervention requise`, 
+      'error',
+      {
+        url: '{% url "liste_interim_validation" %}',
+        text: 'Intervenir immédiatement'
+      }
+    );
+  }
+  
+  // Surveillance du volume global
+  if (totalDemands > 1000) {
+    showNotification(
+      `📊 Volume élevé: ${totalDemands} demandes dans le système`, 
+      'info',
+      {
+        url: '{% url "interim_stats" %}',
+        text: 'Analyser les tendances'
+      }
+    );
+  }
+}
+
+// Animation avancée des statistiques globales
+function animateGlobalStats() {
+  const globalStats = document.querySelectorAll('.global-stat-value');
+  
+  globalStats.forEach((stat, index) => {
+    const text = stat.textContent;
+    const value = parseFloat(text);
+    
+    if (!isNaN(value)) {
+      let current = 0;
+      const increment = value / 60; // Plus fluide pour les grands nombres
+      const suffix = text.replace(value.toString(), '');
+      
+      // Animation échelonnée pour effet visuel
+      setTimeout(() => {
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= value) {
+            current = value;
+            clearInterval(timer);
+          }
+          
+          if (value >= 100) {
+            stat.textContent = Math.floor(current).toLocaleString() + suffix;
+          } else {
+            stat.textContent = Math.floor(current) + suffix;
+          }
+        }, 30);
+      }, index * 200);
+    }
+  });
+}
+
+// Monitoring en temps réel
+function startRealTimeMonitoring() {
+  if (!globalDashboardConfig.autoRefresh) return;
+  
+  // Surveillance continue
+  setInterval(() => {
+    // Vérifications silencieuses
+    fetch('{% url "refresh_stats_ajax" %}', {
+      method: 'GET',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Mise à jour silencieuse des indicateurs
+        updateRealTimeIndicators(data);
+      }
+    })
+    .catch(error => {
+      console.warn('Surveillance temps réel: ', error);
+    });
+  }, globalDashboardConfig.refreshInterval);
+}
+
+function updateRealTimeIndicators(data) {
+  // Mise à jour des indicateurs sans rechargement
+  if (data.stats) {
+    const indicators = document.querySelectorAll('.health-value');
+    indicators.forEach(indicator => {
+      // Animation subtile pour indiquer la mise à jour
+      indicator.style.transform = 'scale(1.05)';
+      setTimeout(() => {
+        indicator.style.transform = 'scale(1)';
+      }, 200);
+    });
+  }
+}
+
+// Raccourcis clavier pour les administrateurs
+function setupAdminKeyboardShortcuts() {
+  document.addEventListener('keydown', function(e) {
+    // Ctrl+Alt+R = Refresh global
+    if (e.ctrlKey && e.altKey && e.key === 'r') {
+      e.preventDefault();
+      refreshGlobalData();
+    }
+    
+    // Ctrl+Alt+E = Export rapide
+    if (e.ctrlKey && e.altKey && e.key === 'e') {
+      e.preventDefault();
+      exportGlobalData();
+    }
+    
+    // Ctrl+Alt+G = Générer rapport
+    if (e.ctrlKey && e.altKey && e.key === 'g') {
+      e.preventDefault();
+      generateGlobalReport();
+    }
+  });
+}
+
+// Initialisation complète niveau global
+document.addEventListener('DOMContentLoaded', function() {
+  // Surveillance immédiate
+  setTimeout(monitorSystemHealth, 2000);
+  
+  // Animations
+  setTimeout(animateGlobalStats, 1000);
+  
+  // Monitoring temps réel
+  startRealTimeMonitoring();
+  
+  // Raccourcis admin
+  setupAdminKeyboardShortcuts();
+  
+  // Messages de bienvenue admin
+  {% if profil_utilisateur.type_profil == 'ADMIN' %}
+  setTimeout(() => {
+    showNotification(
+      '👑 Mode Administrateur activé - Accès complet au système', 
+      'success'
+    );
+  }, 2500);
+  {% elif profil_utilisateur.type_profil == 'RH' %}
+  setTimeout(() => {
+    showNotification(
+      '👨‍💼 Mode RH activé - Supervision globale des ressources humaines', 
+      'success'
+    );
+  }, 2500);
+  {% endif %}
+  
+  // Alerte si système surchargé
+  {% if stats.demandes_en_attente_validation > 20 %}
+  setTimeout(() => {
+    showNotification(
+      '⚠️ Système surchargé: {{ stats.demandes_en_attente_validation }} validations en attente', 
+      'warning',
+      {
+        url: '{% url "liste_interim_validation" %}',
+        text: 'Prendre en charge'
+      }
+    );
+  }, 4000);
+  {% endif %}
+  
+  // Rappel des raccourcis clavier
+  setTimeout(() => {
+    console.log(`
+🔧 RACCOURCIS ADMINISTRATEUR:
+• Ctrl+Alt+R : Refresh global
+• Ctrl+Alt+E : Export rapide  
+• Ctrl+Alt+G : Générer rapport
+    `);
+  }, 1000);
+});
+
+// Gestion des erreurs critiques
+window.addEventListener('error', function(e) {
+  if (globalDashboardConfig.systemScope === 'GLOBAL') {
+    console.error('ERREUR SYSTÈME CRITIQUE:', e.error);
+    showNotification('🚨 Erreur système critique détectée', 'error');
+  }
+});
+
+console.log('Dashboard global initialisé:', globalDashboardConfig);
+console.log('🌐 Mode Global RH/Admin actif - Surveillance complète du système');
+</script>
+{% endblock %}

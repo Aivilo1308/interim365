@@ -1,0 +1,2624 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Détail de {{ employe.nom_complet }}{% endblock %}
+
+{% block content %}
+<!-- En-tête employé -->
+<div class="employee-header">
+  <div class="employee-header-content">
+    <div class="employee-avatar">
+      <i class="fas fa-user-circle"></i>
+    </div>
+    <div class="employee-info">
+      <h1 class="employee-name">{{ employe.nom_complet }}</h1>
+      <div class="employee-meta">
+        <span class="employee-matricule">
+          <i class="fas fa-id-badge"></i>
+          {{ employe.matricule }}
+        </span>
+        <span class="employee-status status-{{ employe.statut_employe|lower }}">
+          <i class="fas fa-circle"></i>
+          {{ employe.get_statut_employe_display }}
+        </span>
+        <span class="employee-type">
+          <i class="fas fa-user-tag"></i>
+          {{ employe.get_type_profil_display }}
+        </span>
+      </div>
+    </div>
+    <div class="employee-actions">
+      {% if peut_creer_demande %}
+        <a href="{% url 'interim_demande' %}?personne_remplacee={{ employe.matricule }}" class="btn btn-primary">
+          <i class="fas fa-plus"></i>
+          Créer demande d'intérim
+        </a>
+      {% endif %}
+      <button type="button" class="btn btn-outline" onclick="window.print()">
+        <i class="fas fa-print"></i>
+        Imprimer
+      </button>
+      <button type="button" class="btn btn-outline" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i>
+        Retour
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation onglets -->
+<div class="tabs-container">
+  <div class="tabs-header">
+    <button class="tab-button active" data-tab="general">
+      <i class="fas fa-info-circle"></i>
+      Informations générales
+    </button>
+    <button class="tab-button" data-tab="competences">
+      <i class="fas fa-star"></i>
+      Compétences
+      <span class="tab-badge">{{ competences.count }}</span>
+    </button>
+    <button class="tab-button" data-tab="formations">
+      <i class="fas fa-graduation-cap"></i>
+      Formations
+      <span class="tab-badge">{{ formations.count }}</span>
+    </button>
+    <button class="tab-button" data-tab="absences">
+      <i class="fas fa-calendar-times"></i>
+      Absences récentes
+      <span class="tab-badge">{{ absences_recentes.count }}</span>
+    </button>
+    <button class="tab-button" data-tab="missions">
+      <i class="fas fa-briefcase"></i>
+      Missions d'intérim
+      <span class="tab-badge">{{ missions_recentes.count }}</span>
+    </button>
+    <button class="tab-button" data-tab="disponibilite">
+      <i class="fas fa-clock"></i>
+      Disponibilité
+    </button>
+  </div>
+
+  <!-- Contenu des onglets -->
+  <div class="tabs-content">
+    
+    <!-- Onglet Informations générales -->
+    <div class="tab-content active" id="tab-general">
+      <div class="card-grid">
+        
+        <!-- Informations personnelles -->
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-user"></i>
+              Informations personnelles
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <label class="info-label">Nom complet</label>
+                <div class="info-value">{{ employe.nom_complet }}</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">Matricule</label>
+                <div class="info-value employee-matricule">{{ employe.matricule }}</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">Email</label>
+                <div class="info-value">
+                  {% if employe.user.email %}
+                    <a href="mailto:{{ employe.user.email }}">{{ employe.user.email }}</a>
+                  {% else %}
+                    <span class="text-muted">Non renseigné</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% if employe.extended_data.telephone %}
+              <div class="info-item">
+                <label class="info-label">Téléphone</label>
+                <div class="info-value">
+                  <a href="tel:{{ employe.extended_data.telephone }}">{{ employe.extended_data.telephone }}</a>
+                </div>
+              </div>
+              {% endif %}
+              {% if employe.extended_data.telephone_portable %}
+              <div class="info-item">
+                <label class="info-label">Mobile</label>
+                <div class="info-value">
+                  <a href="tel:{{ employe.extended_data.telephone_portable }}">{{ employe.extended_data.telephone_portable }}</a>
+                </div>
+              </div>
+              {% endif %}
+              {% if employe.extended_data.date_embauche %}
+              <div class="info-item">
+                <label class="info-label">Date d'embauche</label>
+                <div class="info-value">{{ employe.extended_data.date_embauche|date:"d/m/Y" }}</div>
+              </div>
+              {% endif %}
+              {% if employe.extended_data.type_contrat %}
+              <div class="info-item">
+                <label class="info-label">Type de contrat</label>
+                <div class="info-value">{{ employe.extended_data.type_contrat }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations organisationnelles -->
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-building"></i>
+              Affectation organisationnelle
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              {% if employe.departement %}
+              <div class="info-item">
+                <label class="info-label">Département</label>
+                <div class="info-value org-info">
+                  <i class="fas fa-building"></i>
+                  {{ employe.departement.nom }}
+                </div>
+              </div>
+              {% endif %}
+              {% if employe.site %}
+              <div class="info-item">
+                <label class="info-label">Site</label>
+                <div class="info-value org-info">
+                  <i class="fas fa-map-marker-alt"></i>
+                  {{ employe.site.nom }} - {{ employe.site.ville }}
+                </div>
+              </div>
+              {% endif %}
+              {% if employe.poste %}
+              <div class="info-item">
+                <label class="info-label">Poste</label>
+                <div class="info-value org-info">
+                  <i class="fas fa-briefcase"></i>
+                  {{ employe.poste.titre }}
+                </div>
+              </div>
+              {% endif %}
+              {% if employe.manager %}
+              <div class="info-item">
+                <label class="info-label">Manager</label>
+                <div class="info-value">
+                  <a href="{% url 'employe_detail' employe.manager.matricule %}" class="manager-link">
+                    <i class="fas fa-user-tie"></i>
+                    {{ employe.manager.nom_complet }}
+                  </a>
+                </div>
+              </div>
+              {% endif %}
+              <div class="info-item">
+                <label class="info-label">Type de profil</label>
+                <div class="info-value profile-type-{{ employe.type_profil|lower }}">
+                  {{ employe.get_type_profil_display }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations Kelio -->
+        {% if employe.kelio_data %}
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-sync-alt"></i>
+              Données Kelio
+              <span class="sync-status sync-{{ employe.kelio_sync_status|lower }}">
+                <i class="fas fa-circle"></i>
+                {{ employe.get_kelio_sync_status_display }}
+              </span>
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              {% if employe.kelio_data.kelio_badge_code %}
+              <div class="info-item">
+                <label class="info-label">Code badge</label>
+                <div class="info-value kelio-badge">{{ employe.kelio_data.kelio_badge_code }}</div>
+              </div>
+              {% endif %}
+              {% if employe.kelio_data.temps_travail_kelio %}
+              <div class="info-item">
+                <label class="info-label">Temps de travail</label>
+                <div class="info-value">{{ employe.kelio_data.temps_travail_kelio|floatformat:1 }}%</div>
+              </div>
+              {% endif %}
+              {% if employe.kelio_last_sync %}
+              <div class="info-item">
+                <label class="info-label">Dernière sync</label>
+                <div class="info-value">{{ employe.kelio_last_sync|date:"d/m/Y H:i" }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Statistiques rapides -->
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-chart-bar"></i>
+              Statistiques
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ competences.count }}</div>
+                <div class="stat-label">Compétences</div>
+                <div class="stat-icon">
+                  <i class="fas fa-star"></i>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ formations.count }}</div>
+                <div class="stat-label">Formations</div>
+                <div class="stat-icon">
+                  <i class="fas fa-graduation-cap"></i>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ missions_recentes.count }}</div>
+                <div class="stat-label">Missions</div>
+                <div class="stat-icon">
+                  <i class="fas fa-briefcase"></i>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">
+                  {% if employe.extended_data.disponible_interim %}
+                    <i class="fas fa-check text-success"></i>
+                  {% else %}
+                    <i class="fas fa-times text-danger"></i>
+                  {% endif %}
+                </div>
+                <div class="stat-label">Disponible intérim</div>
+                <div class="stat-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Compétences -->
+    <div class="tab-content" id="tab-competences">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-star"></i>
+            Compétences ({{ competences.count }})
+          </h2>
+          <div class="card-actions">
+            <div class="competences-filter">
+              <select id="filterCategorie" class="form-select-small">
+                <option value="">Toutes catégories</option>
+                <option value="TECHNIQUE">Techniques</option>
+                <option value="TRANSVERSE">Transverses</option>
+                <option value="COMPORTEMENTALE">Comportementales</option>
+                <option value="LINGUISTIQUE">Linguistiques</option>
+                <option value="LOGICIEL">Logiciels</option>
+              </select>
+              <select id="filterNiveau" class="form-select-small">
+                <option value="">Tous niveaux</option>
+                <option value="1">Débutant</option>
+                <option value="2">Intermédiaire</option>
+                <option value="3">Confirmé</option>
+                <option value="4">Expert</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if competences %}
+            <div class="competences-grid" id="competencesGrid">
+              {% for comp in competences %}
+                <div class="competence-card" 
+                     data-categorie="{{ comp.competence.type_competence }}" 
+                     data-niveau="{{ comp.niveau_maitrise }}">
+                  <div class="competence-header">
+                    <h4 class="competence-name">{{ comp.competence.nom }}</h4>
+                    <div class="competence-level level-{{ comp.niveau_maitrise }}">
+                      {% for i in "1234"|make_list %}
+                        <i class="fas fa-star {% if forloop.counter <= comp.niveau_maitrise %}active{% endif %}"></i>
+                      {% endfor %}
+                      <span class="level-text">{{ comp.get_niveau_maitrise_display }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="competence-meta">
+                    <span class="competence-category cat-{{ comp.competence.type_competence|lower }}">
+                      {{ comp.competence.get_type_competence_display }}
+                    </span>
+                    {% if comp.certifie %}
+                      <span class="certification-badge">
+                        <i class="fas fa-certificate"></i>
+                        Certifiée
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  {% if comp.competence.description %}
+                    <p class="competence-description">{{ comp.competence.description|truncatewords:15 }}</p>
+                  {% endif %}
+
+                  <div class="competence-details">
+                    {% if comp.date_acquisition %}
+                      <div class="detail-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        Acquise le {{ comp.date_acquisition|date:"d/m/Y" }}
+                      </div>
+                    {% endif %}
+                    {% if comp.evaluateur %}
+                      <div class="detail-item">
+                        <i class="fas fa-user-check"></i>
+                        Évaluée par {{ comp.evaluateur.nom_complet }}
+                      </div>
+                    {% endif %}
+                    {% if comp.source_donnee == 'KELIO' %}
+                      <div class="detail-item">
+                        <i class="fas fa-sync-alt"></i>
+                        Depuis Kelio
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  {% if comp.commentaire %}
+                    <div class="competence-comment">
+                      <i class="fas fa-comment"></i>
+                      {{ comp.commentaire|truncatewords:20 }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="fas fa-star-half-alt"></i>
+              <h3>Aucune compétence renseignée</h3>
+              <p>Aucune compétence n'a encore été ajoutée pour cet employé.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Formations -->
+    <div class="tab-content" id="tab-formations">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-graduation-cap"></i>
+            Formations et diplômes ({{ formations.count }})
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if formations %}
+            <div class="formations-timeline">
+              {% for formation in formations %}
+                <div class="timeline-item">
+                  <div class="timeline-marker {% if formation.diplome_obtenu %}success{% else %}pending{% endif %}">
+                    <i class="fas fa-{% if formation.certifiante %}certificate{% else %}book{% endif %}"></i>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="formation-card">
+                      <div class="formation-header">
+                        <h4 class="formation-title">{{ formation.titre }}</h4>
+                        <div class="formation-badges">
+                          {% if formation.certifiante %}
+                            <span class="badge badge-certification">
+                              <i class="fas fa-certificate"></i>
+                              Certifiante
+                            </span>
+                          {% endif %}
+                          {% if formation.diplome_obtenu %}
+                            <span class="badge badge-success">
+                              <i class="fas fa-check"></i>
+                              Obtenu
+                            </span>
+                          {% else %}
+                            <span class="badge badge-warning">
+                              <i class="fas fa-clock"></i>
+                              En cours
+                            </span>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      {% if formation.organisme %}
+                        <div class="formation-organisme">
+                          <i class="fas fa-building"></i>
+                          {{ formation.organisme }}
+                        </div>
+                      {% endif %}
+
+                      {% if formation.description %}
+                        <p class="formation-description">{{ formation.description }}</p>
+                      {% endif %}
+
+                      <div class="formation-meta">
+                        {% if formation.date_debut and formation.date_fin %}
+                          <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            Du {{ formation.date_debut|date:"d/m/Y" }} au {{ formation.date_fin|date:"d/m/Y" }}
+                          </div>
+                        {% endif %}
+                        {% if formation.duree_jours %}
+                          <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            {{ formation.duree_jours }} jour{{ formation.duree_jours|pluralize }}
+                          </div>
+                        {% endif %}
+                        {% if formation.type_formation %}
+                          <div class="meta-item">
+                            <i class="fas fa-tag"></i>
+                            {{ formation.type_formation }}
+                          </div>
+                        {% endif %}
+                        {% if formation.source_donnee == 'KELIO' %}
+                          <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            Depuis Kelio
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="fas fa-graduation-cap"></i>
+              <h3>Aucune formation enregistrée</h3>
+              <p>Aucune formation n'a encore été ajoutée pour cet employé.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Absences récentes -->
+    <div class="tab-content" id="tab-absences">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-calendar-times"></i>
+            Absences récentes ({{ absences_recentes.count }})
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if absences_recentes %}
+            <div class="absences-list">
+              {% for absence in absences_recentes %}
+                <div class="absence-card {% if absence.est_en_cours %}current{% endif %}">
+                  <div class="absence-header">
+                    <div class="absence-type">
+                      <i class="fas fa-calendar-times"></i>
+                      {{ absence.type_absence }}
+                    </div>
+                    <div class="absence-status">
+                      {% if absence.est_en_cours %}
+                        <span class="status-badge current">
+                          <i class="fas fa-play"></i>
+                          En cours
+                        </span>
+                      {% else %}
+                        <span class="status-badge past">
+                          <i class="fas fa-check"></i>
+                          Terminée
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="absence-period">
+                    <div class="period-item">
+                      <i class="fas fa-play"></i>
+                      <strong>Début:</strong> {{ absence.date_debut|date:"d/m/Y" }}
+                    </div>
+                    <div class="period-item">
+                      <i class="fas fa-stop"></i>
+                      <strong>Fin:</strong> {{ absence.date_fin|date:"d/m/Y" }}
+                    </div>
+                    <div class="period-item">
+                      <i class="fas fa-clock"></i>
+                      <strong>Durée:</strong> {{ absence.duree_jours }} jour{{ absence.duree_jours|pluralize }}
+                    </div>
+                  </div>
+
+                  {% if absence.commentaire %}
+                    <div class="absence-comment">
+                      <i class="fas fa-comment"></i>
+                      {{ absence.commentaire }}
+                    </div>
+                  {% endif %}
+
+                  <div class="absence-meta">
+                    {% if absence.source_donnee == 'KELIO' %}
+                      <span class="source-badge kelio">
+                        <i class="fas fa-sync-alt"></i>
+                        Kelio
+                      </span>
+                    {% else %}
+                      <span class="source-badge local">
+                        <i class="fas fa-edit"></i>
+                        Local
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="fas fa-calendar-check"></i>
+              <h3>Aucune absence récente</h3>
+              <p>Aucune absence n'a été enregistrée récemment pour cet employé.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Missions d'intérim -->
+    <div class="tab-content" id="tab-missions">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-briefcase"></i>
+            Missions d'intérim ({{ missions_recentes.count }})
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if missions_recentes %}
+            <div class="missions-list">
+              {% for mission in missions_recentes %}
+                <div class="mission-card">
+                  <div class="mission-header">
+                    <div class="mission-title">
+                      <h4>{{ mission.demande_interim.poste.titre }}</h4>
+                      <span class="mission-numero">{{ mission.demande_interim.numero_demande }}</span>
+                    </div>
+                    <div class="mission-status status-{{ mission.demande_interim.statut|lower }}">
+                      {{ mission.demande_interim.get_statut_display }}
+                    </div>
+                  </div>
+
+                  <div class="mission-details">
+                    <div class="detail-row">
+                      <div class="detail-item">
+                        <i class="fas fa-building"></i>
+                        {{ mission.demande_interim.poste.departement.nom }}
+                      </div>
+                      <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ mission.demande_interim.poste.site.nom }}
+                      </div>
+                    </div>
+                    
+                    {% if mission.demande_interim.date_debut and mission.demande_interim.date_fin %}
+                      <div class="detail-row">
+                        <div class="detail-item">
+                          <i class="fas fa-calendar"></i>
+                          Du {{ mission.demande_interim.date_debut|date:"d/m/Y" }} 
+                          au {{ mission.demande_interim.date_fin|date:"d/m/Y" }}
+                        </div>
+                        <div class="detail-item">
+                          <i class="fas fa-clock"></i>
+                          {{ mission.demande_interim.duree_mission }} jour{{ mission.demande_interim.duree_mission|pluralize }}
+                        </div>
+                      </div>
+                    {% endif %}
+
+                    <div class="detail-row">
+                      <div class="detail-item">
+                        <i class="fas fa-user"></i>
+                        Remplace {{ mission.demande_interim.personne_remplacee.nom_complet }}
+                      </div>
+                      {% if mission.demande_interim.urgence != 'NORMALE' %}
+                        <div class="detail-item urgence-{{ mission.demande_interim.urgence|lower }}">
+                          <i class="fas fa-exclamation-triangle"></i>
+                          {{ mission.demande_interim.get_urgence_display }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  {% if mission.demande_interim.description_poste %}
+                    <div class="mission-description">
+                      {{ mission.demande_interim.description_poste|truncatewords:20 }}
+                    </div>
+                  {% endif %}
+
+                  <div class="mission-actions">
+                    <a href="#" class="btn btn-outline-small">
+                      <i class="fas fa-eye"></i>
+                      Voir détails
+                    </a>
+                    {% if mission.demande_interim.evaluation_mission %}
+                      <div class="mission-rating">
+                        <i class="fas fa-star"></i>
+                        {{ mission.demande_interim.evaluation_mission }}/5
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="fas fa-briefcase"></i>
+              <h3>Aucune mission d'intérim</h3>
+              <p>Cet employé n'a encore participé à aucune mission d'intérim.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Disponibilité -->
+    <div class="tab-content" id="tab-disponibilite">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-clock"></i>
+            Disponibilité pour l'intérim
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="availability-overview">
+            <div class="availability-status">
+              {% if employe.extended_data.disponible_interim %}
+                <div class="status-indicator available">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Disponible pour l'intérim</span>
+                </div>
+              {% else %}
+                <div class="status-indicator unavailable">
+                  <i class="fas fa-times-circle"></i>
+                  <span>Non disponible pour l'intérim</span>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if employe.extended_data.rayon_deplacement_km %}
+              <div class="availability-radius">
+                <i class="fas fa-route"></i>
+                <span>Rayon de déplacement: {{ employe.extended_data.rayon_deplacement_km }} km</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Calendrier de disponibilité (zone pour future amélioration) -->
+          <div class="availability-calendar">
+            <div class="calendar-placeholder">
+              <i class="fas fa-calendar-alt"></i>
+              <h4>Calendrier de disponibilité</h4>
+              <p>Le calendrier de disponibilité détaillé sera affiché ici dans une prochaine version.</p>
+              <button type="button" class="btn btn-outline" id="btnCheckAvailability">
+                <i class="fas fa-refresh"></i>
+                Vérifier la disponibilité actuelle
+              </button>
+            </div>
+          </div>
+
+          <!-- Zone de résultats de vérification -->
+          <div id="availabilityCheck" class="availability-check" style="display: none;">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i>
+              <div class="alert-content">
+                <div class="alert-title">Vérification de disponibilité</div>
+                <div id="availabilityResult">Vérification en cours...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES POUR LA PAGE DÉTAIL EMPLOYÉ
+================================================================ */
+
+:root {
+  --primary: #007bff;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
+  --light: #f8f9fa;
+  --dark: #343a40;
+  --border-radius: 8px;
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* ================================================================
+   EN-TÊTE EMPLOYÉ
+================================================================ */
+
+.employee-header {
+  background: linear-gradient(135deg, var(--primary), #0056b3);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.employee-header-content {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  flex-wrap: wrap;
+}
+
+.employee-avatar {
+  font-size: 4rem;
+  opacity: 0.9;
+}
+
+.employee-info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.employee-name {
+  margin: 0 0 1rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.employee-meta {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.employee-matricule,
+.employee-status,
+.employee-type {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.employee-status.status-actif {
+  background: rgba(40, 167, 69, 0.3);
+}
+
+.employee-status.status-conge {
+  background: rgba(255, 193, 7, 0.3);
+}
+
+.employee-status.status-arret {
+  background: rgba(220, 53, 69, 0.3);
+}
+
+.employee-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ================================================================
+   SYSTÈME D'ONGLETS
+================================================================ */
+
+.tabs-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.tabs-header {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: white;
+  color: #6c757d;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
+.tab-button:hover {
+  background: var(--light);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: var(--primary);
+  color: white;
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.tab-badge {
+  background: rgba(255,255,255,0.3);
+  color: currentColor;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tab-button.active .tab-badge {
+  background: rgba(255,255,255,0.3);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ================================================================
+   GRILLES ET CARTES
+================================================================ */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.card-container {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s ease;
+}
+
+.card-container:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* ================================================================
+   GRILLES D'INFORMATIONS
+================================================================ */
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #495057;
+  word-break: break-word;
+}
+
+.info-value.employee-matricule {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.org-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #495057;
+}
+
+.manager-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.manager-link:hover {
+  color: #0056b3;
+}
+
+.profile-type-responsable { color: var(--warning); font-weight: 600; }
+.profile-type-directeur { color: var(--danger); font-weight: 600; }
+.profile-type-rh { color: var(--info); font-weight: 600; }
+.profile-type-admin { color: var(--success); font-weight: 600; }
+
+/* ================================================================
+   STATUTS ET BADGES
+================================================================ */
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.sync-status.sync-reussi {
+  background: #d4edda;
+  color: #155724;
+}
+
+.sync-status.sync-jamais,
+.sync-status.sync-echec {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.sync-status.sync-partiel {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+.text-success {
+  color: var(--success) !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+/* ================================================================
+   STATISTIQUES
+================================================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.stat-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  color: #e9ecef;
+}
+
+/* ================================================================
+   COMPÉTENCES
+================================================================ */
+
+.competences-filter {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-select-small {
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  min-width: 150px;
+}
+
+.competences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.competence-card {
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.competence-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.competence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.competence-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  flex: 1;
+}
+
+.competence-level {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.competence-level .fas.fa-star {
+  color: #e9ecef;
+  font-size: 0.875rem;
+}
+
+.competence-level .fas.fa-star.active {
+  color: #ffc107;
+}
+
+.level-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.competence-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.competence-category {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.cat-technique { background: #e3f2fd; color: #1976d2; }
+.cat-transverse { background: #f3e5f5; color: #7b1fa2; }
+.cat-comportementale { background: #e8f5e8; color: #388e3c; }
+.cat-linguistique { background: #fff3e0; color: #f57c00; }
+.cat-logiciel { background: #fce4ec; color: #c2185b; }
+
+.certification-badge {
+  padding: 0.25rem 0.75rem;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.competence-description {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.competence-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.competence-comment {
+  padding: 0.75rem;
+  background: var(--light);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #495057;
+  border-left: 3px solid var(--info);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* ================================================================
+   FORMATIONS - TIMELINE
+================================================================ */
+
+.formations-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.formations-timeline::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: white;
+  z-index: 2;
+}
+
+.timeline-marker.success {
+  background: var(--success);
+}
+
+.timeline-marker.pending {
+  background: var(--warning);
+}
+
+.timeline-content {
+  margin-left: 1rem;
+}
+
+.formation-card {
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.formation-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.formation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.formation-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  flex: 1;
+}
+
+.formation-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badge-certification {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.formation-organisme {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.formation-description {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.formation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* ================================================================
+   ABSENCES
+================================================================ */
+
+.absences-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.absence-card {
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.absence-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.absence-card.current {
+  border-color: var(--warning);
+  background: #fffbf0;
+}
+
+.absence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.absence-type {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-badge.current {
+  background: var(--warning);
+  color: white;
+}
+
+.status-badge.past {
+  background: var(--success);
+  color: white;
+}
+
+.absence-period {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.period-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.absence-comment {
+  padding: 0.75rem;
+  background: var(--light);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #495057;
+  border-left: 3px solid var(--info);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.absence-meta {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.source-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.source-badge.kelio {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.source-badge.local {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* ================================================================
+   MISSIONS
+================================================================ */
+
+.missions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mission-card {
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.mission-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.mission-title h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.mission-numero {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #6c757d;
+  background: var(--light);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.mission-status {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.status-en_cours { background: #d4edda; color: #155724; }
+.status-terminee { background: #e2e3e5; color: #383d41; }
+.status-validee { background: #cce5ff; color: #004085; }
+
+.mission-details {
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.urgence-elevee,
+.urgence-critique {
+  color: var(--danger) !important;
+  font-weight: 600;
+}
+
+.mission-description {
+  padding: 0.75rem;
+  background: var(--light);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #495057;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.mission-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mission-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* ================================================================
+   DISPONIBILITÉ
+================================================================ */
+
+.availability-overview {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 2px solid #dee2e6;
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.status-indicator.available {
+  color: var(--success);
+}
+
+.status-indicator.unavailable {
+  color: var(--danger);
+}
+
+.availability-radius {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-size: 1rem;
+}
+
+.calendar-placeholder {
+  text-align: center;
+  padding: 3rem 2rem;
+  border: 2px dashed #dee2e6;
+  border-radius: var(--border-radius);
+  color: #6c757d;
+}
+
+.calendar-placeholder i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.calendar-placeholder h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.availability-check {
+  margin-top: 1.5rem;
+}
+
+/* ================================================================
+   ÉTAT VIDE
+================================================================ */
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ================================================================
+   BOUTONS ET LIENS
+================================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+}
+
+.btn-outline-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #6c757d;
+  color: #6c757d;
+  background-color: transparent;
+}
+
+.btn-outline-small:hover:not(:disabled) {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* ================================================================
+   ALERTES
+================================================================ */
+
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 992px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .competences-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .employee-header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .employee-name {
+    font-size: 2rem;
+  }
+  
+  .employee-meta {
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .employee-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .tabs-header {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .tab-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .mission-header,
+  .formation-header,
+  .absence-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .competences-filter {
+    flex-direction: column;
+  }
+  
+  .form-select-small {
+    min-width: auto;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .employee-header {
+    padding: 1.5rem 0;
+  }
+  
+  .employee-name {
+    font-size: 1.75rem;
+  }
+  
+  .card-header,
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .competence-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .formations-timeline {
+    padding-left: 1.5rem;
+  }
+  
+  .timeline-marker {
+    left: -1.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .timeline-content {
+    margin-left: 0.75rem;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content.active {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.stat-item:hover .stat-icon {
+  animation: pulse 0.6s ease;
+  color: var(--primary);
+}
+
+/* ================================================================
+   MODE IMPRESSION
+================================================================ */
+
+@media print {
+  .employee-actions,
+  .tab-button,
+  .btn {
+    display: none !important;
+  }
+  
+  .employee-header {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  .tab-content {
+    display: block !important;
+  }
+  
+  .card-container {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+  
+  .competence-card,
+  .formation-card,
+  .mission-card,
+  .absence-card {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Initialisation de la page détail employé');
+
+  // ================================================================
+  // GESTION DES ONGLETS
+  // ================================================================
+
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  // Fonction pour changer d'onglet
+  function switchTab(targetTabId) {
+    // Désactiver tous les onglets
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+
+    // Activer l'onglet cible
+    const targetButton = document.querySelector(`[data-tab="${targetTabId}"]`);
+    const targetContent = document.getElementById(`tab-${targetTabId}`);
+
+    if (targetButton && targetContent) {
+      targetButton.classList.add('active');
+      targetContent.classList.add('active');
+      
+      // Sauvegarder l'onglet actif dans le localStorage
+      localStorage.setItem('activeEmployeeTab', targetTabId);
+      
+      console.log(`📑 Onglet activé: ${targetTabId}`);
+    }
+  }
+
+  // Event listeners pour les boutons d'onglets
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const tabId = this.dataset.tab;
+      switchTab(tabId);
+    });
+  });
+
+  // Restaurer l'onglet actif depuis le localStorage
+  const savedTab = localStorage.getItem('activeEmployeeTab');
+  if (savedTab && document.getElementById(`tab-${savedTab}`)) {
+    switchTab(savedTab);
+  }
+
+  // ================================================================
+  // FILTRAGE DES COMPÉTENCES
+  // ================================================================
+
+  const filterCategorie = document.getElementById('filterCategorie');
+  const filterNiveau = document.getElementById('filterNiveau');
+  const competencesGrid = document.getElementById('competencesGrid');
+
+  function filtrerCompetences() {
+    if (!competencesGrid) return;
+
+    const categorieFiltre = filterCategorie?.value || '';
+    const niveauFiltre = filterNiveau?.value || '';
+    
+    const competenceCards = competencesGrid.querySelectorAll('.competence-card');
+    let visibleCount = 0;
+
+    competenceCards.forEach(card => {
+      const categorie = card.dataset.categorie || '';
+      const niveau = card.dataset.niveau || '';
+      
+      const matchCategorie = !categorieFiltre || categorie === categorieFiltre;
+      const matchNiveau = !niveauFiltre || niveau === niveauFiltre;
+      
+      if (matchCategorie && matchNiveau) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    console.log(`🔍 Filtrage compétences: ${visibleCount} visibles sur ${competenceCards.length}`);
+    
+    // Afficher un message si aucune compétence ne correspond
+    let noResultsMessage = competencesGrid.querySelector('.no-results-message');
+    if (visibleCount === 0 && competenceCards.length > 0) {
+      if (!noResultsMessage) {
+        noResultsMessage = document.createElement('div');
+        noResultsMessage.className = 'no-results-message empty-state';
+        noResultsMessage.innerHTML = `
+          <i class="fas fa-search"></i>
+          <h3>Aucune compétence trouvée</h3>
+          <p>Aucune compétence ne correspond aux filtres sélectionnés.</p>
+        `;
+        competencesGrid.appendChild(noResultsMessage);
+      }
+      noResultsMessage.style.display = 'block';
+    } else if (noResultsMessage) {
+      noResultsMessage.style.display = 'none';
+    }
+  }
+
+  // Event listeners pour les filtres
+  if (filterCategorie) {
+    filterCategorie.addEventListener('change', filtrerCompetences);
+  }
+  if (filterNiveau) {
+    filterNiveau.addEventListener('change', filtrerCompetences);
+  }
+
+  // ================================================================
+  // VÉRIFICATION DE DISPONIBILITÉ
+  // ================================================================
+
+  const btnCheckAvailability = document.getElementById('btnCheckAvailability');
+  const availabilityCheck = document.getElementById('availabilityCheck');
+  const availabilityResult = document.getElementById('availabilityResult');
+
+  if (btnCheckAvailability) {
+    btnCheckAvailability.addEventListener('click', function() {
+      console.log('🔍 Vérification de disponibilité demandée');
+      
+      // Afficher la zone de résultats
+      if (availabilityCheck) {
+        availabilityCheck.style.display = 'block';
+      }
+      
+      // Afficher le loading
+      if (availabilityResult) {
+        availabilityResult.innerHTML = `
+          <i class="fas fa-spinner fa-spin"></i>
+          Vérification de la disponibilité en cours...
+        `;
+      }
+      
+      // Désactiver le bouton
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vérification...';
+
+      // Récupérer le matricule depuis l'URL ou les données de la page
+      const matricule = getEmployeeMatricule();
+
+      // Simulation d'une vérification (remplacer par un appel AJAX réel)
+      setTimeout(() => {
+        checkEmployeeAvailability(matricule);
+      }, 1500);
+    });
+  }
+
+  function getEmployeeMatricule() {
+    // Extraire le matricule depuis l'URL ou les données de la page
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 2] || '';
+  }
+
+  async function checkEmployeeAvailability(matricule) {
+    try {
+      const response = await fetch(`/interim/ajax/verifier-disponibilite-employe/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          matricule: matricule,
+          date_debut: new Date().toISOString().split('T')[0],
+          date_fin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        })
+      });
+
+      let data;
+      if (response.ok) {
+        data = await response.json();
+      } else {
+        throw new Error(`Erreur HTTP ${response.status}`);
+      }
+
+      // Afficher les résultats
+      if (availabilityResult) {
+        if (data.success) {
+          const disponible = data.disponible;
+          const raison = data.raison || 'Aucune information disponible';
+          
+          availabilityResult.innerHTML = `
+            <div class="availability-status-result ${disponible ? 'available' : 'unavailable'}">
+              <i class="fas fa-${disponible ? 'check-circle' : 'times-circle'}"></i>
+              <strong>${disponible ? 'Disponible' : 'Non disponible'}</strong>
+            </div>
+            <p>${raison}</p>
+            ${data.prochaine_disponibilite ? `<p><strong>Prochaine disponibilité:</strong> ${data.prochaine_disponibilite}</p>` : ''}
+          `;
+        } else {
+          availabilityResult.innerHTML = `
+            <div class="availability-status-result error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <strong>Erreur</strong>
+            </div>
+            <p>${data.error || 'Impossible de vérifier la disponibilité'}</p>
+          `;
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur vérification disponibilité:', error);
+      
+      if (availabilityResult) {
+        availabilityResult.innerHTML = `
+          <div class="availability-status-result error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Erreur de communication</strong>
+          </div>
+          <p>Impossible de vérifier la disponibilité pour le moment.</p>
+        `;
+      }
+    } finally {
+      // Réactiver le bouton
+      if (btnCheckAvailability) {
+        btnCheckAvailability.disabled = false;
+        btnCheckAvailability.innerHTML = `
+          <i class="fas fa-refresh"></i>
+          Vérifier à nouveau
+        `;
+      }
+    }
+  }
+
+  // ================================================================
+  // ANIMATIONS ET AMÉLIORATIONS UX
+  // ================================================================
+
+  // Animation d'apparition pour les cartes
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationDelay = Math.random() * 0.3 + 's';
+        entry.target.classList.add('animate-in');
+      }
+    });
+  }, observerOptions);
+
+  // Observer toutes les cartes
+  document.querySelectorAll('.competence-card, .formation-card, .mission-card, .absence-card').forEach(card => {
+    cardObserver.observe(card);
+  });
+
+  // ================================================================
+  // GESTION DES LIENS ET NAVIGATION
+  // ================================================================
+
+  // Smooth scroll pour les liens internes
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+
+  // ================================================================
+  // TOOLTIPS ET INFORMATIONS CONTEXTUELLES
+  // ================================================================
+
+  // Ajouter des tooltips pour les éléments avec titre
+  const elementsWithTooltip = document.querySelectorAll('[title]');
+  elementsWithTooltip.forEach(element => {
+    // Remplacer le titre par un data-tooltip pour éviter le tooltip natif
+    element.dataset.tooltip = element.title;
+    element.removeAttribute('title');
+    
+    // Ajouter les event listeners pour afficher le tooltip personnalisé
+    element.addEventListener('mouseenter', showTooltip);
+    element.addEventListener('mouseleave', hideTooltip);
+  });
+
+  function showTooltip(event) {
+    const tooltip = event.target.dataset.tooltip;
+    if (!tooltip) return;
+
+    const tooltipElement = document.createElement('div');
+    tooltipElement.className = 'custom-tooltip';
+    tooltipElement.textContent = tooltip;
+    document.body.appendChild(tooltipElement);
+
+    // Positionner le tooltip
+    const rect = event.target.getBoundingClientRect();
+    tooltipElement.style.left = rect.left + (rect.width / 2) - (tooltipElement.offsetWidth / 2) + 'px';
+    tooltipElement.style.top = rect.top - tooltipElement.offsetHeight - 10 + 'px';
+
+    // Stocker la référence pour le nettoyage
+    event.target._tooltip = tooltipElement;
+  }
+
+  function hideTooltip(event) {
+    if (event.target._tooltip) {
+      document.body.removeChild(event.target._tooltip);
+      delete event.target._tooltip;
+    }
+  }
+
+  // ================================================================
+  // RACCOURCIS CLAVIER
+  // ================================================================
+
+  document.addEventListener('keydown', function(event) {
+    // Raccourcis uniquement si aucun champ n'est en focus
+    if (document.activeElement.tagName === 'INPUT' || 
+        document.activeElement.tagName === 'TEXTAREA' || 
+        document.activeElement.tagName === 'SELECT') {
+      return;
+    }
+
+    switch(event.key) {
+      case '1':
+        switchTab('general');
+        break;
+      case '2':
+        switchTab('competences');
+        break;
+      case '3':
+        switchTab('formations');
+        break;
+      case '4':
+        switchTab('absences');
+        break;
+      case '5':
+        switchTab('missions');
+        break;
+      case '6':
+        switchTab('disponibilite');
+        break;
+      case 'p':
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          window.print();
+        }
+        break;
+      case 'Escape':
+        // Fermer les modales ou revenir en arrière
+        if (history.length > 1) {
+          history.back();
+        }
+        break;
+    }
+  });
+
+  // ================================================================
+  // AMÉLIORATION DES FORMULAIRES
+  // ================================================================
+
+  // Auto-focus sur les champs de recherche
+  const searchInputs = document.querySelectorAll('input[type="search"], .search-input');
+  searchInputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.select();
+    });
+  });
+
+  // ================================================================
+  // STATISTIQUES ET MÉTRIQUES
+  // ================================================================
+
+  // Animer les compteurs dans les statistiques
+  const statValues = document.querySelectorAll('.stat-value');
+  const animateCounters = () => {
+    statValues.forEach(stat => {
+      const value = parseInt(stat.textContent);
+      if (isNaN(value)) return;
+
+      let current = 0;
+      const increment = value / 30; // Animation sur 30 frames
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= value) {
+          stat.textContent = value;
+          clearInterval(timer);
+        } else {
+          stat.textContent = Math.floor(current);
+        }
+      }, 16); // ~60fps
+    });
+  };
+
+  // Observer les statistiques pour déclencher l'animation
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounters();
+        statsObserver.unobserve(entry.target);
+      }
+    });
+  });
+
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    statsObserver.observe(statsGrid);
+  }
+
+  // ================================================================
+  // FONCTIONNALITÉS AVANCÉES
+  // ================================================================
+
+  // Recherche rapide dans les compétences
+  function addQuickSearch() {
+    const competencesTab = document.getElementById('tab-competences');
+    if (!competencesTab) return;
+
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'quick-search-container';
+    searchContainer.innerHTML = `
+      <input type="text" 
+             id="competenceSearch" 
+             class="form-input search-input" 
+             placeholder="🔍 Rechercher une compétence..." 
+             style="margin-bottom: 1rem;">
+    `;
+
+    const cardHeader = competencesTab.querySelector('.card-header');
+    if (cardHeader) {
+      cardHeader.appendChild(searchContainer);
+    }
+
+    // Event listener pour la recherche
+    const searchInput = document.getElementById('competenceSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        const competenceCards = document.querySelectorAll('.competence-card');
+        
+        competenceCards.forEach(card => {
+          const competenceName = card.querySelector('.competence-name')?.textContent.toLowerCase() || '';
+          const competenceDesc = card.querySelector('.competence-description')?.textContent.toLowerCase() || '';
+          
+          if (competenceName.includes(searchTerm) || competenceDesc.includes(searchTerm) || searchTerm === '') {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+  }
+
+  // Ajouter la recherche rapide après un délai
+  setTimeout(addQuickSearch, 500);
+
+  // ================================================================
+  // GESTION D'ERREURS ET FALLBACKS
+  // ================================================================
+
+  // Gestion globale des erreurs JavaScript
+  window.addEventListener('error', function(event) {
+    console.error('❌ Erreur JavaScript:', event.error);
+    
+    // Optionnel: envoyer l'erreur au serveur pour monitoring
+    // sendErrorToServer(event.error);
+  });
+
+  // Fallback pour les fonctionnalités non supportées
+  if (!window.IntersectionObserver) {
+    console.warn('⚠️ IntersectionObserver non supporté, désactivation des animations');
+    // Afficher immédiatement tous les éléments
+    document.querySelectorAll('.competence-card, .formation-card, .mission-card, .absence-card').forEach(card => {
+      card.classList.add('animate-in');
+    });
+  }
+
+  // ================================================================
+  // FONCTIONS UTILITAIRES
+  // ================================================================
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  function showNotification(message, type = 'info') {
+    console.log(`📢 Notification ${type}: ${message}`);
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 350px;
+      padding: 1rem;
+      border-radius: 4px;
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      animation: slideInRight 0.3s ease;
+    `;
+    
+    // Couleurs selon le type
+    const colors = {
+      success: '#28a745',
+      error: '#dc3545',
+      warning: '#ffc107',
+      info: '#17a2b8'
+    };
+    
+    notification.style.backgroundColor = colors[type] || colors.info;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Retirer après 4 secondes
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }
+    }, 4000);
+  }
+
+  // ================================================================
+  // INITIALISATION FINALE
+  // ================================================================
+
+  console.log('✅ Page détail employé initialisée avec succès');
+  console.log('📌 Raccourcis clavier disponibles:');
+  console.log('   • 1-6: Changer d\'onglet');
+  console.log('   • Ctrl+P: Imprimer');
+  console.log('   • Échap: Retour');
+  
+  // Marquer la page comme chargée
+  document.body.classList.add('page-loaded');
+});
+
+// ================================================================
+// STYLES D'ANIMATION POUR LES NOTIFICATIONS
+// ================================================================
+
+const animationStyles = document.createElement('style');
+animationStyles.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  @keyframes animate-in {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  .animate-in {
+    animation: animate-in 0.6s ease forwards;
+  }
+  
+  .custom-tooltip {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.9;
+    max-width: 200px;
+    word-wrap: break-word;
+  }
+  
+  .custom-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+  }
+  
+  .availability-status-result {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .availability-status-result.available {
+    color: var(--success);
+  }
+  
+  .availability-status-result.unavailable {
+    color: var(--danger);
+  }
+  
+  .availability-status-result.error {
+    color: var(--warning);
+  }
+  
+  .no-results-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+  }
+  
+  .quick-search-container {
+    margin-left: auto;
+  }
+  
+  .search-input {
+    min-width: 250px;
+  }
+  
+  @media (max-width: 768px) {
+    .quick-search-container {
+      margin-left: 0;
+      margin-top: 1rem;
+      width: 100%;
+    }
+    
+    .search-input {
+      min-width: auto;
+      width: 100%;
+    }
+  }
+`;
+
+document.head.appendChild(animationStyles);
+</script>
+{% endblock extra_js %}

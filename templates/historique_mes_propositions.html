@@ -1,0 +1,1433 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Historique de mes propositions{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header historique -->
+<div class="historique-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8" style="margin-left: 20px;">
+        <h1 class="mb-0">
+          <i class="fas fa-user-plus"></i>
+          Historique de mes propositions
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-user"></i> {{ profil_utilisateur.nom_complet }}
+          - {{ profil_utilisateur.get_type_profil_display }}
+        </p>
+      </div>
+      <div class="col-md-4 text-end" style="margin-left: 20px; margin-top: 15px;">
+        <a href="{% url 'index' %}" class="btn btn-outline-light">
+          <i class="fas fa-arrow-left"></i>
+          Retour au tableau de bord
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informations du proposant -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations du proposant
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="demande-info-grid">
+      <div class="info-card">
+        <div class="info-label">👤 Nom complet</div>
+        <div class="info-value">{{ profil_utilisateur.nom_complet }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏢 Département</div>
+        <div class="info-value">{{ profil_utilisateur.departement.nom|default:"Département N/A" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">💼 Poste</div>
+        <div class="info-value">{{ profil_utilisateur.poste.titre|default:"Poste non défini" }}</div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🎯 Type de profil</div>
+        <div class="info-value">
+          <span class="niveau-badge">{{ profil_utilisateur.get_type_profil_display }}</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">📊 Total propositions</div>
+        <div class="info-value">
+          <span class="count-badge">{{ total_propositions }}</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-label">🏆 Taux de réussite</div>
+        <div class="info-value">
+          <span class="{% if taux_reussite >= 70 %}niveau-badge{% elif taux_reussite >= 50 %}urgence-badge moyenne{% else %}urgence-badge critique{% endif %}">
+            {{ taux_reussite }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistiques des propositions -->
+{% if total_propositions > 0 %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Statistiques de mes propositions
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ total_propositions }}</div>
+          <div class="stat-label">Proposition{{ total_propositions|pluralize }}</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ propositions_retenues }}</div>
+          <div class="stat-label">Retenue{{ propositions_retenues|pluralize }}</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ taux_reussite }}%</div>
+          <div class="stat-label">Taux de réussite</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ score_moyen.moyenne|default:0|floatformat:1 }}</div>
+          <div class="stat-label">Score moyen</div>
+        </div>
+      </div>
+      
+      {% if dates_extremes.premiere %}
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-plus"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ dates_extremes.premiere|date:"d/m/Y" }}</div>
+          <div class="stat-label">Première proposition</div>
+        </div>
+      </div>
+      {% endif %}
+      
+      {% if dates_extremes.derniere %}
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ dates_extremes.derniere|date:"d/m/Y" }}</div>
+          <div class="stat-label">Dernière proposition</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recherche et filtres -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Filtres et recherche
+    </h2>
+  </div>
+  <div class="card-body">
+    <form method="get" class="filter-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="date_debut" class="form-label">Date début</label>
+          <input type="date" name="date_debut" id="date_debut" class="form-input" 
+                 value="{{ filtres.date_debut|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="date_fin" class="form-label">Date fin</label>
+          <input type="date" name="date_fin" id="date_fin" class="form-input" 
+                 value="{{ filtres.date_fin|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="statut" class="form-label">Statut proposition</label>
+          <select name="statut" id="statut" class="form-select">
+            <option value="">Tous les statuts</option>
+            {% for statut_key, statut_label in statuts_choix %}
+            <option value="{{ statut_key }}" {% if filtres.statut == statut_key %}selected{% endif %}>
+              {{ statut_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="urgence" class="form-label">Urgence demande</label>
+          <select name="urgence" id="urgence" class="form-select">
+            <option value="">Toutes les urgences</option>
+            {% for urgence_key, urgence_label in urgences_choix %}
+            <option value="{{ urgence_key }}" {% if filtres.urgence == urgence_key %}selected{% endif %}>
+              {{ urgence_label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="recherche" class="form-label">Recherche</label>
+          <input type="text" name="recherche" id="recherche" class="form-input" 
+                 placeholder="Candidat, demande, justification..." 
+                 value="{{ filtres.recherche|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+          <label for="ordre" class="form-label">Tri</label>
+          <select name="ordre" id="ordre" class="form-select">
+            <option value="-created_at" {% if filtres.ordre == '-created_at' %}selected{% endif %}>Plus récente d'abord</option>
+            <option value="created_at" {% if filtres.ordre == 'created_at' %}selected{% endif %}>Plus ancienne d'abord</option>
+            <option value="-score_final" {% if filtres.ordre == '-score_final' %}selected{% endif %}>Meilleur score d'abord</option>
+            <option value="score_final" {% if filtres.ordre == 'score_final' %}selected{% endif %}>Score croissant</option>
+            <option value="candidat" {% if filtres.ordre == 'candidat' %}selected{% endif %}>Candidat A-Z</option>
+            <option value="-candidat" {% if filtres.ordre == '-candidat' %}selected{% endif %}>Candidat Z-A</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+              Filtrer
+            </button>
+            <a href="?" class="btn btn-outline">
+              <i class="fas fa-undo"></i>
+              Réinitialiser
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Historique détaillé -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-timeline"></i>
+      Chronologie de mes propositions
+      {% if total_propositions %}
+        <span class="count-badge">{{ total_propositions }}</span>
+      {% endif %}
+    </h2>
+  </div>
+  <div class="card-body">
+    {% if propositions_enrichies %}
+      <div class="timeline-container">
+        {% for item in propositions_enrichies %}
+        {% with proposition=item.proposition %}
+        <div class="timeline-item">
+          <div class="timeline-marker">
+            <div class="timeline-number">{{ forloop.counter }}</div>
+          </div>
+          
+          <div class="timeline-content">
+            <!-- En-tête de la proposition -->
+            <div class="timeline-header">
+              <div class="timeline-date">
+                <i class="fas fa-calendar"></i>
+                {{ proposition.created_at|date:"d/m/Y H:i" }}
+              </div>
+              <div class="timeline-levels">
+                <span class="level-badge {% if proposition.statut == 'VALIDEE' or item.candidat_selectionne_info.est_ma_proposition %}to{% else %}from{% endif %}">
+                  {{ proposition.get_statut_display }}
+                </span>
+                {% if proposition.score_final > 0 %}
+                <i class="fas fa-arrow-right"></i>
+                <span class="level-badge {% if proposition.score_final >= 70 %}to{% elif proposition.score_final >= 50 %}from{% else %}from{% endif %}">
+                  Score: {{ proposition.score_final }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Corps de la proposition -->
+            <div class="timeline-body">
+              <!-- Informations sur la demande -->
+              <div class="proposition-section demande-section">
+                <div class="section-title">
+                  <i class="fas fa-file-alt"></i>
+                  Demande {{ proposition.demande_interim.numero_demande }}
+                  {% if item.est_urgente %}
+                    <span class="urgence-badge critique">🚨 Urgente</span>
+                  {% endif %}
+                </div>
+                <div class="section-content">
+                  <div class="detail-row">
+                    <strong>Poste :</strong> {{ proposition.demande_interim.poste.titre }}
+                  </div>
+                  <div class="detail-row">
+                    <strong>Site :</strong> {{ proposition.demande_interim.poste.site.nom }}
+                  </div>
+                  <div class="detail-row">
+                    <strong>Période :</strong> 
+                    {% if proposition.demande_interim.date_debut and proposition.demande_interim.date_fin %}
+                      {{ proposition.demande_interim.date_debut|date:"d/m/Y" }} - {{ proposition.demande_interim.date_fin|date:"d/m/Y" }}
+                      ({{ item.duree_mission }} jour{{ item.duree_mission|pluralize }})
+                    {% else %}
+                      Dates non définies
+                    {% endif %}
+                  </div>
+                  <div class="detail-row">
+                    <strong>Urgence :</strong> 
+                    <span class="urgence-badge {{ proposition.demande_interim.urgence|lower }}">
+                      {{ proposition.demande_interim.get_urgence_display }}
+                    </span>
+                  </div>
+                  <div class="detail-row">
+                    <strong>Statut final :</strong> 
+                    <span class="niveau-badge">{{ proposition.demande_interim.get_statut_display }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Informations sur le candidat proposé -->
+              <div class="proposition-section candidat-section">
+                <div class="section-title">
+                  <i class="fas fa-user"></i>
+                  Candidat proposé
+                </div>
+                <div class="section-content">
+                  <div class="candidat-main">
+                    <strong>{{ proposition.candidat_propose.nom_complet }}</strong>
+                    <span class="candidat-matricule">({{ proposition.candidat_propose.matricule }})</span>
+                  </div>
+                  <div class="detail-row">
+                    <strong>Département :</strong> {{ proposition.candidat_propose.departement.nom|default:"Non défini" }}
+                  </div>
+                  <div class="detail-row">
+                    <strong>Poste actuel :</strong> {{ proposition.candidat_propose.poste.titre|default:"Non défini" }}
+                  </div>
+                  {% if proposition.score_final > 0 %}
+                  <div class="detail-row">
+                    <strong>Score obtenu :</strong> 
+                    <span class="score-badge {% if proposition.score_final >= 70 %}excellent{% elif proposition.score_final >= 50 %}bon{% else %}faible{% endif %}">
+                      {{ proposition.score_final }}/100
+                    </span>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Justification de la proposition -->
+              <div class="proposition-section justification-section">
+                <div class="section-title">
+                  <i class="fas fa-comment"></i>
+                  Ma justification
+                </div>
+                <div class="section-content">
+                  <div class="justification-text">
+                    "{{ proposition.justification }}"
+                  </div>
+                  {% if proposition.competences_specifiques %}
+                  <div class="competences-text">
+                    <strong>Compétences spécifiques :</strong><br>
+                    {{ proposition.competences_specifiques }}
+                  </div>
+                  {% endif %}
+                  {% if proposition.experience_pertinente %}
+                  <div class="experience-text">
+                    <strong>Expérience pertinente :</strong><br>
+                    {{ proposition.experience_pertinente }}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Candidat finalement sélectionné -->
+              {% if item.candidat_selectionne_info %}
+              <div class="proposition-section selection-section">
+                <div class="section-title">
+                  <i class="fas fa-trophy"></i>
+                  Candidat sélectionné
+                  {% if item.candidat_selectionne_info.est_ma_proposition %}
+                    <span class="success-badge">✅ Ma proposition retenue !</span>
+                  {% endif %}
+                </div>
+                <div class="section-content">
+                  <div class="detail-row">
+                    <strong>Candidat :</strong> {{ item.candidat_selectionne_info.candidat.nom_complet }}
+                    {% if not item.candidat_selectionne_info.est_ma_proposition %}
+                      <span class="candidat-matricule">({{ item.candidat_selectionne_info.candidat.matricule }})</span>
+                    {% endif %}
+                  </div>
+                  {% if item.candidat_selectionne_info.score %}
+                  <div class="detail-row">
+                    <strong>Score final :</strong> 
+                    <span class="score-badge excellent">{{ item.candidat_selectionne_info.score.score_total }}/100</span>
+                  </div>
+                  {% endif %}
+                  {% if item.candidat_selectionne_info.proposition and item.candidat_selectionne_info.proposition.justification %}
+                  <div class="detail-row">
+                    <strong>Justification :</strong><br>
+                    <em>"{{ item.candidat_selectionne_info.proposition.justification|truncatewords:20 }}"</em>
+                  </div>
+                  {% endif %}
+                  {% if item.candidat_selectionne_info.proposition and item.candidat_selectionne_info.proposition.proposant != profil_utilisateur %}
+                  <div class="detail-row">
+                    <strong>Proposé par :</strong> {{ item.candidat_selectionne_info.proposition.proposant.nom_complet }}
+                    <span class="escaladeur-type-badge">{{ item.candidat_selectionne_info.proposition.get_source_proposition_display }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Évaluation de ma proposition -->
+              {% if proposition.evaluateur or proposition.commentaire_evaluation %}
+              <div class="proposition-section evaluation-section">
+                <div class="section-title">
+                  <i class="fas fa-star"></i>
+                  Évaluation reçue
+                </div>
+                <div class="section-content">
+                  {% if proposition.evaluateur %}
+                  <div class="detail-row">
+                    <strong>Évaluée par :</strong> {{ proposition.evaluateur.nom_complet }}
+                    <span class="escaladeur-type-badge">{{ proposition.evaluateur.get_type_profil_display }}</span>
+                  </div>
+                  {% endif %}
+                  {% if proposition.date_evaluation %}
+                  <div class="detail-row">
+                    <strong>Date d'évaluation :</strong> {{ proposition.date_evaluation|date:"d/m/Y H:i" }}
+                  </div>
+                  {% endif %}
+                  {% if proposition.commentaire_evaluation %}
+                  <div class="evaluation-comment">
+                    <strong>Commentaire :</strong><br>
+                    <em>"{{ proposition.commentaire_evaluation }}"</em>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Réponse du candidat (si applicable) -->
+              {% if item.reponse_candidat %}
+              <div class="proposition-section reponse-section">
+                <div class="section-title">
+                  <i class="fas fa-reply"></i>
+                  Réponse du candidat
+                </div>
+                <div class="section-content">
+                  <div class="detail-row">
+                    <strong>Réponse :</strong> 
+                    <span class="reponse-badge {{ item.reponse_candidat.reponse|lower }}">
+                      {{ item.reponse_candidat.get_reponse_display }}
+                    </span>
+                  </div>
+                  {% if item.reponse_candidat.date_reponse %}
+                  <div class="detail-row">
+                    <strong>Date de réponse :</strong> {{ item.reponse_candidat.date_reponse|date:"d/m/Y H:i" }}
+                  </div>
+                  {% endif %}
+                  {% if item.reponse_candidat.motif_refus %}
+                  <div class="detail-row">
+                    <strong>Motif :</strong> {{ item.reponse_candidat.get_motif_refus_display }}
+                  </div>
+                  {% endif %}
+                  {% if item.reponse_candidat.commentaire_refus %}
+                  <div class="reponse-comment">
+                    <strong>Commentaire :</strong><br>
+                    <em>"{{ item.reponse_candidat.commentaire_refus }}"</em>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if paginator.num_pages > 1 %}
+      <div class="pagination-container">
+        <div class="pagination-info">
+          Page {{ page_obj.number }} sur {{ paginator.num_pages }} 
+          ({{ page_obj.start_index }}-{{ page_obj.end_index }} sur {{ paginator.count }} proposition{{ paginator.count|pluralize }})
+        </div>
+        <div class="pagination-controls">
+          {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          {% endif %}
+          
+          <span class="pagination-current">{{ page_obj.number }}</span>
+          
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-user-plus fa-4x text-muted mb-3"></i>
+        <h4>Aucune proposition trouvée</h4>
+        <p class="text-muted">
+          {% if filtres.recherche or filtres.statut or filtres.urgence or filtres.date_debut or filtres.date_fin %}
+            Aucune proposition ne correspond à vos critères de recherche.
+            <br>Essayez de modifier vos filtres.
+          {% else %}
+            Vous n'avez pas encore proposé de candidats pour des missions d'intérim.
+            <br>Vos propositions apparaîtront ici lorsque vous en ferez.
+          {% endif %}
+        </p>
+        {% if filtres.recherche or filtres.statut or filtres.urgence or filtres.date_debut or filtres.date_fin %}
+        <a href="?" class="btn btn-primary">
+          <i class="fas fa-undo"></i>
+          Effacer les filtres
+        </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Actions disponibles -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-cogs"></i>
+      Actions disponibles
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="actions-grid">
+      <a href="{% url 'index' %}" class="action-card primary">
+        <div class="action-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Tableau de bord</div>
+          <div class="action-description">
+            Retour au tableau de bord principal
+          </div>
+        </div>
+      </a>
+      
+      <a href="{% url 'liste_interim_validation' %}" class="action-card secondary">
+        <div class="action-icon">
+          <i class="fas fa-list"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Demandes en cours</div>
+          <div class="action-description">
+            Voir toutes les demandes d'intérim
+          </div>
+        </div>
+      </a>
+            
+      <button type="button" class="action-card refresh" onclick="window.location.reload()">
+        <div class="action-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="action-content">
+          <div class="action-title">Actualiser</div>
+          <div class="action-description">
+            Recharger les données
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* Styles inspirés de historique_escalades_demande.html avec thème vert pour les propositions */
+.historique-header {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.demande-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #212529;
+  font-size: 1.1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+  gap: 1rem;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #28a745;
+  min-width: 50px;
+  text-align: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #212529;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: #28a745;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* Timeline styles adaptés au thème vert */
+.timeline-container {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #28a745, #dee2e6);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 3rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #28a745;
+  border: 4px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+.timeline-number {
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.timeline-content {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+  border-color: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.1);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.timeline-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.timeline-levels {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.level-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.level-badge.from {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.level-badge.to {
+  background-color: #28a745;
+  color: white;
+}
+
+.timeline-body {
+  space-y: 1rem;
+}
+
+/* Sections spécifiques aux propositions */
+.proposition-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #28a745;
+}
+
+.demande-section {
+  border-left-color: #007bff;
+}
+
+.candidat-section {
+  border-left-color: #17a2b8;
+}
+
+.justification-section {
+  border-left-color: #6f42c1;
+}
+
+.selection-section {
+  border-left-color: #28a745;
+}
+
+.evaluation-section {
+  border-left-color: #ffc107;
+}
+
+.reponse-section {
+  border-left-color: #dc3545;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.section-content {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+.detail-row {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.candidat-main {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.candidat-matricule {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
+.justification-text, .evaluation-comment, .reponse-comment {
+  font-style: italic;
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.competences-text, .experience-text {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Badges spécialisés */
+.success-badge {
+  background: #d4edda;
+  color: #155724;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.score-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.score-badge.excellent {
+  background: #d4edda;
+  color: #155724;
+}
+
+.score-badge.bon {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.score-badge.faible {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.reponse-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.reponse-badge.accepte {
+  background: #d4edda;
+  color: #155724;
+}
+
+.reponse-badge.refuse {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.reponse-badge.en_attente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.escaladeur-type-badge {
+  padding: 0.25rem 0.5rem;
+  background-color: #e9ecef;
+  color: #495057;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-left: 0.5rem;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-current {
+  padding: 0.5rem 0.75rem;
+  background: #28a745;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-card.primary {
+  border-color: #007bff;
+  color: #004085;
+}
+
+.action-card.primary:hover {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.action-card.secondary {
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.action-card.secondary:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.action-card.info {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.action-card.info:hover {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.action-card.refresh {
+  border-color: #28a745;
+  color: #155724;
+}
+
+.action-card.refresh:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Form styles */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.form-input, .form-select {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: 0;
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Autres badges */
+.urgence-badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.urgence-badge.critique {
+  background-color: #dc3545;
+  color: white;
+}
+
+.urgence-badge.elevee {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.urgence-badge.moyenne {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.urgence-badge.normale {
+  background-color: #6c757d;
+  color: white;
+}
+
+.niveau-badge {
+  background-color: #007bff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-primary:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+  color: white;
+}
+
+.btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+  text-decoration: none;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-state h4 {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.empty-state .text-muted {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .historique-header {
+    padding: 1rem 0;
+  }
+  
+  .demande-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .timeline-container {
+    padding-left: 1rem;
+  }
+  
+  .timeline-container::before {
+    left: 15px;
+  }
+  
+  .timeline-marker {
+    left: -1.25rem;
+    width: 30px;
+    height: 30px;
+  }
+  
+  .timeline-number {
+    font-size: 0.9rem;
+  }
+  
+  .timeline-item {
+    padding-left: 2rem;
+  }
+  
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+/* Animations */
+@keyframes propositionAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timeline-item {
+  animation: propositionAppear 0.5s ease-out forwards;
+}
+
+.timeline-item:nth-child(even) .timeline-content {
+  animation-delay: 0.1s;
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📊 Page historique des propositions initialisée');
+  
+  // Animation d'entrée progressive pour les éléments de timeline
+  const timelineItems = document.querySelectorAll('.timeline-item');
+  timelineItems.forEach((item, index) => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(-20px)';
+    
+    setTimeout(() => {
+      item.style.transition = 'all 0.5s ease';
+      item.style.opacity = '1';
+      item.style.transform = 'translateX(0)';
+    }, index * 200);
+  });
+  
+  // Animation d'entrée pour les cartes de statistiques
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'all 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 100 + (index * 100));
+  });
+  
+  // Effet de hover amélioré pour les timeline items
+  const timelineContents = document.querySelectorAll('.timeline-content');
+  timelineContents.forEach(content => {
+    content.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.02)';
+    });
+    
+    content.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  });
+  
+  // Auto-submit du formulaire de filtres avec debounce
+  let filterTimeout;
+  const filterInputs = document.querySelectorAll('#recherche, #statut, #urgence, #date_debut, #date_fin, #ordre');
+  
+  filterInputs.forEach(input => {
+    input.addEventListener('input', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 500); // 500ms de délai
+    });
+    
+    input.addEventListener('change', function() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        if (this.form) {
+          this.form.submit();
+        }
+      }, 200); // Délai plus court pour les selects
+    });
+  });
+  
+  // Compteur animé pour les statistiques
+  const statNumbers = document.querySelectorAll('.stat-number');
+  statNumbers.forEach(number => {
+    const text = number.textContent;
+    const value = parseFloat(text);
+    
+    if (!isNaN(value) && value > 0) {
+      let current = 0;
+      const increment = Math.ceil(value / 20);
+      const suffix = text.replace(value.toString(), '');
+      
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= value) {
+          current = value;
+          clearInterval(timer);
+        }
+        
+        number.textContent = Math.floor(current) + suffix;
+      }, 50);
+    }
+  });
+  
+  console.log('✅ Animations et interactions initialisées');
+});
+
+// Fonction d'export des propositions
+function exportPropositions() {
+  const exportBtn = document.querySelector('[onclick="exportPropositions()"]');
+  if (exportBtn) {
+    const icon = exportBtn.querySelector('i');
+    const originalClass = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    exportBtn.disabled = true;
+  }
+  
+  // Simuler l'export (à remplacer par l'appel réel)
+  setTimeout(() => {
+    // Restaurer le bouton
+    if (exportBtn) {
+      const icon = exportBtn.querySelector('i');
+      icon.className = 'fas fa-file-export';
+      exportBtn.disabled = false;
+    }
+    
+    // Notification de succès
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-success';
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.padding = '1rem';
+    notification.style.borderRadius = '8px';
+    notification.style.backgroundColor = '#d4edda';
+    notification.style.color = '#155724';
+    notification.style.border = '1px solid #c3e6cb';
+    notification.innerHTML = '<i class="fas fa-check-circle"></i> Export terminé avec succès !';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+    
+  }, 2000);
+}
+</script>
+{% endblock extra_js %}

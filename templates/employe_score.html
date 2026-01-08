@@ -1,0 +1,2302 @@
+{% extends "base.html" %}
+{% load static %}
+{% load interim_filters %}
+
+{% block title %}Interim365 - BNI | Score de {{ employe.nom_complet }}{% endblock %}
+
+{% block content %}
+<!-- En-tête Score Employé -->
+<div class="score-header">
+  <div class="score-header-content">
+    <div class="score-avatar">
+      <i class="fas fa-chart-line"></i>
+    </div>
+    <div class="score-info">
+      <h1 class="score-title">
+        Score de {{ employe.nom_complet }}
+        <span class="score-badge score-{{ score_detail.classe_css }}">
+          {{ score_detail.score_final }}/100
+        </span>
+      </h1>
+      <div class="score-meta">
+        <span class="score-demande">
+          <i class="fas fa-briefcase"></i>
+          {{ demande.numero_demande }} - {{ demande.poste.titre }}
+        </span>
+        <span class="score-date">
+          <i class="fas fa-clock"></i>
+          Calculé le {{ score_detail.date_calcul|date:"d/m/Y H:i" }}
+        </span>
+        <span class="score-type">
+          <i class="fas fa-{{ score_detail.calcule_par|yesno:'robot,user' }}"></i>
+          {{ score_detail.calcule_par|yesno:'Automatique,Manuel' }}
+        </span>
+      </div>
+    </div>
+    <div class="score-actions">
+      <a href="{% url 'employe_detail' employe.matricule %}" class="btn btn-outline">
+        <i class="fas fa-user"></i>
+        Voir le profil
+      </a>
+      {% if peut_proposer %}
+        <button type="button" class="btn btn-primary" onclick="proposerCandidat()">
+          <i class="fas fa-user-plus"></i>
+          Proposer ce candidat
+        </button>
+      {% endif %}
+      <button type="button" class="btn btn-outline" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i>
+        Retour
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation par onglets -->
+<div class="tabs-container">
+  <div class="tabs-header">
+    <button class="tab-button active" data-tab="score-detail">
+      <i class="fas fa-chart-pie"></i>
+      Détail du score
+    </button>
+    <button class="tab-button" data-tab="comparaison">
+      <i class="fas fa-users"></i>
+      Comparaison
+      {% if autres_candidats %}
+      <span class="tab-badge">{{ autres_candidats|length }}</span>
+      {% endif %}
+    </button>
+    <button class="tab-button" data-tab="competences">
+      <i class="fas fa-star"></i>
+      Compétences
+      <span class="tab-badge">{{ employe.competences.count }}</span>
+    </button>
+    <button class="tab-button" data-tab="historique">
+      <i class="fas fa-history"></i>
+      Historique
+      {% if missions_historique %}
+      <span class="tab-badge">{{ missions_historique|length }}</span>
+      {% endif %}
+    </button>
+    <button class="tab-button" data-tab="ameliorations">
+      <i class="fas fa-lightbulb"></i>
+      Améliorations
+      {% if ameliorations_possibles %}
+      <span class="tab-badge">{{ ameliorations_possibles|length }}</span>
+      {% endif %}
+    </button>
+  </div>
+
+  <!-- Contenu des onglets -->
+  <div class="tabs-content">
+    
+    <!-- Onglet Détail du score -->
+    <div class="tab-content active" id="tab-score-detail">
+      <div class="card-grid">
+        
+        <!-- Score global et répartition -->
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-trophy"></i>
+              Score global
+            </h2>
+            <div class="score-global-display">
+              <div class="score-circle score-{{ score_detail.classe_css }}">
+                <span class="score-value">{{ score_detail.score_final }}</span>
+                <span class="score-max">/100</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="score-interpretation">
+              {% if score_detail.score_final >= 80 %}
+                <div class="interpretation-badge excellent">
+                  <i class="fas fa-star"></i>
+                  <strong>Excellent candidat</strong>
+                  <p>Profil très adapté à cette mission d'intérim</p>
+                </div>
+              {% elif score_detail.score_final >= 65 %}
+                <div class="interpretation-badge good">
+                  <i class="fas fa-thumbs-up"></i>
+                  <strong>Bon candidat</strong>
+                  <p>Profil adapté avec quelques points d'attention</p>
+                </div>
+              {% elif score_detail.score_final >= 50 %}
+                <div class="interpretation-badge average">
+                  <i class="fas fa-balance-scale"></i>
+                  <strong>Candidat correct</strong>
+                  <p>Profil acceptable mais nécessite une évaluation approfondie</p>
+                </div>
+              {% else %}
+                <div class="interpretation-badge poor">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <strong>Candidat à risque</strong>
+                  <p>Profil peu adapté, mission difficile sans accompagnement</p>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Points forts et faibles -->
+            <div class="score-summary">
+              {% if score_detail.points_forts %}
+              <div class="points-section points-forts">
+                <h4><i class="fas fa-check-circle text-success"></i> Points forts</h4>
+                <ul>
+                  {% for point in score_detail.points_forts %}
+                  <li>{{ point }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+
+              {% if score_detail.points_faibles %}
+              <div class="points-section points-faibles">
+                <h4><i class="fas fa-exclamation-circle text-warning"></i> Points d'attention</h4>
+                <ul>
+                  {% for point in score_detail.points_faibles %}
+                  <li>{{ point }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Répartition par critères -->
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-chart-bar"></i>
+              Répartition par critères
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="criteria-breakdown">
+              {% for critere, score in score_detail.scores_criteres.items %}
+              <div class="criterion-item">
+                <div class="criterion-header">
+                  <span class="criterion-name">{{ critere|title }}</span>
+                  <span class="criterion-score">{{ score }}/100</span>
+                </div>
+                <div class="criterion-bar">
+                  <div class="criterion-progress" style="width: {{ score }}%"></div>
+                </div>
+                {% if score_detail.explications_criteres %}
+                  {% for cle, explications in score_detail.explications_criteres.items %}
+                    {% if cle == critere %}
+                    <div class="criterion-details">
+                      <ul>
+                        {% for explication in explications %}
+                        <li>{{ explication }}</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Bonus et pénalités -->
+        {% if score_detail.bonus or score_detail.penalites %}
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-plus-minus"></i>
+              Bonus et pénalités
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="bonus-penalites-grid">
+              {% if score_detail.bonus %}
+              <div class="bonus-section">
+                <h4 class="text-success">
+                  <i class="fas fa-plus"></i>
+                  Bonus accordés
+                </h4>
+                {% for type_bonus, valeur in score_detail.bonus.items %}
+                  {% if valeur > 0 %}
+                  <div class="bonus-item positive">
+                    <span class="bonus-name">{{ type_bonus|title }}</span>
+                    <span class="bonus-value">+{{ valeur }}</span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {% if score_detail.penalites %}
+              <div class="penalites-section">
+                <h4 class="text-danger">
+                  <i class="fas fa-minus"></i>
+                  Pénalités appliquées
+                </h4>
+                {% for type_penalite, valeur in score_detail.penalites.items %}
+                  {% if valeur > 0 %}
+                  <div class="bonus-item negative">
+                    <span class="bonus-name">{{ type_penalite|title }}</span>
+                    <span class="bonus-value">-{{ valeur }}</span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Disponibilité -->
+        <div class="card-container">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-calendar-check"></i>
+              Disponibilité
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="availability-status">
+              {% if disponibilite_info.disponible %}
+                <div class="status-indicator available">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Disponible</span>
+                </div>
+                <p>{{ disponibilite_info.raison }}</p>
+              {% else %}
+                <div class="status-indicator unavailable">
+                  <i class="fas fa-times-circle"></i>
+                  <span>Non disponible</span>
+                </div>
+                <p>{{ disponibilite_info.raison }}</p>
+              {% endif %}
+            </div>
+
+            {% if demande.date_debut and demande.date_fin %}
+            <div class="mission-period">
+              <h5>Période de mission</h5>
+              <div class="period-display">
+                <i class="fas fa-calendar"></i>
+                Du {{ demande.date_debut|date:"d/m/Y" }} au {{ demande.date_fin|date:"d/m/Y" }}
+                <span class="duration">({{ demande.duree_mission }} jours)</span>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Comparaison -->
+    <div class="tab-content" id="tab-comparaison">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-users"></i>
+            Comparaison avec autres candidats
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if autres_candidats %}
+            <div class="comparison-table-container">
+              <table class="comparison-table">
+                <thead>
+                  <tr>
+                    <th>Rang</th>
+                    <th>Candidat</th>
+                    <th>Score</th>
+                    <th>Département</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Candidat actuel -->
+                  <tr class="current-candidate">
+                    <td>
+                      <span class="rank-badge current">Analysé</span>
+                    </td>
+                    <td>
+                      <div class="candidate-info">
+                        <strong>{{ employe.nom_complet }}</strong>
+                        <small>{{ employe.matricule }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="score-display score-{{ score_detail.classe_css }}">
+                        {{ score_detail.score_final }}
+                      </div>
+                    </td>
+                    <td>{{ employe.departement.nom|default:"Non renseigné" }}</td>
+                    <td>
+                      {% if proposition_existante %}
+                        <span class="source-badge human">
+                          <i class="fas fa-user"></i>
+                          {{ proposition_existante.get_source_proposition_display }}
+                        </span>
+                      {% else %}
+                        <span class="source-badge auto">
+                          <i class="fas fa-robot"></i>
+                          Analyse
+                        </span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  
+                  <!-- Autres candidats -->
+                  {% for candidat_info in autres_candidats %}
+                  <tr>
+                    <td>
+                      <span class="rank-badge">{{ forloop.counter }}</span>
+                    </td>
+                    <td>
+                      <div class="candidate-info">
+                        <strong>{{ candidat_info.employe.nom_complet }}</strong>
+                        <small>{{ candidat_info.employe.matricule }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="score-display score-{% if candidat_info.score >= 80 %}excellent{% elif candidat_info.score >= 65 %}good{% elif candidat_info.score >= 50 %}average{% else %}poor{% endif %}">
+                        {{ candidat_info.score }}
+                      </div>
+                    </td>
+                    <td>{{ candidat_info.employe.departement.nom|default:"Non renseigné" }}</td>
+                    <td>
+                      <span class="source-badge human">
+                        <i class="fas fa-user"></i>
+                        {{ candidat_info.proposition.get_source_proposition_display }}
+                      </span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+              <h4>Aucun autre candidat</h4>
+              <p>Aucun autre candidat n'a été proposé pour cette demande pour le moment.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Compétences -->
+    <div class="tab-content" id="tab-competences">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-star"></i>
+            Analyse des compétences
+          </h2>
+          <div class="adequation-score">
+            <span class="adequation-label">Adéquation au poste:</span>
+            <span class="adequation-value">{{ analyse_competences.score_adequation|floatformat:0 }}%</span>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if analyse_competences.competences_pertinentes %}
+            <div class="competences-section">
+              <h4 class="text-success">
+                <i class="fas fa-check-circle"></i>
+                Compétences pertinentes ({{ analyse_competences.competences_pertinentes|length }})
+              </h4>
+              <div class="competences-grid">
+                {% for comp in analyse_competences.competences_pertinentes %}
+                <div class="competence-card pertinente">
+                  <div class="competence-header">
+                    <span class="competence-name">{{ comp.nom }}</span>
+                    {% if comp.certifie %}
+                      <i class="fas fa-certificate text-warning"></i>
+                    {% endif %}
+                  </div>
+                  <div class="competence-level">
+                    {% for i in "1234"|make_list %}
+                      <i class="fas fa-star {% if forloop.counter <= comp.niveau %}active{% endif %}"></i>
+                    {% endfor %}
+                    <span class="level-text">{{ comp.niveau_display }}</span>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if analyse_competences.competences_supplementaires %}
+            <div class="competences-section">
+              <h4 class="text-info">
+                <i class="fas fa-plus-circle"></i>
+                Compétences supplémentaires ({{ analyse_competences.competences_supplementaires|length }})
+              </h4>
+              <div class="competences-grid">
+                {% for comp in analyse_competences.competences_supplementaires %}
+                <div class="competence-card supplementaire">
+                  <div class="competence-header">
+                    <span class="competence-name">{{ comp.nom }}</span>
+                  </div>
+                  <div class="competence-level">
+                    {% for i in "1234"|make_list %}
+                      <i class="fas fa-star {% if forloop.counter <= comp.niveau %}active{% endif %}"></i>
+                    {% endfor %}
+                    <span class="level-text">{{ comp.niveau_display }}</span>
+                  </div>
+                  {% if comp.recommandation %}
+                    <div class="competence-recommendation">
+                      <small class="text-muted">{{ comp.recommandation }}</small>
+                    </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if analyse_competences.recommandations %}
+            <div class="recommendations-section">
+              <h4 class="text-warning">
+                <i class="fas fa-lightbulb"></i>
+                Recommandations
+              </h4>
+              <ul class="recommendations-list">
+                {% for recommandation in analyse_competences.recommandations %}
+                <li>{{ recommandation }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if not analyse_competences.competences_pertinentes and not analyse_competences.competences_supplementaires %}
+            <div class="empty-state">
+              <i class="fas fa-star-half-alt fa-3x text-muted mb-3"></i>
+              <h4>Aucune compétence renseignée</h4>
+              <p>Le profil de compétences de cet employé est vide ou incomplet.</p>
+              <div class="mt-3">
+                <a href="{% url 'employe_detail' employe.matricule %}" class="btn btn-outline">
+                  <i class="fas fa-edit"></i>
+                  Compléter le profil
+                </a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Historique -->
+    <div class="tab-content" id="tab-historique">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-history"></i>
+            Historique des missions d'intérim
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if missions_historique %}
+            <div class="missions-timeline">
+              {% for mission in missions_historique %}
+              <div class="timeline-item">
+                <div class="timeline-marker {% if mission.evaluation >= 4 %}excellent{% elif mission.evaluation >= 3 %}good{% else %}average{% endif %}">
+                  <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="timeline-content">
+                  <div class="mission-card">
+                    <div class="mission-header">
+                      <h4>{{ mission.poste }}</h4>
+                      <div class="mission-dates">
+                        <i class="fas fa-calendar"></i>
+                        {{ mission.date_debut|date:"d/m/Y" }} - {{ mission.date_fin|date:"d/m/Y" }}
+                        <span class="duration">({{ mission.duree_jours }} jours)</span>
+                      </div>
+                    </div>
+                    <div class="mission-details">
+                      <div class="detail-item">
+                        <i class="fas fa-building"></i>
+                        {{ mission.departement }}
+                      </div>
+                      <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ mission.site }}
+                      </div>
+                      {% if mission.evaluation %}
+                      <div class="detail-item">
+                        <i class="fas fa-star"></i>
+                        Évaluation: {{ mission.evaluation }}/5
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+              <h4>Aucune mission d'intérim</h4>
+              <p>Cet employé n'a encore participé à aucune mission d'intérim.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglet Améliorations -->
+    <div class="tab-content" id="tab-ameliorations">
+      <div class="card-container">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="fas fa-lightbulb"></i>
+            Suggestions d'amélioration
+          </h2>
+        </div>
+        <div class="card-body">
+          {% if ameliorations_possibles %}
+            <div class="ameliorations-list">
+              {% for amelioration in ameliorations_possibles %}
+              <div class="amelioration-card priorite-{{ amelioration.priorite }}">
+                <div class="amelioration-header">
+                  <h4>{{ amelioration.titre }}</h4>
+                  <span class="priorite-badge priorite-{{ amelioration.priorite }}">
+                    {% if amelioration.priorite == 'haute' %}
+                      <i class="fas fa-exclamation"></i> Priorité haute
+                    {% elif amelioration.priorite == 'moyenne' %}
+                      <i class="fas fa-minus"></i> Priorité moyenne
+                    {% else %}
+                      <i class="fas fa-arrow-down"></i> Priorité basse
+                    {% endif %}
+                  </span>
+                </div>
+                <div class="amelioration-content">
+                  <p class="description">{{ amelioration.description }}</p>
+                  <div class="actions-list">
+                    <h5>Actions recommandées:</h5>
+                    <ul>
+                      {% for action in amelioration.actions %}
+                      <li>{{ action }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state positive">
+              <i class="fas fa-thumbs-up fa-3x text-success mb-3"></i>
+              <h4>Profil optimisé</h4>
+              <p>Ce profil est bien optimisé pour l'intérim. Aucune amélioration majeure n'est nécessaire.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modales -->
+<div class="modal fade" id="modalProposerCandidat" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-plus"></i>
+          Proposer {{ employe.nom_complet }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formProposerCandidat">
+          {% csrf_token %}
+          <input type="hidden" name="candidat_id" value="{{ employe.id }}">
+          <input type="hidden" name="demande_id" value="{{ demande.id }}">
+          
+          <div class="form-group">
+            <label for="justification" class="form-label required">Justification de la proposition</label>
+            <textarea name="justification" id="justification" class="form-textarea" rows="4" required 
+                      placeholder="Expliquez pourquoi vous proposez ce candidat pour cette mission..."></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="competences_specifiques" class="form-label">Compétences spécifiques</label>
+            <textarea name="competences_specifiques" id="competences_specifiques" class="form-textarea" rows="3"
+                      placeholder="Détaillez les compétences particulières de ce candidat..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" onclick="soumettreProposition()">
+          <i class="fas fa-paper-plane"></i>
+          Proposer ce candidat
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES POUR LA PAGE SCORE EMPLOYÉ
+================================================================ */
+
+:root {
+  --excellent-color: #28a745;
+  --good-color: #17a2b8;
+  --average-color: #ffc107;
+  --poor-color: #dc3545;
+  --primary: #007bff;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  --light: #f8f9fa;
+  --dark: #343a40;
+}
+
+/* ================================================================
+   EN-TÊTE SCORE
+================================================================ */
+
+.score-header {
+  background: linear-gradient(135deg, var(--primary), #0056b3);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.score-header-content {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  flex-wrap: wrap;
+}
+
+.score-avatar {
+  font-size: 4rem;
+  opacity: 0.9;
+}
+
+.score-info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.score-title {
+  margin: 0 0 1rem 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.score-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: center;
+}
+
+.score-badge.score-excellent { background: var(--excellent-color); }
+.score-badge.score-good { background: var(--good-color); }
+.score-badge.score-average { background: var(--average-color); color: #212529; }
+.score-badge.score-poor { background: var(--poor-color); }
+
+.score-meta {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.score-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  backdrop-filter: blur(10px);
+}
+
+.score-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ================================================================
+   SYSTÈME D'ONGLETS (repris du template employe_detail)
+================================================================ */
+
+.tabs-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.tabs-header {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: white;
+  color: #6c757d;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
+.tab-button:hover {
+  background: var(--light);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: var(--primary);
+  color: white;
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.tab-badge {
+  background: rgba(255,255,255,0.3);
+  color: currentColor;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ================================================================
+   SCORE GLOBAL
+================================================================ */
+
+.score-global-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.score-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.score-circle.score-excellent { background: var(--excellent-color); }
+.score-circle.score-good { background: var(--good-color); }
+.score-circle.score-average { background: var(--average-color); color: #212529; }
+.score-circle.score-poor { background: var(--poor-color); }
+
+.score-value {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.score-interpretation {
+  margin-bottom: 2rem;
+}
+
+.interpretation-badge {
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 2px solid;
+}
+
+.interpretation-badge.excellent {
+  background: #d4edda;
+  border-color: var(--excellent-color);
+  color: #155724;
+}
+
+.interpretation-badge.good {
+  background: #d1ecf1;
+  border-color: var(--good-color);
+  color: #0c5460;
+}
+
+.interpretation-badge.average {
+  background: #fff3cd;
+  border-color: var(--average-color);
+  color: #856404;
+}
+
+.interpretation-badge.poor {
+  background: #f8d7da;
+  border-color: var(--poor-color);
+  color: #721c24;
+}
+
+.interpretation-badge i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.interpretation-badge strong {
+  font-size: 1.2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* ================================================================
+   POINTS FORTS/FAIBLES
+================================================================ */
+
+.score-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.points-section h4 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.points-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.points-section li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.points-section li:last-child {
+  border-bottom: none;
+}
+
+.points-forts li::before {
+  content: "✓";
+  color: var(--success);
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.points-faibles li::before {
+  content: "⚠";
+  color: var(--warning);
+  margin-right: 0.5rem;
+}
+
+/* ================================================================
+   CRITÈRES DE SCORING
+================================================================ */
+
+.criteria-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.criterion-item {
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.criterion-item:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.criterion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.criterion-name {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.criterion-score {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.criterion-bar {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.criterion-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--info));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.criterion-details {
+  margin-top: 0.5rem;
+}
+
+.criterion-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.criterion-details li {
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+/* ================================================================
+   BONUS ET PÉNALITÉS
+================================================================ */
+
+.bonus-penalites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.bonus-section h4,
+.penalites-section h4 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bonus-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+}
+
+.bonus-item.positive {
+  background: #d4edda;
+  border: 1px solid var(--success);
+}
+
+.bonus-item.negative {
+  background: #f8d7da;
+  border: 1px solid var(--danger);
+}
+
+.bonus-name {
+  font-weight: 500;
+}
+
+.bonus-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.bonus-item.positive .bonus-value {
+  color: var(--success);
+}
+
+.bonus-item.negative .bonus-value {
+  color: var(--danger);
+}
+
+/* ================================================================
+   DISPONIBILITÉ
+================================================================ */
+
+.availability-status {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.status-indicator.available {
+  color: var(--success);
+}
+
+.status-indicator.unavailable {
+  color: var(--danger);
+}
+
+.status-indicator i {
+  font-size: 1.5rem;
+}
+
+.mission-period {
+  text-align: left;
+  padding: 1rem;
+  background: var(--light);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary);
+}
+
+.mission-period h5 {
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.period-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.duration {
+  color: var(--secondary);
+  font-weight: normal;
+}
+
+/* ================================================================
+   TABLEAU DE COMPARAISON
+================================================================ */
+
+.comparison-table-container {
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.comparison-table th {
+  background: var(--light);
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.comparison-table tr:hover {
+  background: rgba(0, 123, 255, 0.05);
+}
+
+.comparison-table tr.current-candidate {
+  background: rgba(40, 167, 69, 0.1);
+  border-left: 4px solid var(--success);
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: white;
+  background: var(--secondary);
+}
+
+.rank-badge.current {
+  background: var(--success);
+  width: auto;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+}
+
+.candidate-info strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.candidate-info small {
+  color: var(--secondary);
+  font-family: monospace;
+}
+
+.score-display {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-weight: 700;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.score-display.score-excellent { background: var(--excellent-color); }
+.score-display.score-good { background: var(--good-color); }
+.score-display.score-average { background: var(--average-color); color: #212529; }
+.score-display.score-poor { background: var(--poor-color); }
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.source-badge.human {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.source-badge.auto {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* ================================================================
+   COMPÉTENCES
+================================================================ */
+
+.adequation-score {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.adequation-label {
+  font-weight: 500;
+  color: var(--secondary);
+}
+
+.adequation-value {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--primary);
+}
+
+.competences-section {
+  margin-bottom: 2rem;
+}
+
+.competences-section h4 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.competences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.competence-card {
+  padding: 1rem;
+  border: 2px solid;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.competence-card.pertinente {
+  border-color: var(--success);
+  background: rgba(40, 167, 69, 0.05);
+}
+
+.competence-card.supplementaire {
+  border-color: var(--info);
+  background: rgba(23, 162, 184, 0.05);
+}
+
+.competence-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.competence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.competence-name {
+  font-weight: 600;
+  flex: 1;
+}
+
+.competence-level {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.competence-level .fas.fa-star {
+  color: #e9ecef;
+  font-size: 0.75rem;
+}
+
+.competence-level .fas.fa-star.active {
+  color: #ffc107;
+}
+
+.level-text {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-left: 0.5rem;
+}
+
+.competence-recommendation {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 4px;
+}
+
+.recommendations-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 4px solid var(--warning);
+  border-radius: 4px;
+}
+
+.recommendations-list {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.recommendations-list li {
+  margin-bottom: 0.5rem;
+}
+
+/* ================================================================
+   HISTORIQUE DES MISSIONS
+================================================================ */
+
+.missions-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.missions-timeline::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: white;
+  z-index: 2;
+}
+
+.timeline-marker.excellent { background: var(--excellent-color); }
+.timeline-marker.good { background: var(--good-color); }
+.timeline-marker.average { background: var(--average-color); }
+
+.timeline-content {
+  margin-left: 1rem;
+}
+
+.mission-card {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: white;
+  transition: box-shadow 0.2s ease;
+}
+
+.mission-card:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.mission-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+
+.mission-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+
+.mission-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+/* ================================================================
+   AMÉLIORATIONS
+================================================================ */
+
+.ameliorations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.amelioration-card {
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.amelioration-card.priorite-haute {
+  border-color: var(--danger);
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.amelioration-card.priorite-moyenne {
+  border-color: var(--warning);
+  background: rgba(255, 193, 7, 0.05);
+}
+
+.amelioration-card.priorite-basse {
+  border-color: var(--info);
+  background: rgba(23, 162, 184, 0.05);
+}
+
+.amelioration-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.amelioration-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.amelioration-header h4 {
+  margin: 0;
+  color: var(--dark);
+}
+
+.priorite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.priorite-badge.priorite-haute {
+  background: var(--danger);
+  color: white;
+}
+
+.priorite-badge.priorite-moyenne {
+  background: var(--warning);
+  color: #212529;
+}
+
+.priorite-badge.priorite-basse {
+  background: var(--info);
+  color: white;
+}
+
+.amelioration-content .description {
+  margin-bottom: 1rem;
+  color: var(--secondary);
+}
+
+.actions-list h5 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: var(--dark);
+}
+
+.actions-list ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.actions-list li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+/* ================================================================
+   ÉTATS VIDES
+================================================================ */
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--secondary);
+}
+
+.empty-state.positive {
+  color: var(--success);
+}
+
+.empty-state i {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+  margin-bottom: 1rem;
+  color: inherit;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+/* ================================================================
+   CARTES ET GRILLES
+================================================================ */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.card-container:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* ================================================================
+   BOUTONS ET INTERACTIONS
+================================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  color: var(--secondary);
+  background-color: transparent;
+  border-color: var(--secondary);
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: var(--secondary);
+}
+
+/* ================================================================
+   MODALES
+================================================================ */
+
+.modal {
+  z-index: 1050;
+}
+
+.modal-dialog {
+  max-width: 600px;
+}
+
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--dark);
+}
+
+.form-label.required::after {
+  content: " *";
+  color: var(--danger);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: 0;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 992px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .competences-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .score-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .bonus-penalites-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .score-header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .score-title {
+    font-size: 1.8rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .score-meta {
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .score-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .tabs-header {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .tab-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .mission-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .mission-details {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .amelioration-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .score-header {
+    padding: 1.5rem 0;
+  }
+  
+  .score-title {
+    font-size: 1.5rem;
+  }
+  
+  .card-header,
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .missions-timeline {
+    padding-left: 1.5rem;
+  }
+  
+  .timeline-marker {
+    left: -1.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .timeline-content {
+    margin-left: 0.75rem;
+  }
+  
+  .comparison-table th,
+  .comparison-table td {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content.active {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.score-circle:hover {
+  animation: pulse 0.6s ease;
+}
+
+/* ================================================================
+   LOADING ET ÉTATS
+================================================================ */
+
+.loading-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ================================================================
+   UTILITAIRES
+================================================================ */
+
+.text-success { color: var(--success) !important; }
+.text-danger { color: var(--danger) !important; }
+.text-warning { color: var(--warning) !important; }
+.text-info { color: var(--info) !important; }
+.text-muted { color: var(--secondary) !important; }
+
+.mb-3 { margin-bottom: 1rem !important; }
+.mt-3 { margin-top: 1rem !important; }
+
+.d-flex { display: flex !important; }
+.align-items-center { align-items: center !important; }
+.justify-content-center { justify-content: center !important; }
+.gap-2 { gap: 0.5rem !important; }
+
+.fw-bold { font-weight: 700 !important; }
+.fw-semibold { font-weight: 600 !important; }
+
+/* ================================================================
+   MODE IMPRESSION
+================================================================ */
+
+@media print {
+  .score-actions,
+  .tab-button,
+  .btn,
+  .modal {
+    display: none !important;
+  }
+  
+  .score-header {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  .tab-content {
+    display: block !important;
+  }
+  
+  .card-container {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Initialisation de la page score employé');
+
+  // ================================================================
+  // GESTION DES ONGLETS
+  // ================================================================
+
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  function switchTab(targetTabId) {
+    // Désactiver tous les onglets
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+
+    // Activer l'onglet cible
+    const targetButton = document.querySelector(`[data-tab="${targetTabId}"]`);
+    const targetContent = document.getElementById(`tab-${targetTabId}`);
+
+    if (targetButton && targetContent) {
+      targetButton.classList.add('active');
+      targetContent.classList.add('active');
+      
+      // Sauvegarder l'onglet actif
+      localStorage.setItem('activeScoreTab', targetTabId);
+      
+      console.log(`📑 Onglet activé: ${targetTabId}`);
+    }
+  }
+
+  // Event listeners pour les boutons d'onglets
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const tabId = this.dataset.tab;
+      switchTab(tabId);
+    });
+  });
+
+  // Restaurer l'onglet actif
+  const savedTab = localStorage.getItem('activeScoreTab');
+  if (savedTab && document.getElementById(`tab-${savedTab}`)) {
+    switchTab(savedTab);
+  }
+
+  // ================================================================
+  // PROPOSITION DE CANDIDAT
+  // ================================================================
+
+  window.proposerCandidat = function() {
+    const modal = document.getElementById('modalProposerCandidat');
+    if (modal && typeof bootstrap !== 'undefined') {
+      const bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
+      
+      // Focus sur la justification
+      setTimeout(() => {
+        const justificationInput = document.getElementById('justification');
+        if (justificationInput) {
+          justificationInput.focus();
+        }
+      }, 500);
+    }
+  };
+
+  window.soumettreProposition = async function() {
+    const form = document.getElementById('formProposerCandidat');
+    const justification = document.getElementById('justification').value.trim();
+    
+    if (!justification || justification.length < 10) {
+      alert('Veuillez saisir une justification d\'au moins 10 caractères.');
+      return;
+    }
+
+    const submitButton = document.querySelector('#modalProposerCandidat .btn-primary');
+    const originalText = submitButton.innerHTML;
+    
+    // Afficher le loading
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proposition en cours...';
+
+    try {
+      const formData = new FormData(form);
+      formData.append('action', 'proposer_candidat');
+
+      const response = await fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success) {
+          // Fermer la modale
+          const modal = bootstrap.Modal.getInstance(document.getElementById('modalProposerCandidat'));
+          if (modal) modal.hide();
+          
+          // Afficher un message de succès
+          showNotification('Candidat proposé avec succès !', 'success');
+          
+          // Optionnel: rediriger vers la page de validation
+          setTimeout(() => {
+            window.location.href = result.redirect_url || `{% url 'interim_validation' demande.id %}`;
+          }, 2000);
+        } else {
+          throw new Error(result.message || 'Erreur lors de la proposition');
+        }
+      } else {
+        throw new Error('Erreur de communication avec le serveur');
+      }
+
+    } catch (error) {
+      console.error('Erreur proposition candidat:', error);
+      showNotification('Erreur lors de la proposition: ' + error.message, 'error');
+    } finally {
+      // Restaurer le bouton
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalText;
+    }
+  };
+
+  // ================================================================
+  // ANIMATIONS DES BARRES DE PROGRESSION
+  // ================================================================
+
+  function animateProgressBars() {
+    const progressBars = document.querySelectorAll('.criterion-progress');
+    
+    progressBars.forEach(bar => {
+      const width = bar.style.width;
+      bar.style.width = '0%';
+      
+      setTimeout(() => {
+        bar.style.width = width;
+      }, 100);
+    });
+  }
+
+  // Observer pour déclencher les animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const progressObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateProgressBars();
+        progressObserver.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  const criteriaSection = document.querySelector('.criteria-breakdown');
+  if (criteriaSection) {
+    progressObserver.observe(criteriaSection);
+  }
+
+  // ================================================================
+  // INTERACTIONS TABLEAU DE COMPARAISON
+  // ================================================================
+
+  const comparisonTable = document.querySelector('.comparison-table');
+  if (comparisonTable) {
+    // Surligner la ligne au survol
+    const rows = comparisonTable.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      row.addEventListener('mouseenter', function() {
+        if (!this.classList.contains('current-candidate')) {
+          this.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+        }
+      });
+      
+      row.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('current-candidate')) {
+          this.style.backgroundColor = '';
+        }
+      });
+    });
+  }
+
+  // ================================================================
+  // TOOLTIP POUR LES SCORES
+  // ================================================================
+
+  const scoreElements = document.querySelectorAll('.score-display, .score-circle');
+  
+  scoreElements.forEach(element => {
+    element.addEventListener('mouseenter', function() {
+      const score = this.textContent.trim();
+      let tooltip = '';
+      
+      const scoreValue = parseInt(score);
+      if (scoreValue >= 80) {
+        tooltip = 'Excellent candidat - Très adapté';
+      } else if (scoreValue >= 65) {
+        tooltip = 'Bon candidat - Bien adapté';
+      } else if (scoreValue >= 50) {
+        tooltip = 'Candidat correct - Adaptation moyenne';
+      } else {
+        tooltip = 'Candidat à risque - Peu adapté';
+      }
+      
+      this.title = tooltip;
+    });
+  });
+
+  // ================================================================
+  // GESTION DES FORMULAIRES
+  // ================================================================
+
+  // Auto-resize des textareas
+  const textareas = document.querySelectorAll('.form-textarea');
+  textareas.forEach(textarea => {
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+  });
+
+  // Validation en temps réel
+  const justificationInput = document.getElementById('justification');
+  if (justificationInput) {
+    justificationInput.addEventListener('input', function() {
+      const submitButton = document.querySelector('#modalProposerCandidat .btn-primary');
+      
+      if (this.value.trim().length >= 10) {
+        submitButton.disabled = false;
+        this.style.borderColor = '#28a745';
+      } else {
+        submitButton.disabled = true;
+        this.style.borderColor = '#dc3545';
+      }
+    });
+  }
+
+  // ================================================================
+  // RACCOURCIS CLAVIER
+  // ================================================================
+
+  document.addEventListener('keydown', function(event) {
+    // Ignore si un champ est en focus
+    if (document.activeElement.tagName === 'INPUT' || 
+        document.activeElement.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    switch(event.key) {
+      case '1':
+        switchTab('score-detail');
+        break;
+      case '2':
+        switchTab('comparaison');
+        break;
+      case '3':
+        switchTab('competences');
+        break;
+      case '4':
+        switchTab('historique');
+        break;
+      case '5':
+        switchTab('ameliorations');
+        break;
+      case 'p':
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          window.print();
+        }
+        break;
+      case 'Escape':
+        // Fermer les modales
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+          const modalInstance = bootstrap.Modal.getInstance(modal);
+          if (modalInstance) modalInstance.hide();
+        });
+        break;
+    }
+  });
+
+  // ================================================================
+  // FONCTIONS UTILITAIRES
+  // ================================================================
+
+  window.showNotification = function(message, type = 'info') {
+    // Créer une notification toast
+    const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+    
+    const toastId = 'toast_' + Date.now();
+    const bgClass = {
+      'success': 'bg-success',
+      'error': 'bg-danger', 
+      'warning': 'bg-warning',
+      'info': 'bg-info'
+    }[type] || 'bg-info';
+    
+    const icon = {
+      'success': 'fa-check-circle',
+      'error': 'fa-exclamation-circle',
+      'warning': 'fa-exclamation-triangle', 
+      'info': 'fa-info-circle'
+    }[type] || 'fa-info-circle';
+    
+    const toastHtml = `
+      <div class="toast ${bgClass} text-white" id="${toastId}" role="alert" data-bs-autohide="true" data-bs-delay="5000">
+        <div class="toast-header ${bgClass} text-white border-0">
+          <i class="fas ${icon} me-2"></i>
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+      </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    if (toastElement && typeof bootstrap !== 'undefined') {
+      const toast = new bootstrap.Toast(toastElement);
+      toast.show();
+      
+      toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+      });
+    }
+  };
+
+  function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '11';
+    document.body.appendChild(container);
+    return container;
+  }
+
+  // ================================================================
+  // GESTION D'ERREURS
+  // ================================================================
+
+  window.addEventListener('error', function(event) {
+    console.error('❌ Erreur JavaScript:', event.error);
+  });
+
+  // ================================================================
+  // INITIALISATION FINALE
+  // ================================================================
+
+  // Animer l'entrée de la page
+  document.body.style.opacity = '0';
+  setTimeout(() => {
+    document.body.style.transition = 'opacity 0.3s ease';
+    document.body.style.opacity = '1';
+  }, 100);
+
+  // Déclencher les animations initiales
+  setTimeout(animateProgressBars, 500);
+
+  console.log('✅ Page score employé initialisée avec succès');
+  console.log('📌 Raccourcis disponibles:');
+  console.log('   • 1-5: Changer d\'onglet');
+  console.log('   • Ctrl+P: Imprimer');
+  console.log('   • Échap: Fermer modales');
+});
+</script>
+{% endblock extra_js %}

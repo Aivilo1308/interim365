@@ -1,0 +1,696 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Extraction des Absences{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- En-tête -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title">
+        <i class="fas fa-calendar-minus text-primary me-2"></i>
+        Extraction des Congés et Absences
+      </h1>
+      <p class="text-muted mb-0">
+        Période du {{ date_debut|date:"d/m/Y" }} au {{ date_fin|date:"d/m/Y" }}
+      </p>
+    </div>
+    
+    <!-- Boutons d'export -->
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="fas fa-download me-2"></i> Exporter
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" href="{% url 'absences_extraction_export' 'xlsx' %}?{{ request.GET.urlencode }}">
+            <i class="fas fa-file-excel text-success me-2"></i> Excel (.xlsx)
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'absences_extraction_export' 'csv' %}?{{ request.GET.urlencode }}">
+            <i class="fas fa-file-csv text-info me-2"></i> CSV (.csv)
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'absences_extraction_export' 'pdf' %}?{{ request.GET.urlencode }}">
+            <i class="fas fa-file-pdf text-danger me-2"></i> PDF (.pdf)
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Filtres -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h6 class="mb-0">
+        <i class="fas fa-filter me-2"></i> Filtres
+      </h6>
+    </div>
+    <div class="card-body">
+      <form method="GET" id="formFiltres">
+        <div class="row g-3">
+          <!-- Année (zone de saisie) -->
+          <div class="col-md-1">
+            <label for="annee" class="form-label">
+              <i class="fas fa-calendar me-1"></i> Année
+            </label>
+            <input type="number" 
+                   class="form-control" 
+                   id="annee" 
+                   name="annee" 
+                   value="{{ annee_selectionnee }}"
+                   min="2000" 
+                   max="2100"
+                   placeholder="{{ annee_courante }}"
+                   onchange="updateDatesForYear(this.value)">
+          </div>
+          
+          <!-- Période -->
+          <div class="col-md-2">
+            <label for="date_debut" class="form-label">
+              <i class="fas fa-calendar-alt me-1"></i> Date début
+            </label>
+            <input type="date" 
+                   class="form-control" 
+                   id="date_debut" 
+                   name="date_debut" 
+                   value="{{ date_debut|date:'Y-m-d' }}">
+          </div>
+          
+          <div class="col-md-2">
+            <label for="date_fin" class="form-label">
+              <i class="fas fa-calendar-alt me-1"></i> Date fin
+            </label>
+            <input type="date" 
+                   class="form-control" 
+                   id="date_fin" 
+                   name="date_fin" 
+                   value="{{ date_fin|date:'Y-m-d' }}">
+          </div>
+          
+          <!-- Département -->
+          <div class="col-md-2">
+            <label for="departement" class="form-label">
+              <i class="fas fa-building me-1"></i> Département
+            </label>
+            <select name="departement" id="departement" class="form-select">
+              <option value="">Tous</option>
+              {% for dept in departements %}
+              <option value="{{ dept.id }}" {% if departement_id == dept.id|stringformat:"s" %}selected{% endif %}>
+                {{ dept.nom }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <!-- Site -->
+          <div class="col-md-2">
+            <label for="site" class="form-label">
+              <i class="fas fa-map-marker-alt me-1"></i> Site
+            </label>
+            <select name="site" id="site" class="form-select">
+              <option value="">Tous</option>
+              {% for s in sites %}
+              <option value="{{ s.id }}" {% if site_id == s.id|stringformat:"s" %}selected{% endif %}>
+                {{ s.nom }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <!-- Matricule / Nom -->
+          <div class="col-md-2">
+            <label for="matricule" class="form-label">
+              <i class="fas fa-search me-1"></i> Matricule / Nom
+            </label>
+            <input type="text" 
+                   class="form-control" 
+                   id="matricule" 
+                   name="matricule" 
+                   value="{{ matricule }}"
+                   placeholder="Rechercher...">
+          </div>
+        </div>
+        
+        <div class="row g-3 mt-1">
+          <!-- Type d'absence -->
+          <div class="col-md-2">
+            <label for="type_absence" class="form-label">
+              <i class="fas fa-tag me-1"></i> Type absence
+            </label>
+            <select name="type_absence" id="type_absence" class="form-select">
+              <option value="">Tous</option>
+              {% for type in types_absence %}
+              <option value="{{ type }}" {% if type_absence == type %}selected{% endif %}>
+                {{ type }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <!-- Tri -->
+          <div class="col-md-3">
+            <label for="tri" class="form-label">
+              <i class="fas fa-sort me-1"></i> Trier par
+            </label>
+            <select name="tri" id="tri" class="form-select">
+              {% for code, label in options_tri %}
+              <option value="{{ code }}" {% if tri == code %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <!-- Boutons -->
+          <div class="col-md-7 d-flex align-items-end justify-content-end gap-2">
+            <a href="{% url 'absences_extraction_liste' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-undo me-1"></i> Réinitialiser
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search me-1"></i> Filtrer
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Statistiques -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-white-50 small">Total Absences</div>
+              <div class="fs-4 fw-bold">{{ stats.total_absences }}</div>
+            </div>
+            <i class="fas fa-calendar-minus fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card bg-info text-white">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-white-50 small">Total Jours</div>
+              <div class="fs-4 fw-bold">{{ stats.total_jours }}</div>
+            </div>
+            <i class="fas fa-clock fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="small">Absences avec fériés</div>
+              <div class="fs-4 fw-bold">{{ stats.absences_avec_feries }}</div>
+            </div>
+            <i class="fas fa-star fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-white-50 small">Fériés inclus</div>
+              <div class="fs-4 fw-bold">{{ stats.total_feries_inclus }}</div>
+            </div>
+            <i class="fas fa-calendar-check fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tableau -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0" id="tableAbsences">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 100px;">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'tri' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}tri={% if tri == 'matricule_asc' %}matricule_desc{% else %}matricule_asc{% endif %}" 
+                   class="text-white text-decoration-none">
+                  MATRICULE
+                  {% if tri == 'matricule_asc' %}<i class="fas fa-sort-up ms-1"></i>
+                  {% elif tri == 'matricule_desc' %}<i class="fas fa-sort-down ms-1"></i>
+                  {% else %}<i class="fas fa-sort ms-1 opacity-50"></i>{% endif %}
+                </a>
+              </th>
+              <th style="width: 130px;">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'tri' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}tri={% if tri == 'nom_asc' %}nom_desc{% else %}nom_asc{% endif %}" 
+                   class="text-white text-decoration-none">
+                  NOM
+                  {% if tri == 'nom_asc' %}<i class="fas fa-sort-up ms-1"></i>
+                  {% elif tri == 'nom_desc' %}<i class="fas fa-sort-down ms-1"></i>
+                  {% else %}<i class="fas fa-sort ms-1 opacity-50"></i>{% endif %}
+                </a>
+              </th>
+              <th style="width: 130px;">PRÉNOM</th>
+              <th style="width: 110px;">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'tri' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}tri={% if tri == 'date_asc' %}date_desc{% else %}date_asc{% endif %}" 
+                   class="text-white text-decoration-none">
+                  DATE DÉPART
+                  {% if tri == 'date_asc' %}<i class="fas fa-sort-up ms-1"></i>
+                  {% elif tri == 'date_desc' %}<i class="fas fa-sort-down ms-1"></i>
+                  {% else %}<i class="fas fa-sort ms-1 opacity-50"></i>{% endif %}
+                </a>
+              </th>
+              <th style="width: 110px;">DATE FIN</th>
+              <th style="width: 150px;">STATUT</th>
+              <th style="width: 100px;" class="text-center">NB JOURS</th>
+              <th>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'tri' and key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}tri={% if tri == 'motif_asc' %}motif_desc{% else %}motif_asc{% endif %}" 
+                   class="text-white text-decoration-none">
+                  MOTIF DE L'ABSENCE
+                  {% if tri == 'motif_asc' %}<i class="fas fa-sort-up ms-1"></i>
+                  {% elif tri == 'motif_desc' %}<i class="fas fa-sort-down ms-1"></i>
+                  {% else %}<i class="fas fa-sort ms-1 opacity-50"></i>{% endif %}
+                </a>
+              </th>
+              <th style="width: 220px;">FÉRIÉS INCLUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in absences %}
+            <tr class="{% if item.nb_feries > 0 %}table-warning{% endif %}">
+              <!-- Matricule -->
+              <td>
+                <span class="badge bg-secondary">{{ item.absence.utilisateur.matricule }}</span>
+              </td>
+              
+              <!-- Nom -->
+              <td class="fw-semibold">
+                {% if item.absence.utilisateur.user %}
+                {{ item.absence.utilisateur.user.last_name|upper }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              
+              <!-- Prénom -->
+              <td>
+                {% if item.absence.utilisateur.user %}
+                {{ item.absence.utilisateur.user.first_name|title }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              
+              <!-- Date début -->
+              <td>
+                <i class="fas fa-calendar text-muted me-1"></i>
+                {{ item.absence.date_debut|date:"d/m/Y" }}
+              </td>
+              
+              <!-- Date fin -->
+              <td>
+                <i class="fas fa-calendar text-muted me-1"></i>
+                {{ item.absence.date_fin|date:"d/m/Y" }}
+              </td>
+              
+              <!-- Statut -->
+              <td>
+                {% if item.absence.est_en_cours %}
+                <span class="badge bg-success">
+                  <i class="fas fa-check-circle me-1"></i> En cours
+                </span>
+                {% elif item.absence.date_fin < today %}
+                <span class="badge bg-secondary">
+                  <i class="fas fa-history me-1"></i> Terminée
+                </span>
+                {% else %}
+                <span class="badge bg-info">
+                  <i class="fas fa-hourglass-half me-1"></i> À venir
+                </span>
+                {% endif %}
+              </td>
+              
+              <!-- Nombre de jours -->
+              <td class="text-center">
+                <span class="badge bg-primary rounded-pill fs-6">
+                  {{ item.absence.duree_jours }}
+                </span>
+              </td>
+              
+              <!-- Motif -->
+              <td>
+                <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ item.absence.type_absence }}">
+                  {{ item.absence.type_absence }}
+                </span>
+              </td>
+              
+              <!-- Fériés -->
+              <td>
+                {% if item.nb_feries > 0 %}
+                <div>
+                  <span class="badge bg-warning text-dark">
+                    <i class="fas fa-star me-1"></i>
+                    {{ item.nb_feries }} férié{% if item.nb_feries > 1 %}s{% endif %}
+                  </span>
+                </div>
+                <div class="feries-details mt-1">
+                  {% for f in item.feries %}
+                  <div class="ferie-item">
+                    <span class="ferie-date">{{ f.date|date:"d/m" }}</span> {{ f.nom }}
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="fas fa-inbox fa-3x mb-3"></i>
+                  <p class="mb-0">Aucune absence trouvée pour cette période</p>
+                  <small>Modifiez les filtres pour voir d'autres résultats</small>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="card-footer bg-light">
+      <div class="row align-items-center">
+        <!-- Info résultats -->
+        <div class="col-md-4">
+          <small class="text-muted">
+            Affichage de 
+            <strong>{{ page_obj.start_index }}</strong> à 
+            <strong>{{ page_obj.end_index }}</strong> sur 
+            <strong>{{ page_obj.paginator.count }}</strong> résultats
+          </small>
+        </div>
+        
+        <!-- Navigation pages -->
+        <div class="col-md-4">
+          {% if page_obj.has_other_pages %}
+          <nav aria-label="Pagination">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+              <!-- Première page -->
+              {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Première page">
+                  <i class="fas fa-angle-double-left"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Page précédente">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% endif %}
+              
+              <!-- Numéros de pages -->
+              {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+                {% endif %}
+              {% endfor %}
+              
+              <!-- Dernière page -->
+              {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Page suivante">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Dernière page">
+                  <i class="fas fa-angle-double-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% else %}
+          <div class="text-center">
+            <small class="text-muted">Page 1 sur 1</small>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Éléments par page -->
+        <div class="col-md-4 text-end">
+          <form method="GET" class="d-inline-flex align-items-center gap-2" id="formPerPage">
+            <label for="per_page" class="form-label mb-0 small text-muted">Afficher</label>
+            <select name="per_page" id="per_page" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+              {% for opt in options_per_page %}
+              <option value="{{ opt }}" {% if per_page == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+            <span class="small text-muted">par page</span>
+            <!-- Conserver les autres paramètres -->
+            {% for key, value in request.GET.items %}
+              {% if key != 'per_page' and key != 'page' %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}">
+              {% endif %}
+            {% endfor %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Légende -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-body py-2">
+      <div class="d-flex flex-wrap justify-content-center gap-4 small">
+        <span>
+          <span class="badge bg-warning text-dark me-1"><i class="fas fa-star"></i></span>
+          Ligne avec jours fériés inclus
+        </span>
+        <span>
+          <span class="badge bg-success me-1"><i class="fas fa-check-circle"></i></span>
+          Absence en cours
+        </span>
+        <span>
+          <span class="badge bg-info me-1"><i class="fas fa-hourglass-half"></i></span>
+          Absence à venir
+        </span>
+        <span>
+          <span class="badge bg-secondary me-1"><i class="fas fa-history"></i></span>
+          Absence terminée
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.page-header {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.table th a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table th a:hover {
+  opacity: 0.8;
+}
+
+.table th a i {
+  font-size: 0.7rem;
+}
+
+.table td {
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+.table-warning {
+  background-color: rgba(255, 193, 7, 0.15) !important;
+}
+
+/* Détails des fériés en petits caractères */
+.feries-details {
+  font-size: 0.7rem;
+  line-height: 1.3;
+  color: #6c757d;
+  max-width: 200px;
+}
+
+.ferie-item {
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ferie-date {
+  font-weight: 600;
+  color: #856404;
+  margin-right: 3px;
+}
+
+.card {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.badge {
+  font-weight: 500;
+}
+
+/* Stats cards */
+.card.bg-primary,
+.card.bg-info,
+.card.bg-warning,
+.card.bg-success {
+  border-radius: 0.75rem;
+}
+
+/* Zone de saisie année */
+#annee {
+  text-align: center;
+  font-weight: 600;
+}
+
+#annee::-webkit-inner-spin-button,
+#annee::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+  }
+  
+  /* Pagination responsive */
+  .card-footer .row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .card-footer .col-md-4 {
+    text-align: center !important;
+  }
+}
+
+/* Pagination styles */
+.pagination .page-link {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+}
+
+/* Animation de chargement pour les exports */
+.btn-export-loading {
+  pointer-events: none;
+}
+
+.btn-export-loading .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialiser les tooltips Bootstrap
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+  
+  // Initialiser les popovers Bootstrap
+  var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+  popoverTriggerList.map(function (popoverTriggerEl) {
+    return new bootstrap.Popover(popoverTriggerEl);
+  });
+});
+
+// Fonction pour mettre à jour les dates quand on change l'année
+function updateDatesForYear(year) {
+  if (!year || year < 2000 || year > 2100) return;
+  
+  const dateDebut = document.getElementById('date_debut');
+  const dateFin = document.getElementById('date_fin');
+  
+  // Mettre à jour les dates pour couvrir toute l'année sélectionnée
+  dateDebut.value = year + '-01-01';
+  dateFin.value = year + '-12-31';
+}
+</script>
+{% endblock %}

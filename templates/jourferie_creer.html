@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajouter un Jour Férié Interne{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'jourferie_liste' %}">
+          <i class="fas fa-calendar-alt me-1"></i> Jours Fériés
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Ajouter un férié interne</li>
+    </ol>
+  </nav>
+  
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <h4 class="mb-0">
+            <i class="fas fa-plus-circle me-2"></i>
+            Ajouter un Jour Férié Interne
+          </h4>
+        </div>
+        
+        <div class="card-body p-4">
+          <!-- Alerte d'information -->
+          <div class="alert alert-info mb-4">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+              <div>
+                <strong>Jour férié interne</strong>
+                <p class="mb-0">
+                  Les jours fériés internes sont spécifiques à votre organisation 
+                  (ex: anniversaire de l'entreprise, journée de team building, etc.).
+                  Ils ne sont pas officiels mais seront pris en compte dans les calculs de présence.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Formulaire -->
+          <form method="POST" id="formCreerFerie">
+            {% csrf_token %}
+            
+            <!-- Nom du jour férié -->
+            <div class="mb-4">
+              <label for="nom" class="form-label fw-semibold">
+                <i class="fas fa-tag me-1 text-primary"></i>
+                Nom du jour férié <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control form-control-lg" 
+                     id="nom" 
+                     name="nom" 
+                     placeholder="Ex: Anniversaire de l'entreprise"
+                     maxlength="150"
+                     required>
+              <div class="form-text">
+                Donnez un nom clair et descriptif au jour férié.
+              </div>
+            </div>
+            
+            <!-- Date -->
+            <div class="mb-4">
+              <label for="date_ferie" class="form-label fw-semibold">
+                <i class="fas fa-calendar me-1 text-primary"></i>
+                Date <span class="text-danger">*</span>
+              </label>
+              <input type="date" 
+                     class="form-control form-control-lg" 
+                     id="date_ferie" 
+                     name="date_ferie" 
+                     min="{{ today }}"
+                     required>
+              <div class="form-text">
+                Sélectionnez la date du jour férié.
+              </div>
+            </div>
+            
+            <!-- Aperçu de la date -->
+            <div class="mb-4" id="apercu-date" style="display: none;">
+              <div class="alert alert-secondary">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-calendar-day fa-2x me-3 text-primary"></i>
+                  <div>
+                    <strong id="apercu-jour"></strong>
+                    <br>
+                    <span id="apercu-date-complete" class="text-muted"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-4">
+              <label for="description" class="form-label fw-semibold">
+                <i class="fas fa-align-left me-1 text-primary"></i>
+                Description (optionnel)
+              </label>
+              <textarea class="form-control" 
+                        id="description" 
+                        name="description" 
+                        rows="3"
+                        placeholder="Décrivez brièvement ce jour férié..."></textarea>
+            </div>
+            
+            <!-- Jour payé -->
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="est_paye" 
+                       name="est_paye" 
+                       checked>
+                <label class="form-check-label fw-semibold" for="est_paye">
+                  <i class="fas fa-money-bill-wave me-1 text-success"></i>
+                  Jour chômé et payé
+                </label>
+              </div>
+              <div class="form-text ms-4">
+                Si coché, ce jour sera comptabilisé comme un jour de travail payé.
+              </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <!-- Boutons -->
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'jourferie_liste' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-times me-2"></i>
+                Annuler
+              </a>
+              <button type="submit" class="btn btn-primary btn-lg" id="btnSubmit">
+                <i class="fas fa-save me-2"></i>
+                Créer le jour férié
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Aide -->
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-question-circle me-2"></i> Aide
+          </h6>
+        </div>
+        <div class="card-body">
+          <h6>Exemples de jours fériés internes :</h6>
+          <ul class="mb-0">
+            <li>Anniversaire de création de l'entreprise</li>
+            <li>Journée de team building annuelle</li>
+            <li>Fermeture exceptionnelle (inventaire, travaux...)</li>
+            <li>Pont accordé par la direction</li>
+            <li>Journée de formation collective</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control-lg {
+  font-size: 1rem;
+}
+
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.card-header h4 {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .d-flex.justify-content-between .btn {
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dateInput = document.getElementById('date_ferie');
+  const apercuDiv = document.getElementById('apercu-date');
+  const apercuJour = document.getElementById('apercu-jour');
+  const apercuDateComplete = document.getElementById('apercu-date-complete');
+  
+  const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 
+                'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  
+  // Mise à jour de l'aperçu de la date
+  dateInput.addEventListener('change', function() {
+    if (this.value) {
+      const date = new Date(this.value + 'T00:00:00');
+      const jourSemaine = joursSemaine[date.getDay()];
+      const jour = date.getDate();
+      const moisNom = mois[date.getMonth()];
+      const annee = date.getFullYear();
+      
+      apercuJour.textContent = jourSemaine;
+      apercuDateComplete.textContent = `${jour} ${moisNom} ${annee}`;
+      
+      // Alerte si weekend
+      if (date.getDay() === 0 || date.getDay() === 6) {
+        apercuJour.innerHTML = jourSemaine + ' <span class="badge bg-warning text-dark ms-2">Weekend</span>';
+      }
+      
+      apercuDiv.style.display = 'block';
+    } else {
+      apercuDiv.style.display = 'none';
+    }
+  });
+  
+  // Validation du formulaire
+  document.getElementById('formCreerFerie').addEventListener('submit', function(e) {
+    const nom = document.getElementById('nom').value.trim();
+    const dateFerie = document.getElementById('date_ferie').value;
+    
+    if (!nom) {
+      e.preventDefault();
+      alert('Veuillez saisir un nom pour le jour férié.');
+      document.getElementById('nom').focus();
+      return;
+    }
+    
+    if (!dateFerie) {
+      e.preventDefault();
+      alert('Veuillez sélectionner une date.');
+      document.getElementById('date_ferie').focus();
+      return;
+    }
+    
+    // Désactiver le bouton pour éviter les doubles soumissions
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Création en cours...';
+  });
+});
+</script>
+{% endblock %}

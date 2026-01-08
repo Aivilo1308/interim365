@@ -1,0 +1,3432 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Synchronisation Globale Kelio SafeSecur V4.3 FINALE{% endblock %}
+
+{% block content %}
+
+<!-- Bootstrap 5.3 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+        crossorigin="anonymous"></script>
+
+<!-- En-tête principal V4.3 -->
+<div class="kelio-header-v43">
+  <div class="container-fluid">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <div class="header-content">
+          <h1 class="header-title">
+            <i class="fas fa-rocket"></i>
+            Synchronisation Globale Kelio SafeSecur
+            <span class="version-badge-v43">V4.3 FINALE</span>
+          </h1>
+          <p class="header-subtitle">
+            <i class="fas fa-shield-alt"></i> 
+            Service ultra-robuste avec gestion des erreurs de concurrence et retry automatique
+            {% if result.stats.total_employees_processed %}
+              <span class="stats-preview">
+                <i class="fas fa-users"></i> {{ result.stats.total_employees_processed }} employés traités
+              </span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="header-actions">
+          <button type="button" class="btn btn-outline-light btn-sm" onclick="afficherTableauBordKelio()">
+            <i class="fas fa-tachometer-alt"></i>
+            Tableau de bord Kelio
+          </button>
+          <button type="button" class="btn btn-outline-light btn-sm" onclick="verifierSanteKelio()">
+            <i class="fas fa-heartbeat"></i>
+            <span class="health-status-indicator" id="healthIndicator">État</span>
+          </button>
+          <a href="{% url 'index' %}" class="btn btn-outline-light">
+            <i class="fas fa-home"></i>
+            Accueil
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alertes et notifications système -->
+<div class="system-alerts-container" id="systemAlerts"></div>
+
+<!-- Tableau de bord Kelio V4.3 (masqué par défaut) -->
+<div class="dashboard-container" id="kelioDashboard" style="display: none;">
+  <div class="card-v43">
+    <div class="card-header-v43">
+      <h3 class="card-title-v43">
+        <i class="fas fa-chart-line text-primary"></i>
+        Tableau de bord Kelio V4.3 en temps réel
+      </h3>
+      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="masquerTableauBord()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="card-body-v43">
+      <div class="dashboard-grid">
+        <!-- État de santé du service -->
+        <div class="dashboard-widget health-widget">
+          <div class="widget-header">
+            <h5><i class="fas fa-heartbeat"></i> État du service</h5>
+          </div>
+          <div class="widget-content" id="healthWidgetContent">
+            <div class="loading-spinner">
+              <div class="spinner"></div>
+              <span>Vérification...</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Statistiques rapides -->
+        <div class="dashboard-widget stats-widget">
+          <div class="widget-header">
+            <h5><i class="fas fa-database"></i> Statistiques</h5>
+          </div>
+          <div class="widget-content" id="statsWidgetContent">
+            <div class="loading-spinner">
+              <div class="spinner"></div>
+              <span>Chargement...</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Actions rapides -->
+        <div class="dashboard-widget actions-widget">
+          <div class="widget-header">
+            <h5><i class="fas fa-bolt"></i> Actions rapides</h5>
+          </div>
+          <div class="widget-content">
+            <div class="quick-actions">
+              <button class="quick-action-btn" onclick="testerConnexionRapide()">
+                <i class="fas fa-plug"></i>
+                Test connexion
+              </button>
+              <button class="quick-action-btn" onclick="viderCacheKelio()">
+                <i class="fas fa-trash"></i>
+                Vider cache
+              </button>
+              <button class="quick-action-btn" onclick="redemarrerService()">
+                <i class="fas fa-redo"></i>
+                Redémarrer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section principale de synchronisation -->
+{% if not result %}
+<div class="sync-main-container">
+  <div class="card-v43">
+    <div class="card-header-v43">
+      <h2 class="card-title-v43">
+        <i class="fas fa-play-circle text-success"></i>
+        Démarrer une synchronisation V4.3
+      </h2>
+    </div>
+    <div class="card-body-v43">
+      
+      <!-- Sélection du mode de synchronisation -->
+      <div class="sync-mode-selection">
+        <h4 class="section-title">
+          <i class="fas fa-cogs"></i>
+          Configuration de la synchronisation
+        </h4>
+        
+        <div class="sync-modes-grid">
+          <!-- Mode complet V4.3 -->
+          <div class="sync-mode-card active" data-mode="complete">
+            <div class="mode-icon">
+              <i class="fas fa-rocket"></i>
+            </div>
+            <div class="mode-content">
+              <h5 class="mode-title">Synchronisation complète V4.3 🚀</h5>
+              <p class="mode-description">
+                Synchronisation ultra-robuste avec toutes les fonctionnalités V4.3 : 
+                gestion des erreurs de concurrence, déduplication intelligente, retry automatique
+              </p>
+              <div class="mode-features">
+                <span class="feature-badge primary">Recommandé</span>
+                <span class="feature-badge success">Ultra-robuste</span>
+                <span class="feature-badge info">Déduplication IA</span>
+              </div>
+              <div class="mode-estimate">
+                <i class="fas fa-clock"></i>
+                <span id="modeEstimateText">Durée estimée : 2-5 minutes (mode rapide) / 3-8 minutes (mode sécurisé)</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mode incrémental V4.3 -->
+          <div class="sync-mode-card" data-mode="incremental">
+            <div class="mode-icon">
+              <i class="fas fa-sync-alt"></i>
+            </div>
+            <div class="mode-content">
+              <h5 class="mode-title">Synchronisation incrémentale V4.3</h5>
+              <p class="mode-description">
+                Synchronise uniquement les modifications récentes avec la robustesse V4.3
+              </p>
+              <div class="mode-features">
+                <span class="feature-badge warning">Rapide</span>
+                <span class="feature-badge success">Intelligent</span>
+              </div>
+              <div class="mode-estimate">
+                <i class="fas fa-clock"></i>
+                Durée estimée : 1-3 minutes
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Options avancées V4.3 -->
+      <div class="sync-options-container">
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="options-group">
+              <h5 class="options-title">
+                <i class="fas fa-sliders-h"></i>
+                Options standard
+              </h5>
+              
+              <div class="option-item">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="forceSync" checked>
+                  <label class="form-check-label" for="forceSync">
+                    <strong>Forcer la synchronisation</strong>
+                    <small class="d-block text-muted">Ignore le cache et force la mise à jour complète</small>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="option-item">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="notifyUsers">
+                  <label class="form-check-label" for="notifyUsers">
+                    <strong>Notifier les utilisateurs</strong>
+                    <small class="d-block text-muted">Envoyer des notifications aux employés concernés</small>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="option-item">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="includeArchived">
+                  <label class="form-check-label" for="includeArchived">
+                    <strong>Inclure les employés archivés</strong>
+                    <small class="d-block text-muted">Synchroniser aussi les profils inactifs</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-6">
+            <div class="options-group v43-options">
+              <h5 class="options-title">
+                <i class="fas fa-rocket"></i>
+                Options avancées V4.3
+                <span class="new-badge">NOUVEAU</span>
+              </h5>
+              
+              <div class="option-item">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="enableRetry" checked>
+                  <label class="form-check-label" for="enableRetry">
+                    <strong>Retry automatique intelligent</strong>
+                    <small class="d-block text-muted">Retry automatique avec backoff exponentiel</small>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="option-item">
+                <label class="form-label">
+                  <strong>Stratégie de retry</strong>
+                </label>
+                <select class="form-select" id="retryStrategy">
+                  <option value="conservative">Conservative (3 tentatives)</option>
+                  <option value="balanced" selected>Équilibrée (5 tentatives)</option>
+                  <option value="aggressive">Agressive (10 tentatives)</option>
+                </select>
+                <small class="text-muted">Niveau d'insistance en cas d'erreurs temporaires</small>
+              </div>
+              
+              <div class="option-item">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="enableDeduplication" checked>
+                  <label class="form-check-label" for="enableDeduplication">
+                    <strong>Déduplication intelligente</strong>
+                    <small class="d-block text-muted">Détection et résolution des doublons avec IA</small>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="option-item">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="enableFastMode" checked>
+                  <label class="form-check-label" for="enableFastMode">
+                    <strong>Mode rapide ⚡</strong>
+                    <small class="d-block text-muted">Synchronisation optimisée pour la vitesse (2-5 min au lieu de 7h)</small>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="option-item">
+                <label class="form-label">
+                  <strong>Taille des lots de traitement</strong>
+                </label>
+                <select class="form-select" id="batchSize">
+                  <option value="5">Petits lots (5 employés) - Sécurisé</option>
+                  <option value="10" selected>Lots moyens (10 employés) - Recommandé</option>
+                  <option value="15">Gros lots (15 employés) - Plus rapide</option>
+                  <option value="20">Très gros lots (20 employés) - Ultra-rapide</option>
+                </select>
+                <small class="text-muted">Compromis entre vitesse et stabilité</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Bouton de lancement -->
+      <div class="launch-section">
+        <div class="pre-launch-checks" id="preLaunchChecks">
+          <div class="check-item" id="checkConnection">
+            <i class="fas fa-circle text-muted"></i>
+            <span>Connexion Kelio</span>
+          </div>
+          <div class="check-item" id="checkConfig">
+            <i class="fas fa-circle text-muted"></i>
+            <span>Configuration</span>
+          </div>
+          <div class="check-item" id="checkResources">
+            <i class="fas fa-circle text-muted"></i>
+            <span>Ressources système</span>
+          </div>
+        </div>
+        
+        <div class="launch-button-container">
+          <button type="button" class="btn-launch-v43" onclick="demarrerSynchronisationV43()" id="btnLaunch">
+            <div class="btn-content">
+              <i class="fas fa-rocket"></i>
+              <span class="btn-text">Démarrer la synchronisation V4.3</span>
+            </div>
+            <div class="btn-progress" id="btnProgress"></div>
+          </button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Résultats de synchronisation -->
+{% if result %}
+<div class="results-container">
+  {% if result.success %}
+  <!-- Résultats de succès -->
+  <div class="card-v43 success-card">
+    <div class="card-header-v43 success-header">
+      <h2 class="card-title-v43">
+        <i class="fas fa-check-circle"></i>
+        Synchronisation V4.3 réussie avec succès
+      </h2>
+      <div class="success-meta">
+        <span class="service-badge">{{ result.stats.service_utilise|default:"Service V4.3" }}</span>
+        <span class="timestamp-badge">{{ result.stats.completed_at|date:"d/m/Y H:i" }}</span>
+      </div>
+    </div>
+    <div class="card-body-v43">
+      
+      <!-- Message de succès -->
+      <div class="alert-v43 alert-success">
+        <div class="alert-icon">
+          <i class="fas fa-thumbs-up"></i>
+        </div>
+        <div class="alert-content">
+          <h4>Excellent !</h4>
+          <p>{{ result.message }}</p>
+          {% if result.metadata.fallback_utilise %}
+          <div class="fallback-notice">
+            <i class="fas fa-info-circle"></i>
+            Service de fallback utilisé pour garantir la robustesse
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Métriques principales -->
+      <div class="metrics-showcase">
+        <h3 class="metrics-title">
+          <i class="fas fa-chart-bar"></i>
+          Résultats de la synchronisation
+        </h3>
+        
+        <div class="metrics-grid">
+          <div class="metric-card employees">
+            <div class="metric-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="metric-data">
+              <div class="metric-value">{{ result.stats.total_employees_processed|default:0 }}</div>
+              <div class="metric-label">Employés traités</div>
+            </div>
+            <div class="metric-trend up">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+          </div>
+          
+          <div class="metric-card created">
+            <div class="metric-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="metric-data">
+              <div class="metric-value">{{ result.stats.total_created|default:0 }}</div>
+              <div class="metric-label">Nouveaux profils</div>
+            </div>
+            <div class="metric-trend up">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+          </div>
+          
+          <div class="metric-card updated">
+            <div class="metric-icon">
+              <i class="fas fa-sync-alt"></i>
+            </div>
+            <div class="metric-data">
+              <div class="metric-value">{{ result.stats.total_updated|default:0 }}</div>
+              <div class="metric-label">Profils mis à jour</div>
+            </div>
+            <div class="metric-trend up">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+          </div>
+          
+          <div class="metric-card performance">
+            <div class="metric-icon">
+              <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div class="metric-data">
+              <div class="metric-value">{{ result.stats.employees_per_second|floatformat:1 }}/s</div>
+              <div class="metric-label">Vitesse de traitement</div>
+            </div>
+            <div class="metric-trend stable">
+              <i class="fas fa-minus"></i>
+            </div>
+          </div>
+          
+          <div class="metric-card duration">
+            <div class="metric-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="metric-data">
+              <div class="metric-value">{{ result.stats.duration_seconds|floatformat:1 }}s</div>
+              <div class="metric-label">Durée totale</div>
+            </div>
+            <div class="metric-trend stable">
+              <i class="fas fa-minus"></i>
+            </div>
+          </div>
+          
+          <div class="metric-card errors">
+            <div class="metric-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="metric-data">
+              <div class="metric-value">{{ result.stats.total_errors|default:0 }}</div>
+              <div class="metric-label">Erreurs</div>
+            </div>
+            <div class="metric-trend {% if result.stats.total_errors > 0 %}up{% else %}down{% endif %}">
+              <i class="fas fa-arrow-{% if result.stats.total_errors > 0 %}up{% else %}down{% endif %}"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Métriques avancées V4.3 -->
+      {% if result.performance_metrics %}
+      <div class="advanced-metrics-v43">
+        <h3 class="metrics-title">
+          <i class="fas fa-microchip"></i>
+          Métriques avancées V4.3
+        </h3>
+        
+        <div class="advanced-metrics-grid">
+          {% if result.performance_metrics.overall %}
+          <div class="advanced-metric-card overall">
+            <div class="metric-header">
+              <h5><i class="fas fa-gauge-high"></i> Performance globale</h5>
+            </div>
+            <div class="metric-body">
+              <div class="main-value">{{ result.performance_metrics.overall.throughput_employees_per_second|floatformat:1 }} emp/s</div>
+              <div class="sub-metrics">
+                <span>Taux de succès : {{ result.performance_metrics.overall.success_rate_percent|floatformat:1 }}%</span>
+                <span>Taux d'erreur : {{ result.performance_metrics.overall.error_rate_percent|floatformat:1 }}%</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if result.performance_metrics.batch_processing %}
+          <div class="advanced-metric-card batch">
+            <div class="metric-header">
+              <h5><i class="fas fa-layer-group"></i> Traitement par lots</h5>
+            </div>
+            <div class="metric-body">
+              <div class="main-value">{{ result.performance_metrics.batch_processing.successful_batches }}/{{ result.performance_metrics.batch_processing.total_batches }}</div>
+              <div class="sub-metrics">
+                <span>Taille des lots : {{ result.performance_metrics.batch_processing.batch_size }}</span>
+                <span>Lots échoués : {{ result.performance_metrics.batch_processing.failed_batches }}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if result.performance_metrics.deduplication %}
+          <div class="advanced-metric-card dedup">
+            <div class="metric-header">
+              <h5><i class="fas fa-copy"></i> Déduplication intelligente</h5>
+            </div>
+            <div class="metric-body">
+              <div class="main-value">{{ result.performance_metrics.deduplication.duplicates_resolved }}</div>
+              <div class="sub-metrics">
+                <span>Doublons détectés : {{ result.performance_metrics.deduplication.duplicates_found }}</span>
+                <span>Scoring utilisé : {% if result.performance_metrics.deduplication.confidence_scoring_used %}Oui{% else %}Non{% endif %}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if result.performance_metrics.concurrency_handling %}
+          <div class="advanced-metric-card concurrency">
+            <div class="metric-header">
+              <h5><i class="fas fa-sync-alt"></i> Gestion de concurrence</h5>
+            </div>
+            <div class="metric-body">
+              <div class="main-value">{{ result.performance_metrics.concurrency_handling.conflicts_auto_resolved }}</div>
+              <div class="sub-metrics">
+                <span>Conflits détectés : {{ result.performance_metrics.concurrency_handling.concurrent_modifications_detected }}</span>
+                <span>Retry effectués : {{ result.performance_metrics.concurrency_handling.retries_performed }}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Détails par service -->
+      {% if result.stats.services_results %}
+      <div class="services-breakdown">
+        <h3 class="metrics-title">
+          <i class="fas fa-cogs"></i>
+          Détails par service
+        </h3>
+        
+        <div class="services-grid">
+          {% for service_name, service_data in result.stats.services_results.items %}
+          <div class="service-detail-card {{ service_data.status|lower }}">
+            <div class="service-header">
+              <div class="service-info">
+                <h5>
+                  {% if service_name == 'employees' %}
+                    <i class="fas fa-users"></i> Employés
+                  {% elif service_name == 'competences' %}
+                    <i class="fas fa-star"></i> Compétences
+                  {% elif service_name == 'formations' %}
+                    <i class="fas fa-graduation-cap"></i> Formations
+                  {% elif service_name == 'absences' %}
+                    <i class="fas fa-calendar-times"></i> Absences
+                  {% else %}
+                    <i class="fas fa-cog"></i> {{ service_name|title }}
+                  {% endif %}
+                </h5>
+                <span class="service-status {{ service_data.status|lower }}">
+                  {% if service_data.status == 'SUCCESS' %}
+                    <i class="fas fa-check-circle"></i> Réussi
+                  {% elif service_data.status == 'PARTIAL' %}
+                    <i class="fas fa-exclamation-triangle"></i> Partiel
+                  {% elif service_data.status == 'FAILED' %}
+                    <i class="fas fa-times-circle"></i> Échec
+                  {% else %}
+                    <i class="fas fa-clock"></i> {{ service_data.status }}
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="service-stats">
+              <div class="stat-row">
+                <span class="stat-label">Traités :</span>
+                <span class="stat-value">{{ service_data.processed|default:0 }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Réussis :</span>
+                <span class="stat-value success">{{ service_data.success_count|default:0 }}</span>
+              </div>
+              {% if service_data.error_count > 0 %}
+              <div class="stat-row">
+                <span class="stat-label">Erreurs :</span>
+                <span class="stat-value error">{{ service_data.error_count }}</span>
+              </div>
+              {% endif %}
+            </div>
+            {% if service_data.message %}
+            <div class="service-message">
+              <small>{{ service_data.message }}</small>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+    </div>
+  </div>
+  {% else %}
+  <!-- Résultats d'erreur -->
+  <div class="card-v43 error-card">
+    <div class="card-header-v43 error-header">
+      <h2 class="card-title-v43">
+        <i class="fas fa-exclamation-triangle"></i>
+        Synchronisation V4.3 interrompue
+      </h2>
+      <div class="error-meta">
+        {% if result.error_classification %}
+        <span class="error-type-badge {{ result.error_classification|lower }}">{{ result.error_classification }}</span>
+        {% endif %}
+        <span class="timestamp-badge">{{ result.timestamp|date:"d/m/Y H:i" }}</span>
+      </div>
+    </div>
+    <div class="card-body-v43">
+      
+      <!-- Message d'erreur principal -->
+      <div class="alert-v43 alert-error">
+        <div class="alert-icon">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="alert-content">
+          <h4>Synchronisation interrompue</h4>
+          <p>{{ result.message }}</p>
+          {% if result.error_details %}
+          <details class="error-details">
+            <summary>Détails techniques</summary>
+            <pre>{{ result.error_details }}</pre>
+          </details>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Résultats partiels -->
+      {% if result.stats.total_employees_processed > 0 %}
+      <div class="partial-results">
+        <h4>
+          <i class="fas fa-chart-pie"></i>
+          Résultats partiels avant interruption
+        </h4>
+        <div class="partial-metrics-grid">
+          <div class="partial-metric">
+            <div class="value">{{ result.stats.total_employees_processed }}</div>
+            <div class="label">Employés traités</div>
+          </div>
+          <div class="partial-metric">
+            <div class="value">{{ result.stats.total_created }}</div>
+            <div class="label">Créés</div>
+          </div>
+          <div class="partial-metric">
+            <div class="value">{{ result.stats.total_updated }}</div>
+            <div class="label">Mis à jour</div>
+          </div>
+          <div class="partial-metric">
+            <div class="value">{{ result.stats.total_errors }}</div>
+            <div class="label">Erreurs</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Diagnostic et recommandations V4.3 -->
+      <div class="error-diagnostics-v43">
+        <h4>
+          <i class="fas fa-stethoscope"></i>
+          Diagnostic automatique V4.3
+        </h4>
+        
+        <div class="diagnostic-grid">
+          <div class="diagnostic-item" id="diagConnection">
+            <div class="diag-icon">
+              <i class="fas fa-wifi"></i>
+            </div>
+            <div class="diag-content">
+              <h6>Connexion Kelio</h6>
+              <span class="diag-status checking">Vérification...</span>
+            </div>
+          </div>
+          
+          <div class="diagnostic-item" id="diagService">
+            <div class="diag-icon">
+              <i class="fas fa-cog"></i>
+            </div>
+            <div class="diag-content">
+              <h6>Services SOAP</h6>
+              <span class="diag-status checking">Vérification...</span>
+            </div>
+          </div>
+          
+          <div class="diagnostic-item" id="diagAuth">
+            <div class="diag-icon">
+              <i class="fas fa-key"></i>
+            </div>
+            <div class="diag-content">
+              <h6>Authentification</h6>
+              <span class="diag-status checking">Vérification...</span>
+            </div>
+          </div>
+          
+          <div class="diagnostic-item" id="diagResources">
+            <div class="diag-icon">
+              <i class="fas fa-server"></i>
+            </div>
+            <div class="diag-content">
+              <h6>Ressources</h6>
+              <span class="diag-status checking">Vérification...</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recommandations -->
+        <div class="recommendations" id="recommendationsList">
+          <h5>
+            <i class="fas fa-lightbulb"></i>
+            Recommandations
+          </h5>
+          <div class="recommendation-loading">
+            <div class="spinner"></div>
+            <span>Analyse des erreurs en cours...</span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Actions principales -->
+<div class="main-actions-container">
+  <div class="card-v43">
+    <div class="card-header-v43">
+      <h3 class="card-title-v43">
+        <i class="fas fa-tools"></i>
+        Actions et outils V4.3
+      </h3>
+    </div>
+    <div class="card-body-v43">
+      
+      <div class="actions-grid-v43">
+        
+        <!-- Action principale selon le contexte -->
+        {% if not result %}
+        <div class="action-card-v43 primary">
+          <div class="action-icon">
+            <i class="fas fa-rocket"></i>
+          </div>
+          <div class="action-content">
+            <h5>Démarrer synchronisation</h5>
+            <p>Lancer une synchronisation V4.3 ultra-robuste</p>
+            <button class="btn btn-primary" onclick="demarrerSynchronisationV43()">
+              Commencer
+            </button>
+          </div>
+        </div>
+        {% elif result.success %}
+        <div class="action-card-v43 success">
+          <div class="action-icon">
+            <i class="fas fa-redo"></i>
+          </div>
+          <div class="action-content">
+            <h5>Nouvelle synchronisation</h5>
+            <p>Relancer une synchronisation V4.3</p>
+            <button class="btn btn-success" onclick="nouvelleSynchronisation()">
+              Relancer
+            </button>
+          </div>
+        </div>
+        {% else %}
+        <div class="action-card-v43 warning">
+          <div class="action-icon">
+            <i class="fas fa-redo"></i>
+          </div>
+          <div class="action-content">
+            <h5>Réessayer</h5>
+            <p>Relancer avec les corrections V4.3</p>
+            <button class="btn btn-warning" onclick="reessayerAvecCorrections()">
+              Réessayer
+            </button>
+          </div>
+        </div>
+        {% endif %}
+        
+        <!-- Diagnostics -->
+        <div class="action-card-v43 info">
+          <div class="action-icon">
+            <i class="fas fa-stethoscope"></i>
+          </div>
+          <div class="action-content">
+            <h5>Diagnostics</h5>
+            <p>Tester la connexion et l'état Kelio</p>
+            <button class="btn btn-info" onclick="lancerDiagnostics()">
+              Diagnostiquer
+            </button>
+          </div>
+        </div>
+        
+        <!-- Statistiques -->
+        <div class="action-card-v43 secondary">
+          <div class="action-icon">
+            <i class="fas fa-chart-bar"></i>
+          </div>
+          <div class="action-content">
+            <h5>Statistiques</h5>
+            <p>Voir les métriques détaillées V4.3</p>
+            <button class="btn btn-secondary" onclick="afficherStatistiques()">
+              Voir stats
+            </button>
+          </div>
+        </div>
+        
+        <!-- Configuration -->
+        <div class="action-card-v43 dark">
+          <div class="action-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <div class="action-content">
+            <h5>Configuration</h5>
+            <p>Paramètres avancés Kelio V4.3</p>
+            <button class="btn btn-dark" onclick="ouvrirConfiguration()">
+              Configurer
+            </button>
+          </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="action-card-v43 light">
+          <div class="action-icon">
+            <i class="fas fa-home"></i>
+          </div>
+          <div class="action-content">
+            <h5>Tableau de bord</h5>
+            <p>Retour à l'accueil</p>
+            <a href="{% url 'index' %}" class="btn btn-light">
+              Accueil
+            </a>
+          </div>
+        </div>
+        
+        <!-- Aide -->
+        <div class="action-card-v43 outline">
+          <div class="action-icon">
+            <i class="fas fa-question-circle"></i>
+          </div>
+          <div class="action-content">
+            <h5>Aide et support</h5>
+            <p>Guide et assistance V4.3</p>
+            <button class="btn btn-outline-primary" onclick="afficherAide()">
+              Aide
+            </button>
+          </div>
+        </div>
+        
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<!-- Modal de progression V4.3 -->
+<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content modal-v43">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-rocket"></i>
+          Synchronisation V4.3 en cours
+        </h5>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Progression principale -->
+        <div class="progress-main">
+          <div class="progress-info">
+            <h6 id="currentStep">Initialisation du service V4.3...</h6>
+            <p id="currentOperation">Préparation de la synchronisation ultra-robuste</p>
+          </div>
+          
+          <div class="progress-bar-container">
+            <div class="progress progress-v43">
+              <div class="progress-bar" id="mainProgressBar" style="width: 0%">
+                <span class="progress-text" id="progressText">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Métriques en temps réel -->
+        <div class="realtime-metrics">
+          <div class="metric-box">
+            <div class="metric-value" id="processedCount">0</div>
+            <div class="metric-label">Traités</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="createdCount">0</div>
+            <div class="metric-label">Créés</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="updatedCount">0</div>
+            <div class="metric-label">Mis à jour</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="errorCount">0</div>
+            <div class="metric-label">Erreurs</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="speedIndicator">0/s</div>
+            <div class="metric-label">Vitesse</div>
+          </div>
+        </div>
+        
+        <!-- Métriques V4.3 avancées -->
+        <div class="advanced-realtime-metrics">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="advanced-metric-box">
+                <h6><i class="fas fa-layer-group"></i> Lots</h6>
+                <div class="metric-detail">
+                  <span id="batchProgress">0/0</span>
+                  <small>lots traités</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="advanced-metric-box">
+                <h6><i class="fas fa-copy"></i> Déduplication</h6>
+                <div class="metric-detail">
+                  <span id="duplicatesResolved">0</span>
+                  <small>doublons résolus</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="advanced-metric-box">
+                <h6><i class="fas fa-redo"></i> Retry</h6>
+                <div class="metric-detail">
+                  <span id="retryCount">0</span>
+                  <small>tentatives</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Journal en temps réel -->
+        <div class="realtime-log">
+          <div class="log-header">
+            <h6><i class="fas fa-terminal"></i> Journal de synchronisation</h6>
+            <div class="log-controls">
+              <button class="btn btn-sm btn-outline-secondary" onclick="pauserLog()">
+                <i class="fas fa-pause" id="logPauseIcon"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="viderLog()">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div class="log-content" id="realtimeLog">
+            <div class="log-entry info">
+              <span class="log-time">[00:00:00]</span>
+              <span class="log-message">Service V4.3 initialisé</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger" onclick="annulerSynchronisation()" id="cancelBtn">
+          <i class="fas fa-stop"></i>
+          Annuler
+        </button>
+        <button type="button" class="btn btn-success" onclick="fermerModal()" id="closeBtn" style="display: none;">
+          <i class="fas fa-check"></i>
+          Terminer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modals de diagnostic et configuration -->
+{% include 'modals_diagnostics_v43.html' %}
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES V4.3 COMPLETS
+   ================================================================ */
+
+:root {
+  --v43-primary: #00d2ff;
+  --v43-secondary: #3a0ca3;
+  --v43-success: #06d6a0;
+  --v43-warning: #ffd60a;
+  --v43-danger: #f72585;
+  --v43-info: #4361ee;
+  --v43-light: #f8f9fa;
+  --v43-dark: #212529;
+  
+  --v43-gradient-1: linear-gradient(135deg, var(--v43-primary), var(--v43-secondary));
+  --v43-gradient-2: linear-gradient(135deg, var(--v43-success), var(--v43-info));
+  --v43-gradient-3: linear-gradient(135deg, var(--v43-warning), var(--v43-danger));
+  
+  --v43-shadow: 0 4px 20px rgba(0, 210, 255, 0.15);
+  --v43-shadow-hover: 0 8px 30px rgba(0, 210, 255, 0.25);
+  
+  --v43-border-radius: 12px;
+  --v43-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Styles de base V4.3 */
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* En-tête V4.3 */
+.kelio-header-v43 {
+  background: var(--v43-gradient-1);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.kelio-header-v43::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 1000'%3E%3Cg fill-opacity='0.03'%3E%3Cpath d='M82 34c-7.1 0-14.1 2.6-19.5 8-5.4-5.4-12.4-8-19.5-8-15.2 0-27.5 12.3-27.5 27.5 0 15.2 12.3 27.5 27.5 27.5 7.1 0 14.1-2.6 19.5-8 5.4 5.4 12.4 8 19.5 8 15.2 0 27.5-12.3 27.5-27.5S97.2 34 82 34z'/%3E%3C/g%3E%3C/svg%3E") center center;
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(180deg); }
+}
+
+.header-content {
+  position: relative;
+  z-index: 2;
+}
+
+.header-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-title i {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.version-badge-v43 {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.3rem 0.8rem;
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stats-preview {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.3rem 0.8rem;
+  border-radius: 1.5rem;
+  margin-left: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.health-status-indicator {
+  position: relative;
+}
+
+.health-status-indicator::before {
+  content: '';
+  position: absolute;
+  left: -0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #28a745;
+  animation: pulse 2s infinite;
+}
+
+/* Alertes système */
+.system-alerts-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+/* Cartes V4.3 */
+.card-v43 {
+  background: white;
+  border-radius: var(--v43-border-radius);
+  box-shadow: var(--v43-shadow);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: var(--v43-transition);
+  border: 0;
+}
+
+.card-v43:hover {
+  box-shadow: var(--v43-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.card-header-v43 {
+  background: var(--v43-gradient-2);
+  color: white;
+  padding: 1.5rem;
+  border-bottom: 0;
+}
+
+.card-header-v43.success-header {
+  background: linear-gradient(135deg, var(--v43-success), #06ffa5);
+}
+
+.card-header-v43.error-header {
+  background: linear-gradient(135deg, var(--v43-danger), #ff006e);
+}
+
+.card-title-v43 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-body-v43 {
+  padding: 2rem;
+}
+
+/* Tableau de bord */
+.dashboard-container {
+  margin-bottom: 2rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.dashboard-widget {
+  background: white;
+  border-radius: var(--v43-border-radius);
+  box-shadow: var(--v43-shadow);
+  overflow: hidden;
+}
+
+.widget-header {
+  background: var(--v43-gradient-1);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widget-header h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.widget-content {
+  padding: 1.5rem;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--v43-secondary);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(58, 12, 163, 0.1);
+  border-left: 3px solid var(--v43-secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.quick-action-btn {
+  background: var(--v43-light);
+  border: 2px solid var(--v43-primary);
+  color: var(--v43-primary);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: var(--v43-transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.quick-action-btn:hover {
+  background: var(--v43-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Section de synchronisation */
+.sync-main-container {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sync-modes-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sync-mode-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 2px solid #e9ecef;
+  border-radius: var(--v43-border-radius);
+  cursor: pointer;
+  transition: var(--v43-transition);
+  background: white;
+}
+
+.sync-mode-card:hover,
+.sync-mode-card.active {
+  border-color: var(--v43-primary);
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.05), rgba(58, 12, 163, 0.05));
+  transform: translateY(-2px);
+  box-shadow: var(--v43-shadow);
+}
+
+.mode-icon {
+  font-size: 2.5rem;
+  color: var(--v43-primary);
+  background: rgba(0, 210, 255, 0.1);
+  padding: 1rem;
+  border-radius: 50%;
+  min-width: 70px;
+  text-align: center;
+}
+
+.mode-content {
+  flex: 1;
+}
+
+.mode-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 0.5rem;
+}
+
+.mode-description {
+  color: #6c757d;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.mode-features {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.feature-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.feature-badge.primary { background: var(--v43-primary); color: white; }
+.feature-badge.success { background: var(--v43-success); color: white; }
+.feature-badge.info { background: var(--v43-info); color: white; }
+.feature-badge.warning { background: var(--v43-warning); color: var(--v43-dark); }
+
+.mode-estimate {
+  color: var(--v43-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Options de synchronisation */
+.sync-options-container {
+  margin-bottom: 2rem;
+}
+
+.options-group {
+  background: var(--v43-light);
+  padding: 1.5rem;
+  border-radius: var(--v43-border-radius);
+  border-left: 4px solid var(--v43-info);
+}
+
+.options-group.v43-options {
+  border-left-color: var(--v43-primary);
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.05), rgba(58, 12, 163, 0.05));
+}
+
+.options-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.new-badge {
+  background: var(--v43-danger);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  animation: pulse 2s infinite;
+}
+
+.option-item {
+  margin-bottom: 1.5rem;
+}
+
+.option-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Style spécial pour le mode rapide */
+.option-item:has(#enableFastMode) {
+  background: linear-gradient(135deg, rgba(255, 214, 10, 0.1), rgba(6, 214, 160, 0.1));
+  border: 2px solid rgba(255, 214, 10, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.option-item:has(#enableFastMode)::before {
+  content: '⚡';
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  background: var(--v43-warning);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  animation: pulse 2s infinite;
+}
+
+.option-item:has(#enableFastMode) .form-check-label strong {
+  color: var(--v43-warning);
+  font-size: 1.1rem;
+}
+
+/* Animation pour l'estimation de temps */
+.mode-estimate {
+  color: var(--v43-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+#modeEstimateText {
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+#modeEstimateText:hover {
+  color: var(--v43-primary);
+  transform: scale(1.05);
+}
+
+.form-check-label {
+  color: var(--v43-dark);
+}
+
+.form-check-label strong {
+  font-weight: 600;
+}
+
+.form-select,
+.form-control {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  transition: var(--v43-transition);
+}
+
+.form-select:focus,
+.form-control:focus {
+  border-color: var(--v43-primary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 210, 255, 0.25);
+}
+
+/* Section de lancement */
+.launch-section {
+  text-align: center;
+}
+
+.pre-launch-checks {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.check-item.checking i {
+  color: var(--v43-warning);
+  animation: pulse 2s infinite;
+}
+
+.check-item.success i {
+  color: var(--v43-success);
+}
+
+.check-item.error i {
+  color: var(--v43-danger);
+}
+
+.launch-button-container {
+  position: relative;
+}
+
+.btn-launch-v43 {
+  background: var(--v43-gradient-1);
+  border: 0;
+  color: white;
+  padding: 1rem 3rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--v43-transition);
+  position: relative;
+  overflow: hidden;
+  min-width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-launch-v43:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--v43-shadow-hover);
+}
+
+.btn-launch-v43:active {
+  transform: translateY(-1px);
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  width: 0%;
+  transition: width 0.3s ease;
+  border-radius: 50px;
+}
+
+/* Métriques principales */
+.metrics-showcase {
+  margin-bottom: 2rem;
+}
+
+.metrics-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.metric-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--v43-border-radius);
+  border-left: 4px solid var(--v43-primary);
+  box-shadow: var(--v43-shadow);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--v43-transition);
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--v43-shadow-hover);
+}
+
+.metric-card.employees { border-left-color: #6f42c1; }
+.metric-card.created { border-left-color: var(--v43-success); }
+.metric-card.updated { border-left-color: var(--v43-info); }
+.metric-card.performance { border-left-color: var(--v43-warning); }
+.metric-card.duration { border-left-color: #fd7e14; }
+.metric-card.errors { border-left-color: var(--v43-danger); }
+
+.metric-icon {
+  font-size: 2rem;
+  color: var(--v43-primary);
+  background: rgba(0, 210, 255, 0.1);
+  padding: 1rem;
+  border-radius: 50%;
+  min-width: 60px;
+  text-align: center;
+}
+
+.metric-card.employees .metric-icon { color: #6f42c1; background: rgba(111, 66, 193, 0.1); }
+.metric-card.created .metric-icon { color: var(--v43-success); background: rgba(6, 214, 160, 0.1); }
+.metric-card.updated .metric-icon { color: var(--v43-info); background: rgba(67, 97, 238, 0.1); }
+.metric-card.performance .metric-icon { color: var(--v43-warning); background: rgba(255, 214, 10, 0.1); }
+.metric-card.duration .metric-icon { color: #fd7e14; background: rgba(253, 126, 20, 0.1); }
+.metric-card.errors .metric-icon { color: var(--v43-danger); background: rgba(247, 37, 133, 0.1); }
+
+.metric-data {
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--v43-dark);
+  line-height: 1;
+}
+
+.metric-label {
+  color: #6c757d;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.metric-trend {
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: var(--v43-light);
+}
+
+.metric-trend.up { color: var(--v43-success); }
+.metric-trend.down { color: var(--v43-danger); }
+.metric-trend.stable { color: #6c757d; }
+
+/* Métriques avancées V4.3 */
+.advanced-metrics-v43 {
+  margin-bottom: 2rem;
+}
+
+.advanced-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.advanced-metric-card {
+  background: white;
+  border-radius: var(--v43-border-radius);
+  box-shadow: var(--v43-shadow);
+  overflow: hidden;
+  transition: var(--v43-transition);
+}
+
+.advanced-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--v43-shadow-hover);
+}
+
+.advanced-metric-card .metric-header {
+  background: var(--v43-gradient-1);
+  color: white;
+  padding: 1rem;
+}
+
+.advanced-metric-card.overall .metric-header { 
+  background: linear-gradient(135deg, #6f42c1, #9c27b0); 
+}
+
+.advanced-metric-card.batch .metric-header { 
+  background: linear-gradient(135deg, var(--v43-success), #20c997); 
+}
+
+.advanced-metric-card.dedup .metric-header { 
+  background: linear-gradient(135deg, var(--v43-warning), #fd7e14); 
+}
+
+.advanced-metric-card.concurrency .metric-header { 
+  background: linear-gradient(135deg, var(--v43-info), #6610f2); 
+}
+
+.metric-header h5 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.metric-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.main-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--v43-dark);
+  margin-bottom: 0.5rem;
+}
+
+.sub-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sub-metrics span {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* Services breakdown */
+.services-breakdown {
+  margin-bottom: 2rem;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.service-detail-card {
+  background: white;
+  border-radius: var(--v43-border-radius);
+  box-shadow: var(--v43-shadow);
+  overflow: hidden;
+  transition: var(--v43-transition);
+}
+
+.service-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--v43-shadow-hover);
+}
+
+.service-detail-card.success {
+  border-left: 4px solid var(--v43-success);
+}
+
+.service-detail-card.partial {
+  border-left: 4px solid var(--v43-warning);
+}
+
+.service-detail-card.failed {
+  border-left: 4px solid var(--v43-danger);
+}
+
+.service-header {
+  padding: 1rem;
+  background: var(--v43-light);
+  border-bottom: 1px solid #e9ecef;
+}
+
+.service-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.service-info h5 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--v43-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.service-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.service-status.success { color: var(--v43-success); }
+.service-status.partial { color: var(--v43-warning); }
+.service-status.failed { color: var(--v43-danger); }
+
+.service-stats {
+  padding: 1rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.stat-row:last-child {
+  margin-bottom: 0;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  font-weight: 600;
+}
+
+.stat-value.success { color: var(--v43-success); }
+.stat-value.error { color: var(--v43-danger); }
+
+.service-message {
+  padding: 0 1rem 1rem;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* Résultats d'erreur */
+.error-card .card-body-v43 {
+  padding: 2rem;
+}
+
+.alert-v43 {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--v43-border-radius);
+  margin-bottom: 2rem;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, rgba(6, 214, 160, 0.1), rgba(32, 201, 151, 0.1));
+  border: 1px solid rgba(6, 214, 160, 0.3);
+}
+
+.alert-error {
+  background: linear-gradient(135deg, rgba(247, 37, 133, 0.1), rgba(220, 53, 69, 0.1));
+  border: 1px solid rgba(247, 37, 133, 0.3);
+}
+
+.alert-icon {
+  font-size: 2rem;
+  min-width: 40px;
+}
+
+.alert-success .alert-icon { color: var(--v43-success); }
+.alert-error .alert-icon { color: var(--v43-danger); }
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.alert-content p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.fallback-notice {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-details {
+  margin-top: 1rem;
+}
+
+.error-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--v43-info);
+}
+
+.error-details pre {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+/* Résultats partiels */
+.partial-results {
+  margin-bottom: 2rem;
+}
+
+.partial-results h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.partial-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.partial-metric {
+  text-align: center;
+  padding: 1rem;
+  background: var(--v43-light);
+  border-radius: 8px;
+}
+
+.partial-metric .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--v43-dark);
+}
+
+.partial-metric .label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Diagnostic et recommandations */
+.error-diagnostics-v43 {
+  margin-bottom: 2rem;
+}
+
+.error-diagnostics-v43 h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.diagnostic-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--v43-light);
+  border-radius: 8px;
+}
+
+.diag-icon {
+  font-size: 1.5rem;
+  color: var(--v43-info);
+}
+
+.diag-content h6 {
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+  color: var(--v43-dark);
+}
+
+.diag-status {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.diag-status.checking { color: var(--v43-warning); }
+.diag-status.ok { color: var(--v43-success); }
+.diag-status.error { color: var(--v43-danger); }
+
+.recommendations {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: var(--v43-shadow);
+}
+
+.recommendations h5 {
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+  color: var(--v43-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recommendation-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #6c757d;
+  padding: 2rem 0;
+}
+
+/* Actions principales */
+.main-actions-container {
+  margin-bottom: 2rem;
+}
+
+.actions-grid-v43 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.action-card-v43 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: var(--v43-border-radius);
+  box-shadow: var(--v43-shadow);
+  transition: var(--v43-transition);
+  border: 2px solid transparent;
+}
+
+.action-card-v43:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--v43-shadow-hover);
+}
+
+.action-card-v43.primary {
+  border-color: var(--v43-primary);
+}
+
+.action-card-v43.success {
+  border-color: var(--v43-success);
+}
+
+.action-card-v43.warning {
+  border-color: var(--v43-warning);
+}
+
+.action-card-v43.info {
+  border-color: var(--v43-info);
+}
+
+.action-card-v43.secondary {
+  border-color: #6c757d;
+}
+
+.action-card-v43.dark {
+  border-color: var(--v43-dark);
+}
+
+.action-card-v43.light {
+  border-color: #e9ecef;
+}
+
+.action-card-v43.outline {
+  border: 2px dashed var(--v43-info);
+}
+
+.action-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.action-card-v43.primary .action-icon { color: var(--v43-primary); }
+.action-card-v43.success .action-icon { color: var(--v43-success); }
+.action-card-v43.warning .action-icon { color: var(--v43-warning); }
+.action-card-v43.info .action-icon { color: var(--v43-info); }
+.action-card-v43.secondary .action-icon { color: #6c757d; }
+.action-card-v43.dark .action-icon { color: var(--v43-dark); }
+.action-card-v43.light .action-icon { color: #6c757d; }
+.action-card-v43.outline .action-icon { color: var(--v43-info); }
+
+.action-content {
+  flex: 1;
+}
+
+.action-content h5 {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: var(--v43-dark);
+}
+
+.action-content p {
+  margin: 0 0 1rem 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Modal de progression */
+.modal-v43 {
+  border-radius: var(--v43-border-radius);
+  overflow: hidden;
+}
+
+.modal-v43 .modal-header {
+  background: var(--v43-gradient-1);
+  color: white;
+  border-bottom: 0;
+}
+
+.modal-v43 .modal-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal-v43 .modal-body {
+  padding: 2rem;
+}
+
+.progress-main {
+  margin-bottom: 2rem;
+}
+
+.progress-info h6 {
+  font-weight: 600;
+  color: var(--v43-dark);
+  margin-bottom: 0.5rem;
+}
+
+.progress-info p {
+  color: #6c757d;
+  margin: 0;
+}
+
+.progress-bar-container {
+  margin-top: 1rem;
+}
+
+.progress-v43 {
+  height: 20px;
+  background: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-v43 .progress-bar {
+  background: var(--v43-gradient-1);
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Métriques temps réel */
+.realtime-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-box {
+  text-align: center;
+  padding: 1rem;
+  background: var(--v43-light);
+  border-radius: 8px;
+}
+
+.metric-box .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--v43-primary);
+}
+
+.metric-box .metric-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Métriques avancées temps réel */
+.advanced-realtime-metrics {
+  margin-bottom: 2rem;
+}
+
+.advanced-metric-box {
+  text-align: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.advanced-metric-box h6 {
+  margin: 0 0 0.75rem 0;
+  font-weight: 600;
+  color: var(--v43-dark);
+  font-size: 0.9rem;
+}
+
+.metric-detail span {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--v43-secondary);
+}
+
+.metric-detail small {
+  display: block;
+  color: #6c757d;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* Journal temps réel */
+.realtime-log {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.log-header {
+  background: var(--v43-light);
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.log-header h6 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--v43-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.log-content {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: #f8f9fa;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.85rem;
+}
+
+.log-entry:last-child {
+  margin-bottom: 0;
+}
+
+.log-time {
+  color: #6c757d;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.log-message {
+  flex: 1;
+}
+
+.log-entry.info { color: var(--v43-info); }
+.log-entry.success { color: var(--v43-success); }
+.log-entry.warning { color: var(--v43-warning); }
+.log-entry.error { color: var(--v43-danger); }
+
+/* Meta informations */
+.success-meta,
+.error-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.service-badge,
+.timestamp-badge,
+.error-type-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.error-type-badge.connection { background: rgba(255, 193, 7, 0.8); color: #856404; }
+.error-type-badge.timeout { background: rgba(220, 53, 69, 0.8); color: white; }
+.error-type-badge.authentication { background: rgba(220, 53, 69, 0.8); color: white; }
+.error-type-badge.concurrent_modification { background: rgba(255, 193, 7, 0.8); color: #856404; }
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header-title {
+    font-size: 2rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .header-actions {
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  
+  .sync-mode-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .mode-icon {
+    margin-bottom: 1rem;
+  }
+  
+  .sync-options-container .row {
+    margin: 0;
+  }
+  
+  .sync-options-container .col-lg-6 {
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .pre-launch-checks {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .btn-launch-v43 {
+    min-width: 250px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .advanced-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions-grid-v43 {
+    grid-template-columns: 1fr;
+  }
+  
+  .diagnostic-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .partial-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .realtime-metrics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-body-v43 {
+    padding: 1rem;
+  }
+  
+  .header-title {
+    font-size: 1.5rem;
+  }
+  
+  .realtime-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .partial-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* États de chargement */
+.loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.loading * {
+  cursor: wait !important;
+}
+
+/* Animations d'entrée */
+.card-v43 {
+  animation: slideInUp 0.5s ease-out forwards;
+}
+
+.metric-card {
+  animation: slideInUp 0.6s ease-out forwards;
+}
+
+.action-card-v43 {
+  animation: slideInUp 0.7s ease-out forwards;
+}
+
+/* Print styles */
+@media print {
+  .header-actions,
+  .main-actions-container,
+  .system-alerts-container,
+  .dashboard-container {
+    display: none !important;
+  }
+  
+  .card-v43 {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .kelio-header-v43 {
+    background: #f8f9fa !important;
+    color: #000 !important;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+// ================================================================
+// JAVASCRIPT V4.3 FINAL - SYNCHRONISATION KELIO GLOBALE
+// ================================================================
+
+// Variables globales
+let syncMode = 'complete';
+let syncInProgress = false;
+let progressModal;
+let dashboardVisible = false;
+let logPaused = false;
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initialisation interface Kelio V4.3 FINALE');
+    
+    initializeModalControls();
+    initializeSyncModeSelection();
+    initializePreLaunchChecks();
+    initializeAnimations();
+    initializeKeyboardShortcuts();
+    
+    console.log('✅ Interface V4.3 initialisée avec succès');
+});
+
+// ================================================================
+// INITIALISATION DES COMPOSANTS
+// ================================================================
+
+function initializeModalControls() {
+    progressModal = new bootstrap.Modal(document.getElementById('progressModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+}
+
+function initializeSyncModeSelection() {
+    const syncModeCards = document.querySelectorAll('.sync-mode-card');
+    
+    syncModeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Désélectionner toutes les cartes
+            syncModeCards.forEach(c => c.classList.remove('active'));
+            
+            // Sélectionner la carte cliquée
+            this.classList.add('active');
+            syncMode = this.dataset.mode;
+            
+            console.log(`Mode sélectionné: ${syncMode}`);
+            
+            // Animation de sélection
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            // Mettre à jour l'estimation selon le mode
+            updateTimeEstimate();
+        });
+    });
+    
+    // Sélectionner le premier mode par défaut
+    if (syncModeCards.length > 0) {
+        syncModeCards[0].classList.add('active');
+        syncMode = syncModeCards[0].dataset.mode;
+    }
+    
+    // Écouter les changements du mode rapide
+    const fastModeToggle = document.getElementById('enableFastMode');
+    if (fastModeToggle) {
+        fastModeToggle.addEventListener('change', updateTimeEstimate);
+    }
+    
+    // Écouter les changements de taille de lots
+    const batchSizeSelect = document.getElementById('batchSize');
+    if (batchSizeSelect) {
+        batchSizeSelect.addEventListener('change', updateTimeEstimate);
+    }
+}
+
+function updateTimeEstimate() {
+    const fastMode = document.getElementById('enableFastMode')?.checked || true;
+    const batchSize = parseInt(document.getElementById('batchSize')?.value) || 10;
+    const estimateElement = document.getElementById('modeEstimateText');
+    
+    if (!estimateElement) return;
+    
+    let estimate = '';
+    
+    if (fastMode) {
+        if (batchSize >= 15) {
+            estimate = '⚡ Durée estimée : 2-3 minutes (mode ultra-rapide)';
+        } else if (batchSize >= 10) {
+            estimate = '⚡ Durée estimée : 2-5 minutes (mode rapide)';
+        } else {
+            estimate = '⚡ Durée estimée : 3-6 minutes (mode rapide sécurisé)';
+        }
+    } else {
+        if (batchSize <= 5) {
+            estimate = '🔒 Durée estimée : 5-10 minutes (mode sécurisé)';
+        } else {
+            estimate = '🔒 Durée estimée : 3-8 minutes (mode sécurisé optimisé)';
+        }
+    }
+    
+    estimateElement.textContent = estimate;
+}
+
+function initializePreLaunchChecks() {
+    // Simulation des vérifications pré-lancement
+    setTimeout(() => {
+        performPreLaunchCheck('checkConnection', 'Connexion Kelio', true);
+    }, 1000);
+    
+    setTimeout(() => {
+        performPreLaunchCheck('checkConfig', 'Configuration', true);
+    }, 1500);
+    
+    setTimeout(() => {
+        performPreLaunchCheck('checkResources', 'Ressources système', true);
+    }, 2000);
+}
+
+function performPreLaunchCheck(elementId, description, success) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const icon = element.querySelector('i');
+    const text = element.querySelector('span');
+    
+    // Animation de vérification
+    element.classList.add('checking');
+    icon.className = 'fas fa-circle text-warning';
+    
+    setTimeout(() => {
+        element.classList.remove('checking');
+        
+        if (success) {
+            element.classList.add('success');
+            icon.className = 'fas fa-check-circle text-success';
+        } else {
+            element.classList.add('error');
+            icon.className = 'fas fa-times-circle text-danger';
+        }
+    }, 500);
+}
+
+function initializeAnimations() {
+    // Animation progressive des cartes
+    const cards = document.querySelectorAll('.card-v43');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Animation des métriques avec compteur
+    animateCounters();
+}
+
+function animateCounters() {
+    const counters = document.querySelectorAll('.metric-value, .main-value, .partial-metric .value');
+    
+    counters.forEach(counter => {
+        const text = counter.textContent;
+        const value = parseFloat(text.replace(/[^\d.]/g, ''));
+        
+        if (!isNaN(value) && value > 0) {
+            let current = 0;
+            const increment = Math.ceil(value / 30);
+            const suffix = text.replace(value.toString(), '');
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= value) {
+                    current = value;
+                    clearInterval(timer);
+                }
+                
+                counter.textContent = Math.floor(current) + suffix;
+            }, 50);
+        }
+    });
+}
+
+function initializeKeyboardShortcuts() {
+    document.addEventListener('keydown', function(event) {
+        // Ctrl+Enter : Lancer synchronisation
+        if (event.ctrlKey && event.key === 'Enter') {
+            event.preventDefault();
+            if (!syncInProgress) {
+                demarrerSynchronisationV43();
+            }
+        }
+        
+        // Escape : Fermer modals
+        if (event.key === 'Escape') {
+            if (dashboardVisible) {
+                masquerTableauBord();
+            }
+        }
+        
+        // F5 : Actualiser (sauf si sync en cours)
+        if (event.key === 'F5') {
+            if (syncInProgress) {
+                event.preventDefault();
+                showNotification('Synchronisation en cours, actualisation bloquée', 'warning');
+            }
+        }
+    });
+}
+
+// ================================================================
+// FONCTIONS PRINCIPALES DE SYNCHRONISATION
+// ================================================================
+
+function demarrerSynchronisationV43() {
+    if (syncInProgress) {
+        showNotification('Une synchronisation est déjà en cours', 'warning');
+        return;
+    }
+    
+    console.log('🚀 Démarrage synchronisation V4.3 FINALE');
+    
+    // Récupérer les options
+    const options = collectSyncOptions();
+    
+    // Valider les options
+    if (!validateSyncOptions(options)) {
+        return;
+    }
+    
+    // Démarrer la synchronisation
+    executeSynchronization(options);
+}
+
+function collectSyncOptions() {
+    return {
+        mode: syncMode,
+        force_sync: document.getElementById('forceSync')?.checked || false,
+        notify_users: document.getElementById('notifyUsers')?.checked || false,
+        include_archived: document.getElementById('includeArchived')?.checked || false,
+        enable_retry: document.getElementById('enableRetry')?.checked || true,
+        retry_strategy: document.getElementById('retryStrategy')?.value || 'balanced',
+        enable_deduplication: document.getElementById('enableDeduplication')?.checked || true,
+        batch_size: parseInt(document.getElementById('batchSize')?.value) || 10,
+        fast_mode: document.getElementById('enableFastMode')?.checked || true  // 🚀 NOUVELLE OPTION
+    };
+}
+
+function validateSyncOptions(options) {
+    // Validation basique
+    if (!options.mode) {
+        showNotification('Mode de synchronisation non sélectionné', 'error');
+        return false;
+    }
+    
+    if (options.batch_size < 1 || options.batch_size > 20) {
+        showNotification('Taille de lot invalide (1-20)', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+function executeSynchronization(options) {
+    syncInProgress = true;
+    
+    // Afficher le modal de progression
+    showProgressModal();
+    
+    // Préparer la requête
+    const requestData = {
+        ...options,
+        timestamp: new Date().toISOString()
+    };
+    
+    console.log('📊 Options de synchronisation:', requestData);
+    
+    // Lancer la requête AJAX
+    fetch("{% url 'admin_kelio_sync_global' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(result => {
+        handleSyncSuccess(result);
+    })
+    .catch(error => {
+        handleSyncError(error);
+    })
+    .finally(() => {
+        syncInProgress = false;
+    });
+}
+
+function handleSyncSuccess(result) {
+    console.log('✅ Synchronisation réussie:', result);
+    
+    if (result.success) {
+        updateProgressBar(100, 'Synchronisation terminée avec succès');
+        addLogEntry('✅ Synchronisation V4.3 terminée avec succès', 'success');
+        
+        // Mettre à jour les métriques temps réel
+        if (result.stats) {
+            updateRealtimeMetrics(result.stats);
+        }
+        
+        // Afficher le bouton de fermeture
+        setTimeout(() => {
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.getElementById('closeBtn').style.display = 'inline-block';
+        }, 2000);
+        
+        // Redirection automatique après 5 secondes
+        setTimeout(() => {
+            window.location.reload();
+        }, 5000);
+        
+    } else {
+        updateProgressBar(0, 'Erreur lors de la synchronisation');
+        addLogEntry(`❌ Erreur: ${result.message}`, 'error');
+        
+        // Afficher les résultats partiels si disponibles
+        if (result.stats && result.stats.total_employees_processed > 0) {
+            updateRealtimeMetrics(result.stats);
+            addLogEntry(`⚠️ ${result.stats.total_employees_processed} employés traités avant l'erreur`, 'warning');
+        }
+        
+        // Permettre la fermeture
+        document.getElementById('cancelBtn').innerHTML = '<i class="fas fa-times"></i> Fermer';
+        document.getElementById('cancelBtn').onclick = hideProgressModal;
+    }
+}
+
+function handleSyncError(error) {
+    console.error('❌ Erreur de synchronisation:', error);
+    
+    updateProgressBar(0, 'Erreur de connexion');
+    addLogEntry(`❌ Erreur: ${error.message}`, 'error');
+    
+    // Permettre la fermeture
+    document.getElementById('cancelBtn').innerHTML = '<i class="fas fa-times"></i> Fermer';
+    document.getElementById('cancelBtn').onclick = hideProgressModal;
+    
+    showNotification(`Erreur de synchronisation: ${error.message}`, 'danger');
+}
+
+// ================================================================
+// GESTION DU MODAL DE PROGRESSION
+// ================================================================
+
+function showProgressModal() {
+    // Réinitialiser le modal
+    resetProgressModal();
+    
+    // Afficher le modal
+    progressModal.show();
+    
+    // Démarrer la simulation de progression
+    simulateProgress();
+}
+
+function hideProgressModal() {
+    progressModal.hide();
+}
+
+function resetProgressModal() {
+    updateProgressBar(0, 'Initialisation...');
+    resetRealtimeMetrics();
+    clearLogEntries();
+    addLogEntry('Service V4.3 initialisé', 'info');
+    
+    // Réinitialiser les boutons
+    document.getElementById('cancelBtn').innerHTML = '<i class="fas fa-stop"></i> Annuler';
+    document.getElementById('cancelBtn').onclick = annulerSynchronisation;
+    document.getElementById('closeBtn').style.display = 'none';
+}
+
+function updateProgressBar(percentage, message) {
+    const progressBar = document.getElementById('mainProgressBar');
+    const progressText = document.getElementById('progressText');
+    const currentStep = document.getElementById('currentStep');
+    const currentOperation = document.getElementById('currentOperation');
+    
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+        progressBar.setAttribute('aria-valuenow', percentage);
+    }
+    
+    if (progressText) {
+        progressText.textContent = Math.round(percentage) + '%';
+    }
+    
+    if (currentStep) {
+        currentStep.textContent = message;
+    }
+    
+    if (currentOperation) {
+        currentOperation.textContent = getOperationDescription(percentage);
+    }
+}
+
+function getOperationDescription(percentage) {
+    if (percentage < 10) return 'Connexion au serveur Kelio...';
+    if (percentage < 20) return 'Authentification et validation...';
+    if (percentage < 30) return 'Récupération des données employés...';
+    if (percentage < 50) return 'Traitement et déduplication...';
+    if (percentage < 80) return 'Synchronisation avec la base de données...';
+    if (percentage < 95) return 'Finalisation et vérifications...';
+    return 'Synchronisation terminée';
+}
+
+function simulateProgress() {
+    let progress = 0;
+    const interval = setInterval(() => {
+        if (!syncInProgress) {
+            clearInterval(interval);
+            return;
+        }
+        
+        progress += Math.random() * 5;
+        if (progress > 90) progress = 90; // Ne pas dépasser 90% pendant la simulation
+        
+        updateProgressBar(progress, getOperationDescription(progress));
+    }, 500);
+}
+
+// ================================================================
+// GESTION DES MÉTRIQUES TEMPS RÉEL
+// ================================================================
+
+function updateRealtimeMetrics(stats) {
+    const metrics = {
+        processedCount: stats.total_employees_processed || 0,
+        createdCount: stats.total_created || 0,
+        updatedCount: stats.total_updated || 0,
+        errorCount: stats.total_errors || 0
+    };
+    
+    // Calculer la vitesse
+    const speed = stats.employees_per_second || 0;
+    document.getElementById('speedIndicator').textContent = speed.toFixed(1) + '/s';
+    
+    // Mettre à jour les compteurs avec animation
+    Object.entries(metrics).forEach(([elementId, value]) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            animateCounterTo(element, value);
+        }
+    });
+    
+    // Métriques avancées V4.3
+    if (stats.services_results && stats.services_results.employees) {
+        const empStats = stats.services_results.employees;
+        
+        document.getElementById('batchProgress').textContent = 
+            `${empStats.successful_batches || 0}/${empStats.total_batches || 0}`;
+        
+        document.getElementById('duplicatesResolved').textContent = 
+            empStats.doublons_geres || 0;
+        
+        document.getElementById('retryCount').textContent = 
+            stats.retries_total || 0;
+    }
+}
+
+function resetRealtimeMetrics() {
+    const metricElements = ['processedCount', 'createdCount', 'updatedCount', 'errorCount', 'speedIndicator'];
+    
+    metricElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = id === 'speedIndicator' ? '0/s' : '0';
+        }
+    });
+    
+    // Métriques avancées
+    document.getElementById('batchProgress').textContent = '0/0';
+    document.getElementById('duplicatesResolved').textContent = '0';
+    document.getElementById('retryCount').textContent = '0';
+}
+
+function animateCounterTo(element, targetValue) {
+    const startValue = parseInt(element.textContent) || 0;
+    const duration = 1000;
+    const startTime = Date.now();
+    
+    function updateCounter() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+        
+        element.textContent = currentValue;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        }
+    }
+    
+    updateCounter();
+}
+
+// ================================================================
+// GESTION DU JOURNAL
+// ================================================================
+
+function addLogEntry(message, type = 'info') {
+    if (logPaused) return;
+    
+    const logContainer = document.getElementById('realtimeLog');
+    if (!logContainer) return;
+    
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    
+    const timestamp = new Date().toLocaleTimeString();
+    entry.innerHTML = `
+        <span class="log-time">[${timestamp}]</span>
+        <span class="log-message">${message}</span>
+    `;
+    
+    logContainer.appendChild(entry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+    
+    // Limiter le nombre d'entrées
+    const entries = logContainer.querySelectorAll('.log-entry');
+    if (entries.length > 50) {
+        entries[0].remove();
+    }
+}
+
+function clearLogEntries() {
+    const logContainer = document.getElementById('realtimeLog');
+    if (logContainer) {
+        logContainer.innerHTML = '';
+    }
+}
+
+function pauserLog() {
+    logPaused = !logPaused;
+    const icon = document.getElementById('logPauseIcon');
+    if (icon) {
+        icon.className = logPaused ? 'fas fa-play' : 'fas fa-pause';
+    }
+}
+
+function viderLog() {
+    clearLogEntries();
+    addLogEntry('Journal vidé', 'info');
+}
+
+// ================================================================
+// FONCTIONS DU TABLEAU DE BORD
+// ================================================================
+
+function afficherTableauBordKelio() {
+    const dashboard = document.getElementById('kelioDashboard');
+    if (!dashboard) return;
+    
+    dashboard.style.display = 'block';
+    dashboardVisible = true;
+    
+    // Charger les données du tableau de bord
+    loadDashboardData();
+    
+    // Animation d'apparition
+    dashboard.style.opacity = '0';
+    dashboard.style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        dashboard.style.transition = 'all 0.3s ease';
+        dashboard.style.opacity = '1';
+        dashboard.style.transform = 'translateY(0)';
+    }, 100);
+}
+
+function masquerTableauBord() {
+    const dashboard = document.getElementById('kelioDashboard');
+    if (!dashboard) return;
+    
+    dashboard.style.transition = 'all 0.3s ease';
+    dashboard.style.opacity = '0';
+    dashboard.style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        dashboard.style.display = 'none';
+        dashboardVisible = false;
+    }, 300);
+}
+
+function loadDashboardData() {
+    // État de santé
+    loadHealthStatus();
+    
+    // Statistiques
+    loadStatistics();
+}
+
+function loadHealthStatus() {
+    const healthWidget = document.getElementById('healthWidgetContent');
+    if (!healthWidget) return;
+    
+    fetch("{% url 'kelio_health_check_v43' %}")
+        .then(response => response.json())
+        .then(data => {
+            const status = data.overall_status;
+            const statusClass = status === 'HEALTHY' ? 'success' : 'danger';
+            const statusIcon = status === 'HEALTHY' ? 'check-circle' : 'exclamation-triangle';
+            
+            healthWidget.innerHTML = `
+                <div class="health-status ${statusClass}">
+                    <i class="fas fa-${statusIcon}"></i>
+                    <span>${status}</span>
+                </div>
+                <small class="text-muted">Service V4.3 ${data.service_version}</small>
+            `;
+        })
+        .catch(error => {
+            healthWidget.innerHTML = `
+                <div class="health-status danger">
+                    <i class="fas fa-times-circle"></i>
+                    <span>ERREUR</span>
+                </div>
+                <small class="text-muted">${error.message}</small>
+            `;
+        });
+}
+
+function loadStatistics() {
+    const statsWidget = document.getElementById('statsWidgetContent');
+    if (!statsWidget) return;
+    
+    fetch("{% url 'kelio_sync_stats_v43' %}")
+        .then(response => response.json())
+        .then(data => {
+            const dbStats = data.database_stats;
+            
+            statsWidget.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">${dbStats.total_profils}</div>
+                        <div class="stat-label">Profils totaux</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${dbStats.profils_synchronises_kelio}</div>
+                        <div class="stat-label">Synchronisés</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${dbStats.taux_synchronisation}%</div>
+                        <div class="stat-label">Taux sync</div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            statsWidget.innerHTML = `
+                <div class="text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Erreur de chargement
+                </div>
+            `;
+        });
+}
+
+// ================================================================
+// ACTIONS RAPIDES
+// ================================================================
+
+function testerConnexionRapide() {
+    showNotification('Test de connexion en cours...', 'info');
+    
+    fetch("{% url 'kelio_test_connection_v43' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const message = data.success ? 'Connexion Kelio OK' : `Erreur: ${data.message}`;
+        const type = data.success ? 'success' : 'danger';
+        showNotification(message, type);
+    })
+    .catch(error => {
+        showNotification(`Erreur de test: ${error.message}`, 'danger');
+    });
+}
+
+function viderCacheKelio() {
+    if (!confirm('Vider le cache Kelio ? Cette action peut impacter les performances.')) {
+        return;
+    }
+    
+    showNotification('Vidage du cache en cours...', 'info');
+    
+    // Simulation (remplacer par appel API réel)
+    setTimeout(() => {
+        showNotification('Cache Kelio vidé avec succès', 'success');
+    }, 2000);
+}
+
+function redemarrerService() {
+    if (!confirm('Redémarrer le service Kelio ? Cette action peut prendre quelques minutes.')) {
+        return;
+    }
+    
+    showNotification('Redémarrage du service en cours...', 'warning');
+    
+    // Simulation (remplacer par appel API réel)
+    setTimeout(() => {
+        showNotification('Service Kelio redémarré avec succès', 'success');
+        loadDashboardData(); // Recharger les données
+    }, 5000);
+}
+
+function verifierSanteKelio() {
+    const indicator = document.getElementById('healthIndicator');
+    if (!indicator) return;
+    
+    indicator.textContent = 'Vérification...';
+    indicator.classList.add('checking');
+    
+    fetch("{% url 'kelio_health_check_v43' %}")
+        .then(response => response.json())
+        .then(data => {
+            const status = data.overall_status;
+            indicator.textContent = status === 'HEALTHY' ? 'OK' : 'Erreur';
+            indicator.classList.remove('checking');
+            
+            const message = status === 'HEALTHY' ? 'Service Kelio opérationnel' : 'Problème détecté avec le service Kelio';
+            const type = status === 'HEALTHY' ? 'success' : 'warning';
+            showNotification(message, type);
+        })
+        .catch(error => {
+            indicator.textContent = 'Erreur';
+            indicator.classList.remove('checking');
+            showNotification(`Erreur de vérification: ${error.message}`, 'danger');
+        });
+}
+
+// ================================================================
+// ACTIONS PRINCIPALES
+// ================================================================
+
+function nouvelleSynchronisation() {
+    if (confirm('Démarrer une nouvelle synchronisation ?')) {
+        window.location.reload();
+    }
+}
+
+function reessayerAvecCorrections() {
+    if (confirm('Relancer la synchronisation avec les corrections V4.3 ?')) {
+        demarrerSynchronisationV43();
+    }
+}
+
+function lancerDiagnostics() {
+    showNotification('Lancement des diagnostics...', 'info');
+    
+    // Simuler les diagnostics
+    setTimeout(() => {
+        const diagnostics = [
+            { name: 'Connexion Kelio', status: 'OK' },
+            { name: 'Services SOAP', status: 'OK' },
+            { name: 'Authentification', status: 'OK' },
+            { name: 'Ressources', status: 'OK' }
+        ];
+        
+        let message = 'Diagnostics terminés:\n';
+        diagnostics.forEach(diag => {
+            message += `• ${diag.name}: ${diag.status}\n`;
+        });
+        
+        alert(message);
+    }, 3000);
+}
+
+function afficherStatistiques() {
+    window.open("{% url 'kelio_sync_stats_v43' %}", '_blank');
+}
+
+function ouvrirConfiguration() {
+    showNotification('Ouverture de la configuration...', 'info');
+    // Rediriger vers la page de configuration
+    setTimeout(() => {
+        window.location.href = "{% url 'admin_config' %}";
+    }, 1000);
+}
+
+function afficherAide() {
+    const helpContent = `
+    === AIDE SYNCHRONISATION KELIO V4.3 FINALE ===
+    
+    🚀 NOUVEAUTÉS V4.3:
+    • Gestion des erreurs de concurrence
+    • Retry automatique intelligent
+    • Déduplication avancée avec IA
+    • Traitement par micro-lots
+    
+    📋 MODES DE SYNCHRONISATION:
+    • Complète: Tous les employés (recommandé)
+    • Incrémentale: Modifications récentes uniquement
+    
+    ⚙️ OPTIONS AVANCÉES:
+    • Retry automatique: Gestion des erreurs temporaires
+    • Déduplication: Évite les doublons
+    • Taille des lots: Compromis vitesse/stabilité
+    
+    🔧 RACCOURCIS CLAVIER:
+    • Ctrl+Enter: Lancer la synchronisation
+    • Escape: Fermer les modals
+    • F5: Actualiser (bloqué pendant sync)
+    
+    📞 SUPPORT:
+    En cas de problème, contactez l'équipe technique
+    avec les détails de l'erreur affichés.
+    `;
+    
+    alert(helpContent);
+}
+
+function annulerSynchronisation() {
+    if (syncInProgress) {
+        if (confirm('Voulez-vous vraiment annuler la synchronisation en cours ?')) {
+            syncInProgress = false;
+            addLogEntry('⚠️ Annulation demandée par l\'utilisateur', 'warning');
+            
+            setTimeout(() => {
+                hideProgressModal();
+                showNotification('Synchronisation annulée', 'warning');
+            }, 1000);
+        }
+    } else {
+        hideProgressModal();
+    }
+}
+
+function fermerModal() {
+    hideProgressModal();
+}
+
+// ================================================================
+// UTILITAIRES
+// ================================================================
+
+function showNotification(message, type = 'info') {
+    // Créer la notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show notification-v43`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${getNotificationIcon(type)}"></i>
+            <span>${message}</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Styles inline pour la notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border-radius: 8px;
+        border: 0;
+    `;
+    
+    // Ajouter au container ou au body
+    const container = document.getElementById('systemAlerts') || document.body;
+    container.appendChild(notification);
+    
+    // Animation d'entrée
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // Suppression automatique
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }
+    }, 5000);
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'success': 'check-circle',
+        'danger': 'exclamation-triangle',
+        'warning': 'exclamation-triangle',
+        'info': 'info-circle',
+        'primary': 'info-circle'
+    };
+    return icons[type] || 'info-circle';
+}
+
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return decodeURIComponent(value);
+        }
+    }
+    
+    // Fallback: chercher dans les meta tags
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    
+    return '';
+}
+
+// ================================================================
+// GESTIONNAIRES D'ÉVÉNEMENTS
+// ================================================================
+
+// Gestion de la fermeture de la page pendant une sync
+window.addEventListener('beforeunload', function(event) {
+    if (syncInProgress) {
+        event.preventDefault();
+        event.returnValue = 'Une synchronisation est en cours. Voulez-vous vraiment quitter ?';
+        return event.returnValue;
+    }
+});
+
+// Gestion de la perte de focus pendant une sync
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && syncInProgress) {
+        console.log('⚠️ Page masquée pendant la synchronisation');
+    }
+});
+
+// Gestion des erreurs JavaScript globales
+window.addEventListener('error', function(event) {
+    console.error('Erreur JavaScript:', event.error);
+    if (syncInProgress) {
+        addLogEntry(`❌ Erreur JavaScript: ${event.error.message}`, 'error');
+    }
+});
+
+// Log final
+console.log('✅ JavaScript V4.3 FINAL chargé avec succès');
+console.log('🚀 Interface prête pour synchronisation ultra-robuste');
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,3822 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Recherche de demandes{% endblock %}
+
+{% block content %}
+
+<!-- ✅ BOOTSTRAP 5.3 JS via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Header de recherche -->
+<div class="recherche-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-0">
+          <i class="fas fa-search"></i>
+          Recherche de demandes d'intérim
+        </h1>
+        <p class="mb-0 mt-2">
+          <i class="fas fa-filter"></i> 
+          Recherche avancée avec scoring et workflow
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        {% if profil_utilisateur.peut_proposer_candidat %}
+        <a href="{% url 'liste_interim_validation' %}" class="btn btn-outline-light">
+          <i class="fas fa-list"></i>
+          Liste validation
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tableau de bord statistiques -->
+{% if stats %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      Tableau de bord
+    </h2>
+    <div class="dashboard-actions">
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshStats()">
+        <i class="fas fa-sync-alt"></i>
+        Actualiser
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#statsDetailModal">
+        <i class="fas fa-chart-pie"></i>
+        Détails
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <!-- Total demandes -->
+      <div class="stat-card primary clickable" onclick="filterByStatus('')">
+        <div class="stat-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.total_demandes }}</div>
+          <div class="stat-label">Total demandes</div>
+          <div class="stat-trend">
+            <i class="fas fa-arrow-up text-success"></i>
+            <small>{{ stats.tendance_mois }}% ce mois</small>
+          </div>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-mini">
+            <div class="progress-bar-mini" style="width: 100%"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Avec candidat -->
+      <div class="stat-card success clickable" onclick="filterByStatus('avec_candidat=oui')">
+        <div class="stat-icon">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.demandes_avec_candidat }}</div>
+          <div class="stat-label">Avec candidat</div>
+          <div class="stat-trend">
+            <i class="fas fa-arrow-up text-success"></i>
+            <small>{{ stats.taux_succes }}% de réussite</small>
+          </div>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-mini">
+            <div class="progress-bar-mini bg-success" style="width: {{ stats.pct_avec_candidat }}%"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- En cours -->
+      <div class="stat-card warning clickable" onclick="filterByStatus('statut=EN_VALIDATION')">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.demandes_en_cours }}</div>
+          <div class="stat-label">En cours</div>
+          <div class="stat-trend">
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            <small>Attention requise</small>
+          </div>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-mini">
+            <div class="progress-bar-mini bg-warning" style="width: {{ stats.pct_en_cours }}%"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Terminées -->
+      <div class="stat-card info clickable" onclick="filterByStatus('statut=TERMINEE')">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.demandes_terminees }}</div>
+          <div class="stat-label">Terminées</div>
+          <div class="stat-trend">
+            <i class="fas fa-chart-line text-info"></i>
+            <small>Missions achevées</small>
+          </div>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-mini">
+            <div class="progress-bar-mini bg-info" style="width: {{ stats.pct_terminees }}%"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Score moyen -->
+      {% if stats.score_moyen_candidats %}
+      <div class="stat-card secondary">
+        <div class="stat-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.score_moyen_candidats }}/100</div>
+          <div class="stat-label">Score moyen</div>
+          <div class="stat-trend">
+            {% if stats.score_moyen_candidats >= 75 %}
+            <i class="fas fa-trophy text-warning"></i>
+            <small>Excellence</small>
+            {% elif stats.score_moyen_candidats >= 60 %}
+            <i class="fas fa-thumbs-up text-success"></i>
+            <small>Bon niveau</small>
+            {% else %}
+            <i class="fas fa-chart-line text-info"></i>
+            <small>À améliorer</small>
+            {% endif %}
+          </div>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-mini">
+            <div class="progress-bar-mini bg-secondary" style="width: {{ stats.score_moyen_candidats }}%"></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Demandes urgentes -->
+      <div class="stat-card danger clickable" onclick="filterByStatus('urgence=ELEVEE&urgence=CRITIQUE')">
+        <div class="stat-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.demandes_urgentes }}</div>
+          <div class="stat-label">Urgentes</div>
+          <div class="stat-trend">
+            <i class="fas fa-fire text-danger"></i>
+            <small>Action immédiate</small>
+          </div>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-mini">
+            <div class="progress-bar-mini bg-danger" style="width: {{ stats.pct_urgentes }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Graphique évolution -->
+    <div class="stats-chart mt-4">
+      <h6 class="chart-title">
+        <i class="fas fa-chart-line"></i>
+        Évolution des demandes (7 derniers jours)
+      </h6>
+      <div class="chart-container">
+        <canvas id="demandesChart" width="400" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Formulaire de recherche -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-filter"></i>
+      Critères de recherche
+    </h2>
+    <div class="search-header-actions">
+      <div class="saved-searches dropdown">
+        <button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown">
+          <i class="fas fa-bookmark"></i>
+          Recherches sauvées
+        </button>
+        <ul class="dropdown-menu" id="savedSearchesList">
+          <!-- Chargé dynamiquement -->
+        </ul>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-success" onclick="saveCurrentSearch()">
+        <i class="fas fa-save"></i>
+        Sauvegarder
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleFilters">
+        <i class="fas fa-chevron-down"></i>
+        <span id="toggleText">Masquer les filtres</span>
+      </button>
+    </div>
+  </div>
+  <div class="card-body" id="filtersContainer">
+    <!-- Recherche intelligente -->
+    <div class="quick-search-section mb-4">
+      <div class="row">
+        <div class="col-md-8">
+          <label for="q" class="form-label">
+            <i class="fas fa-search"></i> Recherche intelligente
+          </label>
+          <div class="search-input-container">
+            <input type="text" id="q" name="q" class="form-control search-input smart-search" 
+                   placeholder="Ex: 'urgente développeur', 'Dupont janvier', 'score >80'..." 
+                   value="{{ search_params.q }}" autocomplete="off">
+<!--
+            <div class="search-buttons">
+              <button type="button" class="btn-search-clear" onclick="clearSearch()" title="Effacer">
+                <i class="fas fa-times"></i>
+              </button>
+               <button type="button" class="btn-search-voice" onclick="startVoiceSearch()" title="Recherche vocale">
+                <i class="fas fa-microphone"></i>
+              </button>           
+            </div>
+ -->             
+            <div class="search-suggestions" id="searchSuggestions"></div>
+          </div>
+          <div class="search-examples">
+            <small class="text-muted">
+              <i class="fas fa-lightbulb"></i>
+              Exemples: 
+              <span class="example-search" onclick="setSearchExample('urgente')">urgente</span>,
+              <span class="example-search" onclick="setSearchExample('développeur PHP')">développeur PHP</span>,
+              <span class="example-search" onclick="setSearchExample('score >75')">score >75</span>
+            </small>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <div class="quick-actions w-100">
+            <div class="btn-group w-100" role="group">
+              <button type="submit" form="searchForm" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+                Rechercher
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'interim_recherche' %}">
+                  <i class="fas fa-eraser"></i> Réinitialiser
+                </a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form method="get" id="searchForm">
+      <input type="hidden" name="q" id="hiddenQ" value="{{ search_params.q }}">
+      
+      <!-- Filtres rapides -->
+      <div class="quick-filters-section mb-4">
+        <h6 class="filters-subtitle">
+          <i class="fas fa-tags"></i> Filtres rapides
+        </h6>
+        <div class="filter-tags">
+          <button type="button" class="filter-tag {% if search_params.urgence == 'CRITIQUE' %}active{% endif %}" 
+                  onclick="toggleQuickFilter('urgence', 'CRITIQUE')">
+            <i class="fas fa-fire"></i> Critiques
+          </button>
+          <button type="button" class="filter-tag {% if search_params.avec_candidat == 'non' %}active{% endif %}" 
+                  onclick="toggleQuickFilter('avec_candidat', 'non')">
+            <i class="fas fa-user-times"></i> Sans candidat
+          </button>
+          <button type="button" class="filter-tag {% if search_params.statut == 'EN_VALIDATION' %}active{% endif %}" 
+                  onclick="toggleQuickFilter('statut', 'EN_VALIDATION')">
+            <i class="fas fa-clock"></i> En validation
+          </button>
+          <button type="button" class="filter-tag {% if search_params.date_debut %}active{% endif %}" 
+                  onclick="toggleQuickFilter('periode', 'cette_semaine')">
+            <i class="fas fa-calendar-week"></i> Cette semaine
+          </button>
+          <button type="button" class="filter-tag" onclick="toggleQuickFilter('score', 'excellent')">
+            <i class="fas fa-star"></i> Score >80
+          </button>
+          <button type="button" class="filter-tag" onclick="resetAllFilters()">
+            <i class="fas fa-times-circle"></i> Effacer tout
+          </button>
+        </div>
+      </div>
+      
+      <!-- Filtres détaillés -->
+      <div class="detailed-filters" id="detailedFilters">
+        <!-- Filtres organisationnels -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label for="departement" class="form-label">
+              <i class="fas fa-building"></i> Département
+            </label>
+            <select id="departement" name="departement" class="form-select filter-select">
+              <option value="">Tous les départements</option>
+              {% for dept in departements %}
+              <option value="{{ dept.id }}" 
+                      {% if search_params.departement == dept.id|stringformat:"s" %}selected{% endif %}
+                      data-count="{{ dept.employes_count }}">
+                {{ dept.nom }} ({{ dept.employes_count }} employés)
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label for="site" class="form-label">
+              <i class="fas fa-map-marker-alt"></i> Site
+            </label>
+            <select id="site" name="site" class="form-select filter-select">
+              <option value="">Tous les sites</option>
+              {% for site_obj in sites %}
+              <option value="{{ site_obj.id }}" {% if search_params.site == site_obj.id|stringformat:"s" %}selected{% endif %}>
+                {{ site_obj.nom }} - {{ site_obj.ville }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label for="statut" class="form-label">
+              <i class="fas fa-flag"></i> Statut
+            </label>
+            <select id="statut" name="statut" class="form-select filter-select">
+              <option value="">Tous les statuts</option>
+              {% for statut_code, statut_label in statuts_choices %}
+              <option value="{{ statut_code }}" {% if search_params.statut == statut_code %}selected{% endif %}>
+                {{ statut_label }}
+                {% if statuts_count.statut_code.count %}({{ statuts_count.statut_code.count }}){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label for="urgence" class="form-label">
+              <i class="fas fa-exclamation-triangle"></i> Urgence
+            </label>
+            <select id="urgence" name="urgence" class="form-select filter-select">
+              <option value="">Toutes urgences</option>
+              {% for urgence_code, urgence_label in urgences_choices %}
+              <option value="{{ urgence_code }}" {% if search_params.urgence == urgence_code %}selected{% endif %}>
+                {% if urgence_code == 'CRITIQUE' %}🔴{% elif urgence_code == 'ELEVEE' %}🟠{% elif urgence_code == 'MOYENNE' %}🟡{% else %}🟢{% endif %}
+                {{ urgence_label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <!-- Filtres temporels -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">
+              <i class="fas fa-calendar-alt"></i> Période de mission
+            </label>
+            <div class="date-range-container">
+              <div class="date-preset-buttons mb-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setDateRange('today')">Aujourd'hui</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setDateRange('week')">Cette semaine</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setDateRange('month')">Ce mois</button>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <input type="date" id="date_debut" name="date_debut" class="form-control form-control-sm" 
+                         value="{{ search_params.date_debut }}" placeholder="Date début">
+                </div>
+                <div class="col-6">
+                  <input type="date" id="date_fin" name="date_fin" class="form-control form-control-sm" 
+                         value="{{ search_params.date_fin }}" placeholder="Date fin">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">
+              <i class="fas fa-user"></i> Candidat et scoring
+            </label>
+            <div class="candidate-filters">
+              <select id="avec_candidat" name="avec_candidat" class="form-select form-select-sm mb-2">
+                <option value="">État candidat</option>
+                <option value="oui" {% if search_params.avec_candidat == 'oui' %}selected{% endif %}>
+                  ✅ Avec candidat sélectionné
+                </option>
+                <option value="non" {% if search_params.avec_candidat == 'non' %}selected{% endif %}>
+                  ❌ Sans candidat
+                </option>
+              </select>
+              <div class="row">
+                <div class="col-6">
+                  <input type="number" id="score_min" name="score_min" class="form-control form-control-sm" 
+                         min="0" max="100" placeholder="Score min" value="{{ search_params.score_min }}">
+                </div>
+                <div class="col-6">
+                  <input type="number" id="score_max" name="score_max" class="form-control form-control-sm" 
+                         min="0" max="100" placeholder="Score max" value="{{ search_params.score_max }}">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label for="niveau_validation" class="form-label">
+              <i class="fas fa-layer-group"></i> Workflow
+            </label>
+            <select id="niveau_validation" name="niveau_validation" class="form-select">
+              <option value="">Tous niveaux</option>
+              <option value="0" {% if search_params.niveau_validation == '0' %}selected{% endif %}>
+                🟡 Niveau 0 (Non validé)
+              </option>
+              <option value="1" {% if search_params.niveau_validation == '1' %}selected{% endif %}>
+                🔵 Niveau 1 (Responsable)
+              </option>
+              <option value="2" {% if search_params.niveau_validation == '2' %}selected{% endif %}>
+                🟣 Niveau 2 (Directeur)
+              </option>
+              <option value="3" {% if search_params.niveau_validation == '3' %}selected{% endif %}>
+                🟢 Niveau 3 (RH/Admin)
+              </option>
+            </select>
+            <div class="workflow-help mt-1">
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                <span id="workflowHelp">Filtrer par étape de validation</span>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+    
+    <!-- Filtres actifs -->
+    <div class="active-filters" id="activeFilters">
+      <!-- Généré dynamiquement -->
+    </div>
+  </div>
+</div>
+
+<!-- Résultats de recherche -->
+{% if demandes_enrichies %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-list"></i>
+      Résultats de recherche
+      <span class="result-count">({{ stats.total_demandes }} demande{{ stats.total_demandes|pluralize }})</span>
+    </h2>
+    <div class="header-actions">
+      <div class="view-controls">
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-secondary active" onclick="switchView('list')">
+            <i class="fas fa-list"></i>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" onclick="switchView('grid')">
+            <i class="fas fa-th"></i>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" onclick="switchView('compact')">
+            <i class="fas fa-compress"></i>
+          </button>
+        </div>
+      </div>
+      <select id="sortBy" class="form-select form-select-sm">
+        <option value="date_desc">➡️ Plus récentes</option>
+        <option value="date_asc">⬅️ Plus anciennes</option>
+        <option value="score_desc">⭐ Meilleur score</option>
+        <option value="urgence_desc">🔥 Plus urgentes</option>
+        <option value="statut">📊 Par statut</option>
+        <option value="dept">🏢 Par département</option>
+      </select>
+      <div class="batch-actions">
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-cogs"></i> Actions
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="selectAllVisible()">
+              <i class="fas fa-check-square"></i> Sélectionner tout
+            </a></li>
+            <li><a class="dropdown-item" href="#" onclick="bulkExport()">
+              <i class="fas fa-download"></i> Exporter sélection
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="bulkNotify()">
+              <i class="fas fa-bell"></i> Notifier sélection
+            </a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="results-container" id="resultsContainer">
+      {% for item in demandes_enrichies %}
+      {% with demande=item.demande candidat_info=item.candidat_info %}
+      <div class="demande-row" data-demande-id="{{ demande.id }}">
+        <div class="row-selector">
+          <input type="checkbox" class="form-check-input" id="check_{{ demande.id }}" value="{{ demande.id }}">
+        </div>
+        
+        <div class="demande-main">
+          <!-- En-tête de la demande -->
+          <div class="demande-header">
+            <div class="demande-title">
+              <h3>
+                <i class="fas fa-file-alt"></i>
+                <span class="numero-demande" onclick="copyToClipboard('{{ demande.numero_demande }}', this)">
+                  {{ demande.numero_demande }}
+                </span>
+                <span class="poste-title">{{ demande.poste.titre }}</span>
+                
+                <!-- Indicateurs visuels -->
+                <div class="status-indicators">
+                  {% if demande.est_urgente %}
+                  <span class="indicator urgent" title="Demande urgente">
+                    <i class="fas fa-fire"></i>
+                  </span>
+                  {% endif %}
+                  
+                  {% if candidat_info %}
+                  <span class="indicator has-candidate" title="Candidat sélectionné">
+                    <i class="fas fa-user-check"></i>
+                  </span>
+                  {% endif %}
+                  
+                  {% if item.nb_propositions > 5 %}
+                  <span class="indicator popular" title="Nombreuses propositions">
+                    <i class="fas fa-star"></i>
+                  </span>
+                  {% endif %}
+                </div>
+              </h3>
+              
+              <div class="demande-badges">
+                <span class="badge-statut {{ demande.statut|lower }}" title="Statut: {{ demande.get_statut_display }}">
+                  {{ demande.get_statut_display }}
+                </span>
+                <span class="badge-urgence {{ demande.urgence|lower }}" title="Urgence: {{ demande.get_urgence_display }}">
+                  {% if demande.urgence == 'CRITIQUE' %}🔴{% elif demande.urgence == 'ELEVEE' %}🟠{% elif demande.urgence == 'MOYENNE' %}🟡{% else %}🟢{% endif %}
+                  {{ demande.get_urgence_display }}
+                </span>
+                <span class="badge-duree" title="Durée de mission">
+                  <i class="fas fa-clock"></i>
+                  {{ demande.duree_mission }} jour{{ demande.duree_mission|pluralize }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="demande-meta">
+              <div class="meta-row">
+                <div class="meta-item">
+                  <i class="fas fa-calendar"></i>
+                  {% if demande.date_debut and demande.date_fin %}
+                    <span class="date-range">
+                      {{ demande.date_debut|date:"d/m/Y" }} - {{ demande.date_fin|date:"d/m/Y" }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted">Dates non définies</span>
+                  {% endif %}
+                </div>
+                <div class="meta-item">
+                  <i class="fas fa-building"></i>
+                  <span class="dept-site">{{ demande.poste.departement.nom }} • {{ demande.poste.site.nom }}</span>
+                </div>
+                <div class="meta-item">
+                  <i class="fas fa-user"></i>
+                  <span class="demandeur">{{ demande.demandeur.nom_complet }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Contenu avec onglets -->
+          <div class="demande-content">
+            <ul class="nav nav-tabs nav-tabs-sm" id="tabs-{{ demande.id }}" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview-{{ demande.id }}" type="button">
+                  <i class="fas fa-eye"></i> Vue d'ensemble
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#persons-{{ demande.id }}" type="button">
+                  <i class="fas fa-users"></i> Personnes (3)
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#scoring-{{ demande.id }}" type="button">
+                  <i class="fas fa-star"></i> Scoring
+                </button>
+              </li>
+              {% if candidat_info.proposition.justification %}
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#justification-{{ demande.id }}" type="button">
+                  <i class="fas fa-comment"></i> Justification
+                </button>
+              </li>
+              {% endif %}
+            </ul>
+            
+            <div class="tab-content mt-3">
+              <!-- Onglet Vue d'ensemble -->
+              <div class="tab-pane fade show active" id="overview-{{ demande.id }}">
+                <div class="overview-grid">
+                  <!-- Progression workflow -->
+                  <div class="overview-card">
+                    <div class="card-icon">
+                      <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="card-content">
+                      <div class="card-title">Progression workflow</div>
+                      <div class="progress-container">
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width: {{ item.progression.pourcentage }}%"></div>
+                          <span class="progress-text">
+                            Niveau {{ item.progression.niveau_actuel }}/{{ item.progression.niveau_max }}
+                          </span>
+                        </div>
+                      </div>
+                      <small class="text-muted">{{ item.progression.pourcentage|floatformat:0 }}% complété</small>
+                    </div>
+                  </div>
+                  
+                  <!-- Propositions -->
+                  <div class="overview-card">
+                    <div class="card-icon">
+                      <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-content">
+                      <div class="card-title">Propositions</div>
+                      <div class="proposals-summary">
+                        <span class="proposals-count">{{ item.nb_propositions }}</span>
+                        <span class="proposals-label">candidat{{ item.nb_propositions|pluralize }}</span>
+                      </div>
+                      <small class="text-muted">
+                        {% if item.meilleur_score > 0 %}
+                          Meilleur score: {{ item.meilleur_score }}/100
+                        {% else %}
+                          Aucune évaluation
+                        {% endif %}
+                      </small>
+                    </div>
+                  </div>
+                  
+                  <!-- Candidat sélectionné ou en attente -->
+                  {% if candidat_info %}
+                  <div class="overview-card selected">
+                    <div class="card-icon">
+                      <i class="fas fa-star"></i>
+                    </div>
+                    <div class="card-content">
+                      <div class="card-title">Candidat retenu</div>
+                      <div class="selected-candidate">
+                        <strong>{{ candidat_info.candidat.nom_complet }}</strong>
+                      </div>
+                      <small class="text-success">
+                        Score: {{ candidat_info.score_total }}/100
+                      </small>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="overview-card pending">
+                    <div class="card-icon">
+                      <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="card-content">
+                      <div class="card-title">En attente</div>
+                      <div class="pending-status">
+                        Aucun candidat sélectionné
+                      </div>
+                      <small class="text-warning">
+                        {{ item.nb_propositions }} proposition{{ item.nb_propositions|pluralize }} reçue{{ item.nb_propositions|pluralize }}
+                      </small>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <!-- Onglet Personnes -->
+              <div class="tab-pane fade" id="persons-{{ demande.id }}">
+                <div class="persons-grid">
+                  <!-- Demandeur -->
+                  <div class="person-card">
+                    <div class="person-avatar">
+                      <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="person-info">
+                      <div class="person-label">Demandeur</div>
+                      <div class="person-name">{{ demande.demandeur.nom_complet }}</div>
+                      <small>{{ demande.demandeur.poste.titre|default:"Poste N/A" }}</small>
+                      <div class="person-actions">
+                        <button class="btn-person-action" title="Contacter">
+                          <i class="fas fa-envelope"></i>
+                        </button>
+                        <button class="btn-person-action" title="Voir profil">
+                          <i class="fas fa-user"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Personne remplacée -->
+                  <div class="person-card">
+                    <div class="person-avatar">
+                      <i class="fas fa-user-clock"></i>
+                    </div>
+                    <div class="person-info">
+                      <div class="person-label">Personne remplacée</div>
+                      <div class="person-name">{{ demande.personne_remplacee.nom_complet }}</div>
+                      <small>{{ demande.motif_absence.nom }}</small>
+                      <div class="absence-indicator">
+                        <span class="badge badge-sm badge-warning">
+                          <i class="fas fa-calendar-times"></i>
+                          {{ demande.motif_absence.nom }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Candidat sélectionné -->
+                  {% if candidat_info %}
+                  <div class="person-card selected">
+                    <div class="person-avatar">
+                      <i class="fas fa-star"></i>
+                    </div>
+                    <div class="person-info">
+                      <div class="person-label">
+                        <i class="fas fa-trophy"></i> Candidat sélectionné
+                      </div>
+                      <div class="person-name">{{ candidat_info.candidat.nom_complet }}</div>
+                      <small>
+                        Score: {{ candidat_info.score_total }}/100
+                        {% if candidat_info.proposition %}
+                          • Proposé par {{ candidat_info.proposition.proposant.nom_complet }}
+                        {% endif %}
+                      </small>
+                      <div class="person-actions">
+                        <button class="btn-person-action" title="Voir scoring détaillé">
+                          <i class="fas fa-chart-bar"></i>
+                        </button>
+                        <button class="btn-person-action" title="Contacter">
+                          <i class="fas fa-phone"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="person-card empty">
+                    <div class="person-avatar">
+                      <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="person-info">
+                      <div class="person-label">Candidat sélectionné</div>
+                      <div class="person-name">Aucun candidat sélectionné</div>
+                      <small>{{ item.nb_propositions }} proposition{{ item.nb_propositions|pluralize }} en attente</small>
+                      <div class="person-actions">
+                        <button class="btn-person-action" title="Voir propositions">
+                          <i class="fas fa-list"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <!-- Onglet Scoring -->
+              <div class="tab-pane fade" id="scoring-{{ demande.id }}">
+                {% if candidat_info.score_detail %}
+                <div class="scoring-details">
+                  <div class="score-overview">
+                    <div class="total-score">
+                      <div class="score-circle">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                          <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                          <path class="circle" stroke-dasharray="{{ candidat_info.score_total }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                          <text x="18" y="20.35" class="percentage">{{ candidat_info.score_total }}</text>
+                        </svg>
+                      </div>
+                      <div class="score-label">Score total</div>
+                    </div>
+                    
+                    <div class="score-breakdown">
+                      <div class="score-item">
+                        <div class="score-bar">
+                          <div class="score-fill" style="width: {{ candidat_info.score_detail.score_competences }}%"></div>
+                        </div>
+                        <span class="score-label">Compétences</span>
+                        <span class="score-value">{{ candidat_info.score_detail.score_competences }}/100</span>
+                      </div>
+                      
+                      <div class="score-item">
+                        <div class="score-bar">
+                          <div class="score-fill" style="width: {{ candidat_info.score_detail.score_experience }}%"></div>
+                        </div>
+                        <span class="score-label">Expérience</span>
+                        <span class="score-value">{{ candidat_info.score_detail.score_experience }}/100</span>
+                      </div>
+                      
+                      <div class="score-item">
+                        <div class="score-bar">
+                          <div class="score-fill" style="width: {{ candidat_info.score_detail.score_disponibilite }}%"></div>
+                        </div>
+                        <span class="score-label">Disponibilité</span>
+                        <span class="score-value">{{ candidat_info.score_detail.score_disponibilite }}/100</span>
+                      </div>
+                      
+                      <div class="score-item">
+                        <div class="score-bar">
+                          <div class="score-fill" style="width: {{ candidat_info.score_detail.score_proximite }}%"></div>
+                        </div>
+                        <span class="score-label">Proximité</span>
+                        <span class="score-value">{{ candidat_info.score_detail.score_proximite }}/100</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {% if candidat_info.score_detail.bonus_hierarchique > 0 %}
+                  <div class="bonus-section">
+                    <h6><i class="fas fa-plus-circle text-success"></i> Bonus</h6>
+                    <div class="bonus-item">
+                      <span>Proposition hiérarchique</span>
+                      <span class="bonus-value">+{{ candidat_info.score_detail.bonus_hierarchique }} pts</span>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+                {% else %}
+                <div class="no-scoring">
+                  <i class="fas fa-chart-bar fa-3x text-muted"></i>
+                  <p>Aucun scoring détaillé disponible</p>
+                </div>
+                {% endif %}
+              </div>
+              
+              <!-- Onglet Justification -->
+              {% if candidat_info.proposition.justification %}
+              <div class="tab-pane fade" id="justification-{{ demande.id }}">
+                <div class="justification-content">
+                  <div class="justification-header">
+                    <i class="fas fa-quote-left"></i>
+                    <span>Justification de {{ candidat_info.proposition.proposant.nom_complet }}</span>
+                  </div>
+                  <div class="justification-text">
+                    {{ candidat_info.proposition.justification|linebreaks }}
+                  </div>
+                  {% if candidat_info.proposition.competences_specifiques %}
+                  <div class="competences-section">
+                    <h6><i class="fas fa-cogs"></i> Compétences spécifiques</h6>
+                    <p>{{ candidat_info.proposition.competences_specifiques|linebreaks }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Actions et dernière activité -->
+          <div class="demande-actions">
+            <div class="action-buttons">
+              <a href="#" class="btn btn-sm btn-outline-primary" onclick="viewDetails('{{ demande.id }}')">
+                <i class="fas fa-eye"></i>
+                Détails complets
+              </a>
+              
+              {% if profil_utilisateur.peut_valider_niveau and demande.statut == 'EN_VALIDATION' %}
+              <a href="#" class="btn btn-sm btn-success" onclick="validateDemande('{{ demande.id }}')">
+                <i class="fas fa-check"></i>
+                Valider
+              </a>
+              {% endif %}
+              
+              {% if demande.peut_etre_modifiee %}
+              <a href="#" class="btn btn-sm btn-outline-warning" onclick="editDemande('{{ demande.id }}')">
+                <i class="fas fa-edit"></i>
+                Modifier
+              </a>
+              {% endif %}
+              
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#" onclick="duplicateDemande('{{ demande.id }}')">
+                    <i class="fas fa-copy"></i> Dupliquer
+                  </a></li>
+                  <li><a class="dropdown-item" href="#" onclick="exportDemande('{{ demande.id }}')">
+                    <i class="fas fa-download"></i> Exporter
+                  </a></li>
+                  <li><a class="dropdown-item" href="#" onclick="addToFavorites('{{ demande.id }}')">
+                    <i class="fas fa-star"></i> Favoris
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="#" onclick="viewHistory('{{ demande.id }}')">
+                    <i class="fas fa-history"></i> Historique
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="last-activity">
+              {% if item.derniere_action %}
+              <div class="activity-item">
+                <i class="fas fa-clock text-muted"></i>
+                <span class="activity-text">
+                  {{ item.derniere_action.get_action_display }} 
+                  <span class="activity-date" title="{{ item.derniere_action.created_at|date:'d/m/Y H:i:s' }}">
+                    {{ item.derniere_action.created_at|timesince }}
+                  </span>
+                  {% if item.derniere_action.utilisateur %}
+                    par <strong>{{ item.derniere_action.utilisateur.nom_complet }}</strong>
+                  {% endif %}
+                </span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if demandes.has_other_pages %}
+<div class="pagination-container">
+  <nav aria-label="Navigation des résultats">
+    <ul class="pagination justify-content-center">
+      {% if demandes.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% for key, value in search_params.items %}{% if value %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ demandes.previous_page_number }}">
+            <i class="fas fa-chevron-left"></i> Précédent
+          </a>
+        </li>
+      {% endif %}
+      
+      {% for num in demandes.paginator.page_range %}
+        {% if demandes.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% elif num > demandes.number|add:'-3' and num < demandes.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?{% for key, value in search_params.items %}{% if value %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+      
+      {% if demandes.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% for key, value in search_params.items %}{% if value %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ demandes.next_page_number }}">
+            Suivant <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endif %}
+
+{% elif has_search %}
+<!-- Aucun résultat -->
+<div class="card-container">
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-search"></i>
+    </div>
+    <h3>Aucun résultat trouvé</h3>
+    <p>Aucune demande ne correspond à vos critères de recherche.</p>
+    <a href="{% url 'interim_recherche' %}" class="btn btn-primary">
+      <i class="fas fa-times"></i>
+      Effacer les filtres
+    </a>
+  </div>
+</div>
+
+{% else %}
+<!-- État initial -->
+<div class="card-container">
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-search"></i>
+    </div>
+    <h3>Recherche de demandes d'intérim</h3>
+    <p>Utilisez les filtres ci-dessus pour rechercher des demandes d'intérim.</p>
+    <div class="quick-filters">
+      <a href="?statut=EN_VALIDATION" class="btn btn-outline-primary">
+        <i class="fas fa-clock"></i>
+        En validation
+      </a>
+      <a href="?avec_candidat=oui" class="btn btn-outline-success">
+        <i class="fas fa-user-check"></i>
+        Avec candidat
+      </a>
+      <a href="?urgence=ELEVEE" class="btn btn-outline-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        Urgentes
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modals -->
+
+<!-- Modal de détails des statistiques -->
+<div class="modal fade" id="statsDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-chart-pie"></i>
+          Analyse détaillée des demandes
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <canvas id="statusChart" width="300" height="300"></canvas>
+            <h6 class="text-center mt-2">Répartition par statut</h6>
+          </div>
+          <div class="col-md-6">
+            <canvas id="urgencyChart" width="300" height="300"></canvas>
+            <h6 class="text-center mt-2">Répartition par urgence</h6>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-12">
+            <h6>Évolution sur 30 jours</h6>
+            <canvas id="evolutionChart" width="600" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <div class="spinner-container">
+      <div class="loading-dots">
+        <div class="dot1"></div>
+        <div class="dot2"></div>
+        <div class="dot3"></div>
+      </div>
+      <div class="loading-text" id="loadingText">Recherche en cours...</div>
+      <div class="loading-progress">
+        <div class="progress-bar-loading" id="loadingProgress"></div>
+      </div>
+    </div>
+    <button type="button" class="btn-cancel-loading" onclick="cancelLoading()">
+      <i class="fas fa-times"></i> Annuler
+    </button>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+  <!-- Les toasts seront ajoutés ici dynamiquement -->
+</div>
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* === STYLES POUR LA RECHERCHE D'INTÉRIM === */
+
+/* Header de recherche avec thème bleu */
+.recherche-header {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+/* Dashboard statistiques */
+.dashboard-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  gap: 1rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-card.primary { background-color: #e3f2fd; border-color: #2196f3; }
+.stat-card.success { background-color: #e8f5e8; border-color: #4caf50; }
+.stat-card.warning { background-color: #fff3e0; border-color: #ff9800; }
+.stat-card.info { background-color: #e1f5fe; border-color: #00bcd4; }
+.stat-card.secondary { background-color: #f3e5f5; border-color: #9c27b0; }
+.stat-card.danger { background-color: #ffebee; border-color: #f44336; }
+
+.stat-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.stat-progress {
+  margin-top: 0.75rem;
+}
+
+.progress-mini {
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar-mini {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s ease;
+}
+
+.progress-bar-mini.bg-success { background: #28a745; }
+.progress-bar-mini.bg-warning { background: #ffc107; }
+.progress-bar-mini.bg-info { background: #17a2b8; }
+.progress-bar-mini.bg-danger { background: #dc3545; }
+.progress-bar-mini.bg-secondary { background: #6c757d; }
+
+/* Graphiques */
+.stats-chart {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.chart-title {
+  margin-bottom: 1rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-container {
+  position: relative;
+  height: 200px;
+}
+
+/* Recherche intelligente */
+.search-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.smart-search {
+  padding-right: 80px;
+  font-size: 1.1rem;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.smart-search:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+  transform: scale(1.02);
+}
+
+.search-input-container {
+  position: relative;
+}
+
+.search-buttons {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+.btn-search-clear, .btn-search-voice {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.btn-search-clear:hover, .btn-search-voice:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+
+.suggestion-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.suggestion-item:hover {
+  background-color: #f8f9fa;
+}
+
+.search-examples {
+  margin-top: 0.5rem;
+}
+
+.example-search {
+  cursor: pointer;
+  color: #007bff;
+  text-decoration: underline;
+  margin-right: 0.5rem;
+}
+
+.example-search:hover {
+  color: #0056b3;
+}
+
+/* Filtres rapides */
+.filters-subtitle {
+  margin-bottom: 1rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-tag {
+  background: none;
+  border: 2px solid #dee2e6;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.filter-tag:hover {
+  border-color: #007bff;
+  color: #007bff;
+  transform: translateY(-1px);
+}
+
+.filter-tag.active {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+/* Filtres détaillés */
+.detailed-filters {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-top: 1rem;
+}
+
+.filter-select {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.filter-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.date-range-container {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.date-preset-buttons {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.candidate-filters {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.workflow-help {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+/* Filtres actifs */
+.active-filters {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.active-filter {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.active-filter .remove-filter {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.active-filter .remove-filter:hover {
+  opacity: 1;
+}
+
+/* Résultats de recherche */
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.view-controls .btn-group .btn {
+  padding: 0.375rem 0.75rem;
+}
+
+.result-count {
+  color: #6c757d;
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+/* Cartes de demandes */
+.results-container {
+  max-height: none;
+}
+
+.demande-row {
+  display: flex;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.demande-row:hover {
+  background-color: #f8f9fa;
+}
+
+.demande-row:last-child {
+  border-bottom: none;
+}
+
+.row-selector {
+  flex-shrink: 0;
+  margin-right: 1rem;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.5rem;
+}
+
+.demande-main {
+  flex: 1;
+}
+
+.demande-header {
+  margin-bottom: 1.5rem;
+}
+
+.demande-title h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.numero-demande {
+  color: #007bff;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: monospace;
+  padding: 0.25rem 0.5rem;
+  background: #e3f2fd;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.numero-demande:hover {
+  background: #bbdefb;
+  transform: scale(1.05);
+}
+
+.poste-title {
+  font-weight: 600;
+  color: #495057;
+}
+
+.status-indicators {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: white;
+}
+
+.indicator.urgent {
+  background: #dc3545;
+  animation: pulse 2s infinite;
+}
+
+.indicator.has-candidate {
+  background: #28a745;
+}
+
+.indicator.popular {
+  background: #ffc107;
+  color: #212529;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.demande-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.badge-statut, .badge-urgence, .badge-duree {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-statut.soumise { background: #fff3cd; color: #856404; }
+.badge-statut.en_validation { background: #cce5ff; color: #004085; }
+.badge-statut.validee { background: #d4edda; color: #155724; }
+.badge-statut.terminee { background: #e2e3e5; color: #383d41; }
+.badge-statut.refusee { background: #f8d7da; color: #721c24; }
+.badge-statut.annulee { background: #f8d7da; color: #721c24; }
+
+.badge-urgence.critique { background: #dc3545; color: white; }
+.badge-urgence.elevee { background: #ffc107; color: #212529; }
+.badge-urgence.moyenne { background: #17a2b8; color: white; }
+.badge-urgence.normale { background: #6c757d; color: white; }
+
+.badge-duree {
+  background: #e9ecef;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.demande-meta {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.meta-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Onglets des demandes */
+.nav-tabs-sm .nav-link {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+}
+
+.nav-tabs-sm .nav-link.active {
+  background: white;
+  border-color: #dee2e6 #dee2e6 white;
+  color: #007bff;
+}
+
+/* Contenu des onglets */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.overview-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  display: flex;
+  gap: 1rem;
+}
+
+.overview-card.selected {
+  border-left-color: #28a745;
+  background: #f0fff4;
+}
+
+.overview-card.pending {
+  border-left-color: #ffc107;
+  background: #fffbf0;
+}
+
+.card-icon {
+  font-size: 1.5rem;
+  color: #007bff;
+  min-width: 40px;
+  text-align: center;
+}
+
+.overview-card.selected .card-icon {
+  color: #28a745;
+}
+
+.overview-card.pending .card-icon {
+  color: #ffc107;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.progress-container {
+  margin: 0.5rem 0;
+}
+
+.progress-bar {
+  background: #e9ecef;
+  height: 20px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s ease;
+  position: relative;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.proposals-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.proposals-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.proposals-label {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.selected-candidate {
+  margin: 0.5rem 0;
+}
+
+.pending-status {
+  color: #856404;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
+/* Grille des personnes */
+.persons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.person-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  display: flex;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.person-card:hover {
+  border-color: #007bff;
+  transform: translateY(-1px);
+}
+
+.person-card.selected {
+  border-color: #28a745;
+  background: #f0fff4;
+}
+
+.person-card.empty {
+  border-color: #ffc107;
+  background: #fffbf0;
+  opacity: 0.8;
+}
+
+.person-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.person-card.selected .person-avatar {
+  background: #28a745;
+}
+
+.person-card.empty .person-avatar {
+  background: #ffc107;
+  color: #212529;
+}
+
+.person-info {
+  flex: 1;
+}
+
+.person-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.person-name {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.25rem;
+}
+
+.person-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-person-action {
+  background: none;
+  border: 1px solid #dee2e6;
+  padding: 0.375rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.btn-person-action:hover {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.absence-indicator {
+  margin-top: 0.5rem;
+}
+
+.badge-sm {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.7rem;
+}
+
+.badge-warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+/* Scoring détaillé */
+.scoring-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.total-score {
+  text-align: center;
+}
+
+.score-circle {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+}
+
+.circular-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 3.8;
+}
+
+.circle {
+  fill: none;
+  stroke: #007bff;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  animation: progress 1s ease-out forwards;
+}
+
+.percentage {
+  fill: #495057;
+  font-family: sans-serif;
+  font-size: 0.5em;
+  font-weight: bold;
+  text-anchor: middle;
+}
+
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0 100;
+  }
+}
+
+.score-label {
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.score-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.score-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.score-bar {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.score-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+.score-value {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.875rem;
+  min-width: 60px;
+  text-align: right;
+}
+
+.bonus-section {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f0fff4;
+  border-radius: 6px;
+  border-left: 3px solid #28a745;
+}
+
+.bonus-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bonus-value {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.no-scoring {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+/* Justification */
+.justification-content {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #6f42c1;
+}
+
+.justification-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.justification-text {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  color: #495057;
+  line-height: 1.6;
+  font-style: italic;
+  border: 1px solid #e9ecef;
+}
+
+.competences-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.competences-section h6 {
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Actions des demandes */
+.demande-actions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.last-activity {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activity-date {
+  font-weight: 500;
+}
+
+/* États vides */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #dee2e6;
+  margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #6c757d;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quick-filters {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Pagination */
+.pagination-container {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.pagination .page-link {
+  color: #007bff;
+  border-color: #dee2e6;
+  padding: 0.5rem 0.75rem;
+}
+
+.pagination .page-link:hover {
+  color: #0056b3;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Modals */
+.export-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.format-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.format-option {
+  cursor: pointer;
+}
+
+.format-option input[type="radio"] {
+  display: none;
+}
+
+.format-card {
+  border: 2px solid #dee2e6;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.format-option input[type="radio"]:checked + .format-card {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.format-card i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.format-card span {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.format-card small {
+  color: #6c757d;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 400px;
+  margin: 1rem;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.loading-dots > div {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #007bff;
+  animation: loadingBounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots .dot2 {
+  animation-delay: -0.32s;
+}
+
+.loading-dots .dot3 {
+  animation-delay: -0.16s;
+}
+
+@keyframes loadingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.loading-text {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.loading-progress {
+  background: #e9ecef;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progress-bar-loading {
+  background: #007bff;
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  animation: loadingProgress 3s linear infinite;
+}
+
+@keyframes loadingProgress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.btn-cancel-loading {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cancel-loading:hover {
+  background: #c82333;
+}
+
+/* Styles communs */
+.card-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+  color: white;
+}
+
+.btn-outline-primary {
+  color: #007bff;
+  background-color: transparent;
+  border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  color: white;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-outline-secondary {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  color: white;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-outline-success {
+  color: #28a745;
+  background-color: transparent;
+  border-color: #28a745;
+}
+
+.btn-outline-success:hover {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-outline-info {
+  color: #17a2b8;
+  background-color: transparent;
+  border-color: #17a2b8;
+}
+
+.btn-outline-info:hover {
+  color: white;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-outline-warning {
+  color: #ffc107;
+  background-color: transparent;
+  border-color: #ffc107;
+}
+
+.btn-outline-warning:hover {
+  color: #212529;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-outline-light {
+  color: white;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+.btn-success {
+  color: white;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+  color: white;
+}
+
+.btn-secondary {
+  color: white;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+  border-color: #4e555b;
+  color: white;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* Form controls */
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-control, .form-select {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+  outline: 0;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.form-control-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-check-input {
+  margin-top: 0.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .recherche-header {
+    padding: 1rem 0;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .persons-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .scoring-details {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .export-options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .demande-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .demande-title h3 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .status-indicators {
+    margin-left: 0;
+  }
+  
+  .meta-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .demande-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .search-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .filter-tags {
+    justify-content: center;
+  }
+  
+  .quick-actions .btn-group {
+    flex-direction: column;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demande-row {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.stat-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Utilitaires */
+.text-muted {
+  color: #6c757d;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+.text-info {
+  color: #17a2b8;
+}
+
+.text-warning {
+  color: #ffc107;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.mb-0 { margin-bottom: 0; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+
+.p-0 { padding: 0; }
+
+.w-100 { width: 100%; }
+
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.align-items-end { align-items: flex-end; }
+.justify-content-center { justify-content: center; }
+.justify-content-between { justify-content: space-between; }
+
+.text-center { text-align: center; }
+.text-end { text-align: right; }
+
+.position-fixed { position: fixed; }
+.top-0 { top: 0; }
+.end-0 { right: 0; }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -15px;
+  margin-left: -15px;
+}
+
+.col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-12 {
+  position: relative;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+@media (min-width: 768px) {
+  .col-md-3 { flex: 0 0 25%; max-width: 25%; }
+  .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+  .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+  .col-md-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
+  .col-md-12 { flex: 0 0 100%; max-width: 100%; }
+}
+
+.col-6 { flex: 0 0 50%; max-width: 50%; }
+.col-12 { flex: 0 0 100%; max-width: 100%; }
+
+.container {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .container { max-width: 540px; }
+}
+
+@media (min-width: 768px) {
+  .container { max-width: 720px; }
+}
+
+@media (min-width: 992px) {
+  .container { max-width: 960px; }
+}
+
+@media (min-width: 1200px) {
+  .container { max-width: 1140px; }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔍 Page de recherche d\'intérim initialisée');
+  
+  // Variables globales
+  let searchTimeout;
+  let currentFilters = {};
+  let isLoading = false;
+  
+  // === INITIALISATION ===
+  initializeSearchForm();
+  initializeFilters();
+  initializeAnimations();
+  initializeCharts();
+  initializeEventListeners();
+  
+  // === FONCTIONS D'INITIALISATION ===
+  
+  function initializeSearchForm() {
+    const searchInput = document.getElementById('q');
+    const hiddenInput = document.getElementById('hiddenQ');
+    
+    if (searchInput) {
+      // Synchroniser les champs de recherche
+      searchInput.addEventListener('input', function() {
+        hiddenInput.value = this.value;
+        performSmartSearch(this.value);
+      });
+      
+      // Suggestions en temps réel
+      searchInput.addEventListener('input', debounce(function() {
+        if (this.value.length >= 2) {
+          fetchSearchSuggestions(this.value);
+        } else {
+          hideSuggestions();
+        }
+      }, 300));
+      
+      // Masquer suggestions quand on clique ailleurs
+      document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target)) {
+          hideSuggestions();
+        }
+      });
+    }
+  }
+  
+  function initializeFilters() {
+    // Filtres rapides
+    const quickFilters = document.querySelectorAll('.filter-tag');
+    quickFilters.forEach(filter => {
+      filter.addEventListener('click', function() {
+        const action = this.getAttribute('onclick');
+        if (action) {
+          eval(action);
+        }
+      });
+    });
+    
+    // Filtres détaillés avec auto-submit
+    const filterInputs = document.querySelectorAll('#departement, #site, #statut, #urgence, #avec_candidat, #niveau_validation');
+    filterInputs.forEach(input => {
+      input.addEventListener('change', debounce(function() {
+        updateActiveFilters();
+        submitSearchForm();
+      }, 500));
+    });
+    
+    // Filtres de dates
+    const dateInputs = document.querySelectorAll('#date_debut, #date_fin');
+    dateInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        updateActiveFilters();
+        submitSearchForm();
+      });
+    });
+    
+    // Filtres de scores
+    const scoreInputs = document.querySelectorAll('#score_min, #score_max');
+    scoreInputs.forEach(input => {
+      input.addEventListener('input', debounce(function() {
+        validateScoreInput(this);
+        updateActiveFilters();
+        submitSearchForm();
+      }, 800));
+    });
+    
+    // Toggle des filtres détaillés
+    const toggleBtn = document.getElementById('toggleFilters');
+    const filtersContainer = document.getElementById('detailedFilters');
+    const toggleText = document.getElementById('toggleText');
+    
+    if (toggleBtn && filtersContainer) {
+      toggleBtn.addEventListener('click', function() {
+        const isVisible = filtersContainer.style.display !== 'none';
+        filtersContainer.style.display = isVisible ? 'none' : 'block';
+        toggleText.textContent = isVisible ? 'Afficher les filtres' : 'Masquer les filtres';
+        
+        const icon = toggleBtn.querySelector('i');
+        icon.className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+      });
+    }
+    
+    // Initialiser l'affichage des filtres actifs
+    updateActiveFilters();
+  }
+  
+  function initializeAnimations() {
+    // Animation progressive des cartes de statistiques
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        card.style.transition = 'all 0.6s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, 100 + (index * 100));
+    });
+    
+    // Animation des cartes de demandes
+    const demandeRows = document.querySelectorAll('.demande-row');
+    demandeRows.forEach((row, index) => {
+      row.style.opacity = '0';
+      row.style.transform = 'translateX(-20px)';
+      
+      setTimeout(() => {
+        row.style.transition = 'all 0.5s ease';
+        row.style.opacity = '1';
+        row.style.transform = 'translateX(0)';
+      }, 200 + (index * 100));
+    });
+    
+    // Compteurs animés pour les statistiques
+    animateStatNumbers();
+  }
+  
+  function initializeCharts() {
+    // Graphique d'évolution des demandes
+    const chartCanvas = document.getElementById('demandesChart');
+    if (chartCanvas && window.evolutionData) {
+      createEvolutionChart(chartCanvas);
+    }
+  }
+  
+  function initializeEventListeners() {
+    // Sélection/désélection des demandes
+    const checkboxes = document.querySelectorAll('.form-check-input[id^="check_"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateBatchActions);
+    });
+    
+    // Tri des résultats
+    const sortSelect = document.getElementById('sortBy');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', function() {
+        applySorting(this.value);
+      });
+    }
+    
+    // Changement de vue
+    const viewButtons = document.querySelectorAll('[onclick^="switchView"]');
+    viewButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const view = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+        switchView(view);
+      });
+    });
+  }
+  
+  // === FONCTIONS DE RECHERCHE ===
+  
+  function performSmartSearch(query) {
+    console.log('🔍 Recherche intelligente:', query);
+    
+    // Analyser la requête pour des patterns spéciaux
+    analyzeSearchQuery(query);
+    
+    // Déclencher la recherche avec délai
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      if (query.length >= 2 || query.length === 0) {
+        submitSearchForm();
+      }
+    }, 600);
+  }
+  
+  function analyzeSearchQuery(query) {
+    // Pattern pour les scores : "score >80", "score:75", etc.
+    const scorePattern = /score\s*[><=:]\s*(\d+)/i;
+    const scoreMatch = query.match(scorePattern);
+    
+    if (scoreMatch) {
+      const scoreValue = scoreMatch[1];
+      const operator = scoreMatch[0].match(/[><=:]/)[0];
+      
+      if (operator === '>' || operator === ':') {
+        document.getElementById('score_min').value = scoreValue;
+      } else if (operator === '<') {
+        document.getElementById('score_max').value = scoreValue;
+      } else if (operator === '=') {
+        document.getElementById('score_min').value = scoreValue;
+        document.getElementById('score_max').value = scoreValue;
+      }
+    }
+    
+    // Pattern pour l'urgence : "urgent", "critique", etc.
+    if (/urgent|critique/i.test(query)) {
+      document.getElementById('urgence').value = 'CRITIQUE';
+    } else if (/élevé|elevé|haute/i.test(query)) {
+      document.getElementById('urgence').value = 'ELEVEE';
+    }
+    
+    // Pattern pour les statuts
+    if (/validation|attente/i.test(query)) {
+      document.getElementById('statut').value = 'EN_VALIDATION';
+    } else if (/terminé|terminée|fini/i.test(query)) {
+      document.getElementById('statut').value = 'TERMINEE';
+    }
+  }
+  
+  function fetchSearchSuggestions(query) {
+    // Simulation d'appel AJAX pour les suggestions
+    // En production, remplacer par un appel réel à l'API
+    const suggestions = [
+      { label: `Demande: ${query}`, value: query, category: 'Numéros' },
+      { label: `Poste: ${query}`, value: query, category: 'Postes' },
+      { label: `Personne: ${query}`, value: query, category: 'Personnes' }
+    ];
+    
+    showSuggestions(suggestions);
+  }
+  
+  function showSuggestions(suggestions) {
+    const container = document.getElementById('searchSuggestions');
+    if (!container || suggestions.length === 0) return;
+    
+    container.innerHTML = '';
+    
+    suggestions.forEach(suggestion => {
+      const item = document.createElement('div');
+      item.className = 'suggestion-item';
+      item.innerHTML = `
+        <div class="suggestion-content">
+          <strong>${suggestion.label}</strong>
+          <small class="text-muted">${suggestion.category}</small>
+        </div>
+      `;
+      
+      item.addEventListener('click', () => {
+        document.getElementById('q').value = suggestion.value;
+        document.getElementById('hiddenQ').value = suggestion.value;
+        hideSuggestions();
+        submitSearchForm();
+      });
+      
+      container.appendChild(item);
+    });
+    
+    container.style.display = 'block';
+  }
+  
+  function hideSuggestions() {
+    const container = document.getElementById('searchSuggestions');
+    if (container) {
+      container.style.display = 'none';
+    }
+  }
+  
+  // === FONCTIONS DE FILTRAGE ===
+  
+  function toggleQuickFilter(type, value) {
+    console.log('🏷️ Filtre rapide:', type, value);
+    
+    let currentValue = '';
+    let inputElement = null;
+    
+    switch(type) {
+      case 'urgence':
+        inputElement = document.getElementById('urgence');
+        currentValue = inputElement.value;
+        break;
+      case 'avec_candidat':
+        inputElement = document.getElementById('avec_candidat');
+        currentValue = inputElement.value;
+        break;
+      case 'statut':
+        inputElement = document.getElementById('statut');
+        currentValue = inputElement.value;
+        break;
+      case 'periode':
+        if (value === 'cette_semaine') {
+          setDateRange('week');
+          return;
+        }
+        break;
+      case 'score':
+        if (value === 'excellent') {
+          document.getElementById('score_min').value = '80';
+          document.getElementById('score_max').value = '';
+          updateActiveFilters();
+          submitSearchForm();
+          return;
+        }
+        break;
+    }
+    
+    if (inputElement) {
+      inputElement.value = currentValue === value ? '' : value;
+      updateActiveFilters();
+      submitSearchForm();
+    }
+  }
+  
+  function resetAllFilters() {
+    console.log('🧹 Réinitialisation des filtres');
+    
+    // Vider tous les champs
+    document.getElementById('q').value = '';
+    document.getElementById('hiddenQ').value = '';
+    document.getElementById('departement').value = '';
+    document.getElementById('site').value = '';
+    document.getElementById('statut').value = '';
+    document.getElementById('urgence').value = '';
+    document.getElementById('avec_candidat').value = '';
+    document.getElementById('niveau_validation').value = '';
+    document.getElementById('date_debut').value = '';
+    document.getElementById('date_fin').value = '';
+    document.getElementById('score_min').value = '';
+    document.getElementById('score_max').value = '';
+    
+    updateActiveFilters();
+    submitSearchForm();
+  }
+  
+  function setDateRange(period) {
+    const today = new Date();
+    const formatDate = (date) => date.toISOString().split('T')[0];
+    
+    let startDate, endDate;
+    
+    switch(period) {
+      case 'today':
+        startDate = endDate = today;
+        break;
+      case 'week':
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - today.getDay()); // Lundi de cette semaine
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6); // Dimanche
+        break;
+      case 'month':
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        break;
+    }
+    
+    if (startDate && endDate) {
+      document.getElementById('date_debut').value = formatDate(startDate);
+      document.getElementById('date_fin').value = formatDate(endDate);
+      updateActiveFilters();
+      submitSearchForm();
+    }
+  }
+  
+  function updateActiveFilters() {
+    const container = document.getElementById('activeFilters');
+    if (!container) return;
+    
+    const filters = [];
+    
+    // Collecter tous les filtres actifs
+    const filterFields = {
+      'q': 'Recherche',
+      'departement': 'Département',
+      'site': 'Site',
+      'statut': 'Statut',
+      'urgence': 'Urgence',
+      'avec_candidat': 'Candidat',
+      'niveau_validation': 'Niveau',
+      'date_debut': 'Date début',
+      'date_fin': 'Date fin',
+      'score_min': 'Score min',
+      'score_max': 'Score max'
+    };
+    
+    Object.entries(filterFields).forEach(([fieldId, label]) => {
+      const field = document.getElementById(fieldId);
+      if (field && field.value) {
+        let displayValue = field.value;
+        
+        // Formatage spécial pour certains champs
+        if (field.tagName === 'SELECT') {
+          const option = field.options[field.selectedIndex];
+          displayValue = option ? option.text : field.value;
+        }
+        
+        filters.push({
+          field: fieldId,
+          label: label,
+          value: displayValue,
+          rawValue: field.value
+        });
+      }
+    });
+    
+    // Afficher les filtres actifs
+    container.innerHTML = filters.map(filter => `
+      <div class="active-filter">
+        <strong>${filter.label}:</strong> ${filter.value}
+        <span class="remove-filter" onclick="removeFilter('${filter.field}')">
+          <i class="fas fa-times"></i>
+        </span>
+      </div>
+    `).join('');
+  }
+  
+  function removeFilter(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.value = '';
+      updateActiveFilters();
+      submitSearchForm();
+    }
+  }
+  
+  function validateScoreInput(input) {
+    const value = parseInt(input.value);
+    if (isNaN(value)) return;
+    
+    if (value < 0) input.value = 0;
+    if (value > 100) input.value = 100;
+    
+    // Validation croisée des scores min/max
+    const scoreMin = document.getElementById('score_min');
+    const scoreMax = document.getElementById('score_max');
+    
+    if (scoreMin.value && scoreMax.value) {
+      const min = parseInt(scoreMin.value);
+      const max = parseInt(scoreMax.value);
+      
+      if (min > max) {
+        if (input === scoreMin) {
+          scoreMax.value = min;
+        } else {
+          scoreMin.value = max;
+        }
+      }
+    }
+  }
+  
+  // === FONCTIONS D'INTERFACE ===
+  
+  function switchView(view) {
+    const container = document.getElementById('resultsContainer');
+    const viewButtons = document.querySelectorAll('.view-controls .btn');
+    
+    // Mettre à jour les boutons
+    viewButtons.forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.btn').classList.add('active');
+    
+    // Appliquer la vue
+    container.className = `results-container view-${view}`;
+    
+    console.log('👁️ Vue changée:', view);
+  }
+  
+  function applySorting(sortType) {
+    console.log('🔄 Tri appliqué:', sortType);
+    
+    const container = document.getElementById('resultsContainer');
+    const rows = Array.from(container.querySelectorAll('.demande-row'));
+    
+    rows.sort((a, b) => {
+      switch(sortType) {
+        case 'date_desc':
+          return new Date(b.dataset.dateCreation) - new Date(a.dataset.dateCreation);
+        case 'date_asc':
+          return new Date(a.dataset.dateCreation) - new Date(b.dataset.dateCreation);
+        case 'score_desc':
+          return (b.dataset.score || 0) - (a.dataset.score || 0);
+        case 'urgence_desc':
+          const urgenceOrder = {'CRITIQUE': 4, 'ELEVEE': 3, 'MOYENNE': 2, 'NORMALE': 1};
+          return (urgenceOrder[b.dataset.urgence] || 0) - (urgenceOrder[a.dataset.urgence] || 0);
+        default:
+          return 0;
+      }
+    });
+    
+    // Réorganiser les éléments
+    rows.forEach(row => container.appendChild(row));
+    
+    // Réanimer les éléments
+    rows.forEach((row, index) => {
+      row.style.animation = 'none';
+      setTimeout(() => {
+        row.style.animation = `fadeInUp 0.3s ease-out ${index * 50}ms forwards`;
+      }, 10);
+    });
+  }
+  
+  function updateBatchActions() {
+    const selectedCheckboxes = document.querySelectorAll('.form-check-input[id^="check_"]:checked');
+    const batchActions = document.querySelector('.batch-actions');
+    
+    if (batchActions) {
+      const count = selectedCheckboxes.length;
+      const button = batchActions.querySelector('.dropdown-toggle');
+      
+      if (count > 0) {
+        button.innerHTML = `<i class="fas fa-cogs"></i> Actions (${count})`;
+        batchActions.style.display = 'block';
+      } else {
+        button.innerHTML = '<i class="fas fa-cogs"></i> Actions';
+      }
+    }
+  }
+  
+  function selectAllVisible() {
+    const checkboxes = document.querySelectorAll('.form-check-input[id^="check_"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = !allChecked;
+    });
+    
+    updateBatchActions();
+  }
+  
+  // === FONCTIONS D'ANIMATION ===
+  
+  function animateStatNumbers() {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    
+    statNumbers.forEach(element => {
+      const text = element.textContent;
+      const match = text.match(/(\d+(?:\.\d+)?)/);
+      
+      if (match) {
+        const finalValue = parseFloat(match[1]);
+        const suffix = text.replace(match[1], '');
+        
+        animateNumber(element, 0, finalValue, 1500, suffix);
+      }
+    });
+  }
+  
+  function animateNumber(element, start, end, duration, suffix = '') {
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Fonction d'easing
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const current = start + (end - start) * easeOut;
+      
+      element.textContent = Math.floor(current) + suffix;
+      
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        element.textContent = end + suffix;
+      }
+    }
+    
+    requestAnimationFrame(update);
+  }
+  
+  // === FONCTIONS DE GRAPHIQUES ===
+  
+  function createEvolutionChart(canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    // Données d'exemple (à remplacer par les vraies données)
+    const data = {
+      labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+      datasets: [{
+        label: 'Demandes créées',
+        data: [12, 19, 8, 15, 10, 13, 9],
+        borderColor: '#007bff',
+        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4
+      }]
+    };
+    
+    new Chart(ctx, {
+      type: 'line',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        },
+        elements: {
+          point: {
+            radius: 4,
+            hoverRadius: 6
+          }
+        }
+      }
+    });
+  }
+  
+  // === FONCTIONS UTILITAIRES ===
+  
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func.apply(this, args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  
+  function submitSearchForm() {
+    if (isLoading) return;
+    
+    const form = document.getElementById('searchForm');
+    if (form) {
+      showLoading();
+      form.submit();
+    }
+  }
+  
+  function showLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      isLoading = true;
+      
+      // Simulation de progression
+      const progressBar = document.getElementById('loadingProgress');
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+        }
+        if (progressBar) {
+          progressBar.style.width = progress + '%';
+        }
+      }, 200);
+    }
+  }
+  
+  function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      isLoading = false;
+    }
+  }
+  
+  // === FONCTIONS EXPOSÉES GLOBALEMENT ===
+  
+  window.clearSearch = function() {
+    document.getElementById('q').value = '';
+    document.getElementById('hiddenQ').value = '';
+    hideSuggestions();
+    submitSearchForm();
+  };
+  
+  window.startVoiceSearch = function() {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'fr-FR';
+      recognition.onresult = function(event) {
+        const result = event.results[0][0].transcript;
+        document.getElementById('q').value = result;
+        document.getElementById('hiddenQ').value = result;
+        submitSearchForm();
+      };
+      recognition.start();
+    } else {
+      alert('Recherche vocale non supportée par votre navigateur');
+    }
+  };
+  
+  window.setSearchExample = function(example) {
+    document.getElementById('q').value = example;
+    document.getElementById('hiddenQ').value = example;
+    submitSearchForm();
+  };
+  
+  window.advancedSearch = function() {
+    const filtersContainer = document.getElementById('detailedFilters');
+    if (filtersContainer) {
+      filtersContainer.style.display = 'block';
+      filtersContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+   
+  window.refreshStats = function() {
+    const btn = event.target.closest('button');
+    const icon = btn.querySelector('i');
+    const originalClass = icon.className;
+    
+    icon.className = 'fas fa-spinner fa-spin';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+  };
+  
+  window.filterByStatus = function(filter) {
+    if (filter) {
+      const params = new URLSearchParams(filter);
+      params.forEach((value, key) => {
+        const field = document.getElementById(key);
+        if (field) {
+          field.value = value;
+        }
+      });
+    }
+    
+    updateActiveFilters();
+    submitSearchForm();
+  };
+  
+  window.saveCurrentSearch = function() {
+    // Ici on pourrait sauvegarder la recherche actuelle
+    // Pour la démo, on affiche juste une notification
+    showNotification('Recherche sauvegardée', 'success');
+  };
+  
+  window.bulkExport = function() {
+    const selected = document.querySelectorAll('.form-check-input[id^="check_"]:checked');
+    console.log('📤 Export en lot:', selected.length, 'demandes');
+    showNotification(`Export de ${selected.length} demandes en cours...`, 'info');
+  };
+  
+  window.bulkNotify = function() {
+    const selected = document.querySelectorAll('.form-check-input[id^="check_"]:checked');
+    console.log('🔔 Notification en lot:', selected.length, 'demandes');
+    showNotification(`Notifications envoyées pour ${selected.length} demandes`, 'success');
+  };
+  
+  window.viewDetails = function(demandeId) {
+    console.log('👁️ Voir détails demande:', demandeId);
+    // Redirection vers la page de détails
+    window.location.href = `/interim/demande/${demandeId}/`;
+  };
+  
+  window.validateDemande = function(demandeId) {
+    console.log('✅ Valider demande:', demandeId);
+    if (confirm('Êtes-vous sûr de vouloir valider cette demande ?')) {
+      // Ici on ferait l'appel AJAX pour valider
+      showNotification('Demande validée avec succès', 'success');
+    }
+  };
+  
+  window.editDemande = function(demandeId) {
+    console.log('✏️ Modifier demande:', demandeId);
+    window.location.href = `/interim/demande/${demandeId}/modifier/`;
+  };
+  
+  window.duplicateDemande = function(demandeId) {
+    console.log('📋 Dupliquer demande:', demandeId);
+    if (confirm('Voulez-vous créer une nouvelle demande basée sur celle-ci ?')) {
+      window.location.href = `/interim/demande/${demandeId}/dupliquer/`;
+    }
+  };
+  
+  window.exportDemande = function(demandeId) {
+    console.log('📄 Exporter demande:', demandeId);
+    // Créer un lien de téléchargement temporaire
+    const link = document.createElement('a');
+    link.href = `/interim/demande/${demandeId}/export/`;
+    link.download = `demande_${demandeId}.pdf`;
+    link.click();
+    showNotification('Export en cours...', 'info');
+  };
+  
+  window.addToFavorites = function(demandeId) {
+    console.log('⭐ Ajouter aux favoris:', demandeId);
+    // Ici on ferait l'appel AJAX pour ajouter aux favoris
+    showNotification('Demande ajoutée aux favoris', 'success');
+  };
+  
+  window.viewHistory = function(demandeId) {
+    console.log('📋 Voir historique:', demandeId);
+    window.location.href = `/interim/demande/${demandeId}/historique/`;
+  };
+  
+  window.copyToClipboard = function(text, element) {
+    navigator.clipboard.writeText(text).then(() => {
+      element.style.transform = 'scale(1.1)';
+      element.style.backgroundColor = '#28a745';
+      element.style.color = 'white';
+      
+      setTimeout(() => {
+        element.style.transform = 'scale(1)';
+        element.style.backgroundColor = '#e3f2fd';
+        element.style.color = '#007bff';
+      }, 200);
+      
+      showNotification('Numéro copié dans le presse-papiers', 'success');
+    });
+  };
+  
+  window.startExport = function() {
+    const format = document.querySelector('input[name="format"]:checked').value;
+    const options = {
+      basicInfo: document.getElementById('includeBasicInfo').checked,
+      scoring: document.getElementById('includeScoring').checked,
+      justifications: document.getElementById('includeJustifications').checked,
+      history: document.getElementById('includeHistory').checked
+    };
+    
+    console.log('📤 Démarrage export:', format, options);
+    
+    // Simulation d'export
+
+    showLoading();
+    
+    setTimeout(() => {
+      hideLoading();
+      showNotification('Export terminé avec succès', 'success');
+    }, 3000);
+  };
+  
+  window.cancelLoading = function() {
+    hideLoading();
+    showNotification('Opération annulée', 'warning');
+  };
+  
+  // === FONCTIONS DE NOTIFICATION ===
+  
+  function showNotification(message, type = 'info') {
+    const container = document.querySelector('.toast-container');
+    if (!container) return;
+    
+    const toastId = 'toast_' + Date.now();
+    const iconMap = {
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-circle',
+      warning: 'fa-exclamation-triangle',
+      info: 'fa-info-circle'
+    };
+    
+    const colorMap = {
+      success: 'text-success',
+      error: 'text-danger',
+      warning: 'text-warning',
+      info: 'text-info'
+    };
+    
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = 'toast';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <div class="toast-header">
+        <i class="fas ${iconMap[type]} ${colorMap[type]} me-2"></i>
+        <strong class="me-auto">Notification</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body">
+        ${message}
+      </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+      autohide: true,
+      delay: type === 'error' ? 8000 : 5000
+    });
+    
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+      toast.remove();
+    });
+  }
+  
+  // === GESTION DES ERREURS ===
+  
+  window.addEventListener('error', function(e) {
+    console.error('Erreur JavaScript:', e.error);
+    hideLoading();
+    showNotification('Une erreur inattendue s\'est produite', 'error');
+  });
+  
+  // === RACCOURCIS CLAVIER ===
+  
+  document.addEventListener('keydown', function(e) {
+    // Ctrl+F ou Cmd+F pour focus sur la recherche
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      const searchInput = document.getElementById('q');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+    }
+    
+    // Échap pour fermer les suggestions ou modals
+    if (e.key === 'Escape') {
+      hideSuggestions();
+      hideLoading();
+    }
+    
+    // Entrée pour lancer la recherche si on est dans le champ de recherche
+    if (e.key === 'Enter' && document.activeElement.id === 'q') {
+      e.preventDefault();
+      submitSearchForm();
+    }
+  });
+  
+  // === SAUVEGARDE AUTOMATIQUE DE L'ÉTAT ===
+  
+  function saveSearchState() {
+    const state = {
+      query: document.getElementById('q').value,
+      filters: {
+        departement: document.getElementById('departement').value,
+        site: document.getElementById('site').value,
+        statut: document.getElementById('statut').value,
+        urgence: document.getElementById('urgence').value,
+        avec_candidat: document.getElementById('avec_candidat').value,
+        niveau_validation: document.getElementById('niveau_validation').value,
+        date_debut: document.getElementById('date_debut').value,
+        date_fin: document.getElementById('date_fin').value,
+        score_min: document.getElementById('score_min').value,
+        score_max: document.getElementById('score_max').value
+      },
+      timestamp: Date.now()
+    };
+    
+    localStorage.setItem('interim_search_state', JSON.stringify(state));
+  }
+  
+  function restoreSearchState() {
+    try {
+      const saved = localStorage.getItem('interim_search_state');
+      if (!saved) return;
+      
+      const state = JSON.parse(saved);
+      
+      // Ne restaurer que si c'est récent (moins de 1 heure)
+      if (Date.now() - state.timestamp > 3600000) return;
+      
+      // Restaurer seulement si aucun paramètre n'est déjà défini
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.toString()) return;
+      
+      document.getElementById('q').value = state.query || '';
+      document.getElementById('hiddenQ').value = state.query || '';
+      
+      Object.entries(state.filters).forEach(([key, value]) => {
+        const element = document.getElementById(key);
+        if (element && value) {
+          element.value = value;
+        }
+      });
+      
+      updateActiveFilters();
+      
+    } catch (error) {
+      console.warn('Erreur lors de la restauration de l\'état:', error);
+    }
+  }
+  
+  // Sauvegarder l'état avant de quitter la page
+  window.addEventListener('beforeunload', saveSearchState);
+  
+  // Restaurer l'état au chargement
+  restoreSearchState();
+  
+  // === MÉTRIQUES ET ANALYTICS ===
+  
+  function trackSearchEvent(action, details = {}) {
+    // Ici on pourrait envoyer des métriques à un service d'analytics
+    console.log('📊 Événement tracké:', action, details);
+    
+    // Exemple d'envoi à Google Analytics (si configuré)
+    if (typeof gtag === 'function') {
+      gtag('event', action, {
+        event_category: 'search',
+        event_label: 'interim_requests',
+        custom_map: details
+      });
+    }
+  }
+  
+  // Tracker certains événements
+  document.getElementById('q').addEventListener('input', debounce(function() {
+    if (this.value.length >= 3) {
+      trackSearchEvent('search_query_typed', { query_length: this.value.length });
+    }
+  }, 2000));
+  
+  // === OPTIMISATIONS PERFORMANCE ===
+  
+  // Observer d'intersection pour le lazy loading des images/contenus
+  const observerOptions = {
+    root: null,
+    rootMargin: '50px',
+    threshold: 0.1
+  };
+  
+  const lazyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const element = entry.target;
+        
+        // Charger les images lazy
+        const lazyImages = element.querySelectorAll('img[data-src]');
+        lazyImages.forEach(img => {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+        });
+        
+        // Animer l'entrée des éléments
+        element.classList.add('animated', 'fadeInUp');
+        
+        lazyObserver.unobserve(element);
+      }
+    });
+  }, observerOptions);
+  
+  // Observer toutes les cartes de demandes
+  document.querySelectorAll('.demande-row').forEach(row => {
+    lazyObserver.observe(row);
+  });
+  
+  // === ACCESSIBILITÉ ===
+  
+  // Support du clavier pour les filtres tags
+  document.querySelectorAll('.filter-tag').forEach(tag => {
+    tag.setAttribute('tabindex', '0');
+    tag.setAttribute('role', 'button');
+    
+    tag.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.click();
+      }
+    });
+  });
+  
+  // Annonces pour les lecteurs d'écran
+  function announceToScreenReader(message) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.style.position = 'absolute';
+    announcement.style.left = '-10000px';
+    announcement.style.width = '1px';
+    announcement.style.height = '1px';
+    announcement.style.overflow = 'hidden';
+    announcement.textContent = message;
+    
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 1000);
+  }
+  
+  // === FINALISATION ===
+  
+  console.log('✅ Initialisation complète de la recherche d\'intérim');
+  
+  // Annoncer aux lecteurs d'écran que la page est prête
+  announceToScreenReader('Page de recherche d\'intérim chargée et prête à utiliser');
+  
+  // Masquer l'overlay de chargement si visible
+  hideLoading();
+  
+  // Focus sur le champ de recherche si aucun autre élément n'est focusé
+  setTimeout(() => {
+    if (document.activeElement === document.body) {
+      const searchInput = document.getElementById('q');
+      if (searchInput && !searchInput.value) {
+        searchInput.focus();
+      }
+    }
+  }, 500);
+  
+  // Performance: marquer la fin du chargement
+  if ('performance' in window && 'mark' in performance) {
+    performance.mark('interim-search-loaded');
+  }
+});
+
+// === FONCTIONS GLOBALES SUPPLÉMENTAIRES ===
+
+// Fonction pour réinitialiser complètement la page
+window.resetPage = function() {
+  localStorage.removeItem('interim_search_state');
+  window.location.href = window.location.pathname;
+};
+
+// Fonction pour partager un lien de recherche
+window.shareSearch = function() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({
+      title: 'Recherche d\'intérim',
+      url: url
+    });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      showNotification('Lien copié dans le presse-papiers', 'success');
+    });
+  }
+};
+
+// Fonction pour basculer entre thème clair/sombre (si implémenté)
+window.toggleTheme = function() {
+  const body = document.body;
+  const isDark = body.classList.contains('dark-theme');
+  
+  if (isDark) {
+    body.classList.remove('dark-theme');
+    localStorage.setItem('theme', 'light');
+  } else {
+    body.classList.add('dark-theme');
+    localStorage.setItem('theme', 'dark');
+  }
+  
+  showNotification(`Thème ${isDark ? 'clair' : 'sombre'} activé`, 'info');
+};
+
+// Fonction pour obtenir des statistiques de performance
+window.getPerformanceStats = function() {
+  if ('performance' in window) {
+    const navigation = performance.getEntriesByType('navigation')[0];
+    const stats = {
+      loadTime: Math.round(navigation.loadEventEnd - navigation.fetchStart),
+      domReady: Math.round(navigation.domContentLoadedEventEnd - navigation.fetchStart),
+      ttfb: Math.round(navigation.responseStart - navigation.fetchStart)
+    };
+    
+    console.table(stats);
+    return stats;
+  }
+  return null;
+};
+
+// Fonction d'aide pour le debug
+window.debugSearch = function() {
+  const debug = {
+    searchParams: {
+      query: document.getElementById('q').value,
+      hidden: document.getElementById('hiddenQ').value
+    },
+    activeFilters: currentFilters,
+    url: window.location.href,
+    performance: getPerformanceStats(),
+    localStorage: localStorage.getItem('interim_search_state')
+  };
+  
+  console.group('🔍 Debug Recherche Intérim');
+  console.log('Paramètres:', debug.searchParams);
+  console.log('Filtres actifs:', debug.activeFilters);
+  console.log('URL:', debug.url);
+  console.log('Performance:', debug.performance);
+  console.log('État sauvé:', debug.localStorage);
+  console.groupEnd();
+  
+  return debug;
+};
+
+// Export pour les tests unitaires si nécessaire
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    debounce,
+    validateScoreInput,
+    animateNumber,
+    showNotification
+  };
+}
+</script>
+{% endblock extra_js %}

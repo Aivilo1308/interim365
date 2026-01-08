@@ -1,0 +1,1473 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Interim365 - BNI | Détail demande {{ demande.numero_demande }}{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}">
+      <i class="fas fa-info-circle"></i>
+      <div class="alert-content">{{ message }}</div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Header avec badge de statut -->
+<div class="detail-header">
+  <h1 class="page-title">
+    <i class="fas fa-file-alt"></i>
+    Demande {{ demande.numero_demande }}
+    <span class="status-badge {{ demande.statut|lower }}">
+      {% if demande.statut == 'BROUILLON' %}
+        <i class="fas fa-edit"></i> Brouillon
+      {% elif demande.statut == 'SOUMISE' %}
+        <i class="fas fa-paper-plane"></i> Soumise
+      {% elif demande.statut == 'EN_VALIDATION' %}
+        <i class="fas fa-clock"></i> En validation
+      {% elif demande.statut == 'VALIDEE' %}
+        <i class="fas fa-check"></i> Validée
+      {% elif demande.statut == 'EN_COURS' %}
+        <i class="fas fa-play"></i> En cours
+      {% elif demande.statut == 'TERMINEE' %}
+        <i class="fas fa-check-circle"></i> Terminée
+      {% elif demande.statut == 'REFUSEE' %}
+        <i class="fas fa-times"></i> Refusée
+      {% elif demande.statut == 'ANNULEE' %}
+        <i class="fas fa-ban"></i> Annulée
+      {% endif %}
+    </span>
+  </h1>
+  <div class="user-menu">
+    <button class="icon-btn" onclick="window.print()" title="Imprimer">
+      <i class="fas fa-print"></i>
+    </button>
+    <button class="icon-btn" title="Notifications">
+      <i class="fas fa-bell"></i>
+    </button>
+    <div class="user-avatar">{{ profil_utilisateur.initiales }}</div>
+  </div>
+</div>
+
+<!-- Informations principales -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-info-circle"></i>
+      Informations générales
+    </h2>
+    <div class="urgence-badge {{ demande.urgence|lower }}">
+      {% if demande.urgence == 'NORMALE' %}
+        <i class="fas fa-circle"></i> Normale
+      {% elif demande.urgence == 'MOYENNE' %}
+        <i class="fas fa-exclamation"></i> Moyenne
+      {% elif demande.urgence == 'ELEVEE' %}
+        <i class="fas fa-exclamation-triangle"></i> Élevée
+      {% elif demande.urgence == 'CRITIQUE' %}
+        <i class="fas fa-fire"></i> Critique
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Numéro de demande</span>
+        <span class="info-value highlight">{{ demande.numero_demande }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Demandeur</span>
+        <span class="info-value">{{ demande.demandeur.nom_complet }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Personne à remplacer</span>
+        <span class="info-value">{{ demande.personne_remplacee.nom_complet }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Poste</span>
+        <span class="info-value">{{ demande.poste.titre }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Département</span>
+        <span class="info-value">{{ demande.poste.departement.nom }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Site</span>
+        <span class="info-value">{{ demande.poste.site.nom }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Motif d'absence</span>
+        <span class="info-value">{{ demande.motif_absence.nom }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Date de création</span>
+        <span class="info-value">{{ demande.created_at|date:"d/m/Y à H:i" }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Période et dates -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-calendar-alt"></i>
+      Période de remplacement
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="info-grid-2">
+      <div class="info-item">
+        <span class="info-label">Date de début</span>
+        <span class="info-value highlight">
+          {% if demande.date_debut %}
+            {{ demande.date_debut|date:"d/m/Y" }}
+          {% else %}
+            <span class="empty">Non renseignée</span>
+          {% endif %}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Date de fin</span>
+        <span class="info-value highlight">
+          {% if demande.date_fin %}
+            {{ demande.date_fin|date:"d/m/Y" }}
+          {% else %}
+            <span class="empty">Non renseignée</span>
+          {% endif %}
+        </span>
+      </div>
+      {% if demande.date_debut and demande.date_fin %}
+      <div class="info-item">
+        <span class="info-label">Durée</span>
+        <span class="info-value">{{ demande.duree_mission }} jour{{ demande.duree_mission|pluralize }}</span>
+      </div>
+      {% endif %}
+      {% if demande.date_debut_effective %}
+      <div class="info-item">
+        <span class="info-label">Date de début effective</span>
+        <span class="info-value">{{ demande.date_debut_effective|date:"d/m/Y" }}</span>
+      </div>
+      {% endif %}
+      {% if demande.date_fin_effective %}
+      <div class="info-item">
+        <span class="info-label">Date de fin effective</span>
+        <span class="info-value">{{ demande.date_fin_effective|date:"d/m/Y" }}</span>
+      </div>
+      {% endif %}
+      {% if demande.date_validation %}
+      <div class="info-item">
+        <span class="info-label">Date de validation</span>
+        <span class="info-value">{{ demande.date_validation|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Description du poste -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-clipboard-list"></i>
+      Description du poste
+    </h2>
+  </div>
+  <div class="card-body">
+    {% if demande.description_poste %}
+      <div class="description-text">{{ demande.description_poste }}</div>
+    {% else %}
+      <p class="info-value empty">Aucune description fournie</p>
+    {% endif %}
+
+    {% if demande.competences_indispensables %}
+      <div class="detail-section">
+        <h4 class="section-label">Compétences indispensables</h4>
+        <div class="description-text">{{ demande.competences_indispensables }}</div>
+      </div>
+    {% endif %}
+
+    {% if demande.instructions_particulieres %}
+      <div class="detail-section">
+        <h4 class="section-label">Instructions particulières</h4>
+        <div class="description-text">{{ demande.instructions_particulieres }}</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Propositions de candidats -->
+{% if propositions_candidats %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-users"></i>
+      Propositions de candidats
+      <span class="count-badge">{{ propositions_candidats|length }}</span>
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="propositions-container">
+      {% for proposition in propositions_candidats %}
+      <div class="proposition-item {% if proposition.candidat_propose == demande.candidat_selectionne %}selected{% endif %}">
+        <div class="proposition-header">
+          <div class="candidate-info">
+            <div class="candidate-avatar">{{ proposition.candidat_propose.initiales }}</div>
+            <div class="candidate-details">
+              <h4>{{ proposition.candidat_propose.nom_complet }}</h4>
+              <p><strong>Matricule :</strong> {{ proposition.candidat_propose.matricule }}</p>
+              {% if proposition.candidat_propose.poste %}
+                <p><strong>Poste actuel :</strong> {{ proposition.candidat_propose.poste.titre }}</p>
+              {% endif %}
+              {% if proposition.candidat_propose.departement %}
+                <p><strong>Département :</strong> {{ proposition.candidat_propose.departement.nom }}</p>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="proposition-meta">
+            <div class="proposant-info">
+              <span class="proposant-label">Proposé par</span>
+              <span class="proposant-name">{{ proposition.proposant.nom_complet }}</span>
+              <span class="proposant-role">({{ proposition.proposant.get_type_profil_display }})</span>
+            </div>
+            
+            <div class="proposition-status">
+              <span class="status-badge {{ proposition.statut|lower }}">
+                {% if proposition.statut == 'SOUMISE' %}
+                  <i class="fas fa-clock"></i> En attente
+                {% elif proposition.statut == 'EN_EVALUATION' %}
+                  <i class="fas fa-search"></i> En évaluation
+                {% elif proposition.statut == 'RETENUE' %}
+                  <i class="fas fa-check"></i> Retenue
+                {% elif proposition.statut == 'REJETEE' %}
+                  <i class="fas fa-times"></i> Rejetée
+                {% elif proposition.statut == 'SELECTIONNEE' %}
+                  <i class="fas fa-star"></i> Sélectionnée
+                {% endif %}
+              </span>
+            </div>
+            
+            {% if proposition.score_total %}
+            <div class="score-display">
+              <span class="score-label">Score</span>
+              <span class="score-value score-{{ proposition.score_class }}">{{ proposition.score_total }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="proposition-content">
+          {% if proposition.justification %}
+          <div class="justification-section">
+            <h5 class="subsection-title">
+              <i class="fas fa-comment"></i>
+              Justification
+            </h5>
+            <div class="justification-text">{{ proposition.justification }}</div>
+          </div>
+          {% endif %}
+          
+          {% if proposition.competences_specifiques %}
+          <div class="competences-section">
+            <h5 class="subsection-title">
+              <i class="fas fa-cogs"></i>
+              Compétences spécifiques
+            </h5>
+            <div class="competences-text">{{ proposition.competences_specifiques }}</div>
+          </div>
+          {% endif %}
+          
+          {% if proposition.experience_pertinente %}
+          <div class="experience-section">
+            <h5 class="subsection-title">
+              <i class="fas fa-briefcase"></i>
+              Expérience pertinente
+            </h5>
+            <div class="experience-text">{{ proposition.experience_pertinente }}</div>
+          </div>
+          {% endif %}
+          
+          <div class="proposition-footer">
+            <span class="date-proposition">
+              <i class="fas fa-calendar"></i>
+              Proposé le {{ proposition.created_at|date:"d/m/Y à H:i" }}
+            </span>
+            
+            {% if proposition.candidat_propose == demande.candidat_selectionne %}
+            <span class="selection-indicator">
+              <i class="fas fa-check-circle text-success"></i>
+              Candidat sélectionné
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Candidat sélectionné (si différent des propositions ou aucune proposition) -->
+{% if demande.candidat_selectionne and not propositions_candidats %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-user-check"></i>
+      Candidat sélectionné
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="candidate-info">
+      <div class="candidate-avatar">{{ demande.candidat_selectionne.initiales }}</div>
+      <div class="candidate-details">
+        <h3>{{ demande.candidat_selectionne.nom_complet }}</h3>
+        <p><strong>Matricule :</strong> {{ demande.candidat_selectionne.matricule }}</p>
+        {% if demande.candidat_selectionne.poste %}
+          <p><strong>Poste actuel :</strong> {{ demande.candidat_selectionne.poste.titre }}</p>
+        {% endif %}
+        {% if demande.candidat_selectionne.departement %}
+          <p><strong>Département :</strong> {{ demande.candidat_selectionne.departement.nom }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Workflow et validation -->
+{% if workflow %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-sitemap"></i>
+      État du workflow
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="info-grid-2">
+      <div class="info-item">
+        <span class="info-label">Étape actuelle</span>
+        <span class="info-value">{{ workflow.etape_actuelle.nom }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Progression</span>
+        <span class="info-value">{{ workflow.progression_percentage|floatformat:0 }}%</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Dernière action</span>
+        <span class="info-value">{{ workflow.date_derniere_action|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% if workflow.est_en_retard %}
+      <div class="info-item">
+        <span class="info-label">État</span>
+        <span class="info-value" style="color: var(--danger);">
+          <i class="fas fa-exclamation-triangle"></i> En retard
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if workflow.historique_actions %}
+    <div class="detail-section">
+      <h4 class="section-label">Historique des actions</h4>
+      <div class="timeline">
+        {% for action in workflow.historique_actions|slice:":5" %}
+        <div class="timeline-item completed">
+          <div class="timeline-title">{{ action.action }}</div>
+          <div class="timeline-description">
+            Par {{ action.utilisateur.nom }} ({{ action.utilisateur.type_profil }})
+            {% if action.commentaire %}
+              <br>{{ action.commentaire }}
+            {% endif %}
+          </div>
+          <div class="timeline-date">{{ action.date|date:"d/m/Y à H:i" }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Statistiques de validation -->
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-chart-line"></i>
+      Informations de validation
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Niveau de validation actuel</span>
+        <span class="info-value">{{ demande.niveau_validation_actuel }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Niveaux requis</span>
+        <span class="info-value">{{ demande.niveaux_validation_requis }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Propositions autorisées</span>
+        <span class="info-value">
+          {% if demande.propositions_autorisees %}
+            <i class="fas fa-check text-success"></i> Oui
+          {% else %}
+            <i class="fas fa-times text-danger"></i> Non
+          {% endif %}
+        </span>
+      </div>
+      {% if demande.nb_max_propositions_par_utilisateur %}
+      <div class="info-item">
+        <span class="info-label">Max propositions par utilisateur</span>
+        <span class="info-value">{{ demande.nb_max_propositions_par_utilisateur }}</span>
+      </div>
+      {% endif %}
+      {% if demande.date_limite_propositions %}
+      <div class="info-item">
+        <span class="info-label">Date limite propositions</span>
+        <span class="info-value">{{ demande.date_limite_propositions|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Évaluation finale -->
+{% if demande.evaluation_mission %}
+<div class="card-container">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fas fa-star"></i>
+      Évaluation de la mission
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="info-grid-2">
+      <div class="info-item">
+        <span class="info-label">Note</span>
+        <span class="info-value highlight">
+          {% for i in "12345" %}
+            {% if forloop.counter <= demande.evaluation_mission %}
+              <i class="fas fa-star" style="color: #fbbf24;"></i>
+            {% else %}
+              <i class="far fa-star" style="color: #d1d5db;"></i>
+            {% endif %}
+          {% endfor %}
+          ({{ demande.evaluation_mission }}/5)
+        </span>
+      </div>
+    </div>
+    {% if demande.commentaire_final %}
+      <div class="detail-section">
+        <h4 class="section-label">Commentaire final</h4>
+        <div class="description-text">{{ demande.commentaire_final }}</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Action Bar -->
+<div class="action-bar">
+  <div class="action-group">
+    <a href="{% url 'index' %}" class="btn btn-outline">
+      <i class="fas fa-arrow-left"></i>
+      Retour au tableau de bord
+    </a>
+    {% if demande.peut_etre_modifiee and peut_modifier %}
+      <a href="{% url 'demande_update' demande.id %}" class="btn btn-primary">
+        <i class="fas fa-edit"></i>
+        Modifier
+      </a>
+    {% endif %}
+  </div>
+  
+  <div class="action-group">
+    {% if peut_valider and demande.statut == 'EN_VALIDATION' %}
+      <a href="{% url 'interim_validation' demande.id %}" class="btn btn-success">
+        <i class="fas fa-check"></i>
+        Valider
+      </a>
+    {% endif %}
+    
+    {% if peut_proposer_candidat and demande.statut in 'SOUMISE,EN_VALIDATION' %}
+      <button class="btn btn-info" onclick="ouvrirModalProposition()">
+        <i class="fas fa-user-plus"></i>
+        Proposer un candidat
+      </button>
+    {% endif %}
+    
+    <a href="{% url 'historique_interim' %}" class="btn btn-outline">
+      <i class="fas fa-history"></i>
+      Historique complet
+    </a>
+    
+    {% if workflow %}
+      <a href="{% url 'workflow_detail' demande.id %}" class="btn btn-outline">
+        <i class="fas fa-sitemap"></i>
+        Workflow détaillé
+      </a>
+    {% endif %}
+
+    <button class="btn btn-outline" onclick="window.print()">
+      <i class="fas fa-print"></i>
+      Imprimer
+    </button>
+  </div>
+</div>
+
+<!-- Modal Proposition de candidat -->
+{% if peut_proposer_candidat %}
+<div id="modalProposition" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-user-plus"></i> Proposer un candidat</h3>
+      <button class="modal-close" onclick="fermerModalProposition()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formProposition" method="post" action="{% url 'proposer_candidat_supplementaire' demande.id %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label for="candidat_id" class="form-label required">Candidat à proposer</label>
+          <select name="candidat_id" id="candidat_id" class="form-select" required>
+            <option value="">Sélectionnez un candidat</option>
+            {% for candidat in candidats_proposables %}
+              <option value="{{ candidat.id }}">{{ candidat.nom_complet }} ({{ candidat.matricule }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="justification" class="form-label required">Justification de la proposition</label>
+          <textarea name="justification" id="justification" class="form-textarea" required
+                    placeholder="Expliquez pourquoi vous proposez ce candidat..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="competences_specifiques" class="form-label">Compétences spécifiques du candidat</label>
+          <textarea name="competences_specifiques" id="competences_specifiques" class="form-textarea"
+                    placeholder="Détaillez les compétences spécifiques de ce candidat..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="experience_pertinente" class="form-label">Expérience pertinente</label>
+          <textarea name="experience_pertinente" id="experience_pertinente" class="form-textarea"
+                    placeholder="Décrivez l'expérience pertinente de ce candidat..."></textarea>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="fermerModalProposition()">
+            <i class="fas fa-times"></i>
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i>
+            Proposer le candidat
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block extra_css %}
+<style>
+/* ================================================================
+   STYLES SPÉCIFIQUES AU DÉTAIL DE DEMANDE
+================================================================ */
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.page-title .status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.count-badge {
+  background-color: var(--primary);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-menu .icon-btn {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-menu .icon-btn:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.info-value {
+  font-size: 1rem;
+  color: var(--gray-900);
+  font-weight: 400;
+}
+
+.info-value.highlight {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.info-value.empty {
+  color: var(--gray-400);
+  font-style: italic;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-badge.brouillon {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.status-badge.soumise {
+  background-color: var(--info-light);
+  color: var(--info);
+}
+
+.status-badge.en-validation {
+  background-color: var(--warning-light);
+  color: #92400e;
+}
+
+.status-badge.validee {
+  background-color: var(--success-light);
+  color: var(--secondary-dark);
+}
+
+.status-badge.en-cours {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.status-badge.terminee {
+  background-color: var(--secondary-light);
+  color: var(--secondary-dark);
+}
+
+.status-badge.refusee {
+  background-color: var(--danger-light);
+  color: var(--danger);
+}
+
+.status-badge.annulee {
+  background-color: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.status-badge.en_evaluation {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.retenue {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.status-badge.rejetee {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.status-badge.selectionnee {
+  background-color: #ede9fe;
+  color: #7c3aed;
+}
+
+/* Urgence Badges */
+.urgence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.urgence-badge.normale {
+  background-color: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.urgence-badge.moyenne {
+  background-color: var(--info-light);
+  color: var(--info);
+}
+
+.urgence-badge.elevee {
+  background-color: var(--warning-light);
+  color: #92400e;
+}
+
+.urgence-badge.critique {
+  background-color: var(--danger-light);
+  color: var(--danger);
+}
+
+/* Description Text */
+.description-text {
+  background-color: var(--gray-50);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--gray-200);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+/* Detail Sections */
+.detail-section {
+  margin-top: 1.5rem;
+}
+
+.section-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  margin-bottom: 0.5rem;
+}
+
+/* ================================================================
+   STYLES POUR LES PROPOSITIONS DE CANDIDATS
+================================================================ */
+
+.propositions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.proposition-item {
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+.proposition-item:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.proposition-item.selected {
+  border-color: var(--secondary);
+  background-color: var(--secondary-light);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.2);
+}
+
+.proposition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.candidate-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.candidate-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.candidate-details h4 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 1.125rem;
+}
+
+.candidate-details p {
+  margin: 0.25rem 0 0 0;
+  color: var(--gray-600);
+  font-size: 0.875rem;
+}
+
+.proposition-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.proposant-info {
+  text-align: right;
+}
+
+.proposant-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.proposant-name {
+  display: block;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.proposant-role {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.proposition-status {
+  margin: 0.5rem 0;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.score-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.score-value.score-excellent { background-color: #10b981; }
+.score-value.score-good { background-color: #3b82f6; }
+.score-value.score-average { background-color: #f59e0b; }
+.score-value.score-poor { background-color: #ef4444; }
+
+.proposition-content {
+  border-top: 1px solid var(--gray-200);
+  padding-top: 1rem;
+}
+
+.subsection-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.justification-text,
+.competences-text,
+.experience-text {
+  background-color: var(--gray-50);
+  padding: 0.75rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--primary);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.proposition-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-200);
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.selection-indicator {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.75rem;
+  width: 2px;
+  background-color: var(--gray-200);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -2rem;
+  top: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background-color: var(--gray-300);
+  z-index: 1;
+}
+
+.timeline-item.completed::before {
+  background-color: var(--secondary);
+}
+
+.timeline-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-description {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+}
+
+.timeline-date {
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Action Bar */
+.action-bar {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  position: sticky;
+  bottom: 1rem;
+  z-index: 10;
+}
+
+.action-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* ================================================================
+   STYLES POUR LE MODAL DE PROPOSITION
+================================================================ */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.modal-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--gray-500);
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.modal-close:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--gray-700);
+}
+
+.form-label.required::after {
+  content: " *";
+  color: var(--danger);
+}
+
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-select:focus,
+.form-textarea:focus {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: white;
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.btn-success {
+  color: white;
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.btn-success:hover {
+  background-color: var(--secondary-dark);
+  border-color: var(--secondary-dark);
+}
+
+.btn-info {
+  color: white;
+  background-color: var(--info);
+  border-color: var(--info);
+}
+
+.btn-info:hover {
+  background-color: var(--info-dark);
+  border-color: var(--info-dark);
+}
+
+.btn-outline {
+  color: var(--gray-600);
+  background-color: transparent;
+  border-color: var(--gray-300);
+}
+
+.btn-outline:hover {
+  color: var(--gray-700);
+  background-color: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+/* Helper Classes */
+.text-success {
+  color: var(--secondary) !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .info-grid,
+  .info-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-header,
+  .action-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .action-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .action-bar .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .proposition-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .proposition-meta {
+    align-items: flex-start;
+  }
+  
+  .candidate-info {
+    width: 100%;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .action-bar,
+  .user-menu,
+  .modal {
+    display: none !important;
+  }
+  
+  .card-container {
+    box-shadow: none;
+    border: 1px solid var(--gray-300);
+    break-inside: avoid;
+  }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Initialisation du détail de demande avec propositions');
+
+  // Actualisation automatique du statut
+  const refreshStatus = () => {
+    const demandeId = {{ demande.id }};
+    fetch(`/interim/api/workflow/status/${demandeId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.status !== '{{ demande.statut }}') {
+          showNotification('Le statut de la demande a été mis à jour', 'info');
+        }
+      })
+      .catch(error => {
+        console.log('Erreur lors de la vérification du statut:', error);
+      });
+  };
+
+  // Vérifier le statut toutes les 30 secondes
+  setInterval(refreshStatus, 30000);
+
+  // Raccourcis clavier
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey) {
+      switch(e.key) {
+        case 'p':
+          e.preventDefault();
+          window.print();
+          break;
+        case 'h':
+          e.preventDefault();
+          window.location.href = "{% url 'historique_interim' %}";
+          break;
+        {% if peut_proposer_candidat %}
+        case 'n':
+          e.preventDefault();
+          ouvrirModalProposition();
+          break;
+        {% endif %}
+      }
+    }
+  });
+
+  console.log('✅ Détail de demande initialisé pour la demande {{ demande.numero_demande }}');
+});
+
+// ================================================================
+// FONCTIONS POUR LE MODAL DE PROPOSITION
+// ================================================================
+
+{% if peut_proposer_candidat %}
+function ouvrirModalProposition() {
+  document.getElementById('modalProposition').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function fermerModalProposition() {
+  document.getElementById('modalProposition').style.display = 'none';
+  document.body.style.overflow = 'auto';
+  document.getElementById('formProposition').reset();
+}
+
+// Fermer le modal en cliquant à l'extérieur
+document.getElementById('modalProposition').addEventListener('click', function(e) {
+  if (e.target === this) {
+    fermerModalProposition();
+  }
+});
+
+// Gérer la soumission du formulaire de proposition
+document.getElementById('formProposition').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  
+  fetch(this.action, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      fermerModalProposition();
+      // Recharger la page pour afficher la nouvelle proposition
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      showNotification(data.error || 'Erreur lors de la proposition', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur de communication avec le serveur', 'error');
+  });
+});
+{% endif %}
+
+// ================================================================
+// FONCTION DE NOTIFICATION
+// ================================================================
+
+function showNotification(message, type = 'info') {
+  console.log(`📢 Notification ${type}: ${message}`);
+  
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type}`;
+  notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 350px; animation: slideIn 0.3s ease;';
+  notification.innerHTML = `
+    <i class="fas fa-info-circle"></i>
+    <div class="alert-content">${message}</div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Supprimer après 5 secondes
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }
+  }, 5000);
+}
+
+// ================================================================
+// STYLES D'ANIMATION POUR LES NOTIFICATIONS
+// ================================================================
+
+const animationStyles = document.createElement('style');
+animationStyles.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(animationStyles);
+</script>
+{% endblock extra_js %}
