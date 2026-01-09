@@ -36,6 +36,7 @@ from django.utils.decorators import method_decorator
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
 from django.utils.safestring import mark_safe
+from django.conf import settings
 
 # ================================================================
 # IMPORTS DJANGO FORMS
@@ -360,33 +361,49 @@ class ProfilUtilisateurForm(ModelForm):
 # ================================================================
 
 class ConfigurationApiKelioForm(ModelForm):
-    """Formulaire simple pour ConfigurationApiKelio SANS cryptage du mot de passe"""
+    """Formulaire pour ConfigurationApiKelio avec gestion de la propriété password"""
+    
+    password = forms.CharField(
+        required=False,
+        widget=PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Saisir le mot de passe en clair'
+        }),
+        label="Mot de passe",
+        help_text="Laisser vide pour conserver le mot de passe existant"
+    )
     
     class Meta:
         model = ConfigurationApiKelio
-        fields = '__all__'
-        widgets = {
-            'password': PasswordInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Saisir le mot de passe en clair'
-            }),
-        }
+        # NE PAS inclure 'password' ici car c'est une propriété, pas un champ
+        fields = ['nom', 'url_base', 'username', 'actif',
+                 'timeout_seconds',
+                 'service_employees', 'service_absences', 'service_formations', 'service_competences',
+                 'cache_duree_defaut_minutes', 'cache_taille_max_mo', 'auto_invalidation_cache']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Personnaliser les widgets et labels
-        self.fields['password'].help_text = "Mot de passe stocké en clair (non crypté)"
+        if self.instance and self.instance.pk and self.instance.password:
+            # En modification, afficher une indication
+            self.fields['password'].help_text = "Mot de passe actuel défini. Saisir un nouveau pour changer."
+    
+    def save(self, commit=True):
+        # Récupérer le mot de passe depuis le formulaire
+        password = self.cleaned_data.get('password')
         
-        if self.instance and self.instance.pk:
-            # En modification, afficher une indication si un mot de passe existe
-            if self.instance.password:
-                self.fields['password'].help_text = "Mot de passe actuel défini. Modifiez pour changer."
-        else:
-            # En création, le mot de passe est requis
-            self.fields['password'].required = True
-            self.fields['password'].help_text = "Mot de passe requis pour nouvelle configuration"
-
+        # Sauvegarder d'abord l'instance
+        instance = super().save(commit=False)
+        
+        # Si un nouveau mot de passe a été saisi, le crypter
+        if password:
+            instance.set_password(password)
+        
+        if commit:
+            instance.save()
+        
+        return instance
+    
 # ================================================================
 # UTILITAIRES SÉCURISÉS
 # ================================================================
@@ -767,17 +784,22 @@ class ProfilUtilisateurAdmin(BaseModelAdmin):
 
 @admin.register(ConfigurationApiKelio)
 class ConfigurationApiKelioAdmin(BaseModelAdmin):
-    """Administration simplifiée SANS cryptage du mot de passe"""
+    """Administration avec cryptage automatique"""
     
-    form = ConfigurationApiKelioForm  #   Utiliser le formulaire simplifié
+    # Utiliser le formulaire personnalisé
+    form = ConfigurationApiKelioForm
     
-    list_display = ('nom', 'url_base', 'username', 'display_password_status', 'display_status', 'display_services', 'created_at')
+    list_display = ('nom', 'url_base', 'username', 
+                   'display_password_status', 'display_encryption_status',
+                   'display_status', 'display_services', 'created_at')
+    
     list_filter = ('actif', 'service_employees', 'service_absences')
     search_fields = ('nom', 'url_base', 'username')
     
     fieldsets = (
         ('Configuration de base', {
             'fields': ('nom', 'url_base', 'username', 'password', 'actif')
+            # Note: 'password' est maintenant défini dans le formulaire
         }),
         ('Paramètres connexion', {
             'fields': ('timeout_seconds',),
@@ -804,54 +826,287 @@ class ConfigurationApiKelioAdmin(BaseModelAdmin):
     
     readonly_fields = ('created_at', 'updated_at')
     
+    # Supprimer ou adapter ces méthodes qui ne sont plus nécessaires
+    def get_exclude(self, request, obj=None):
+        """Exclure le champ crypté de l'affichage"""
+        exclude = super().get_exclude(request, obj) or []
+        return exclude + ['password_encrypted']
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Définit les champs en lecture seule"""
+        readonly = list(super().get_readonly_fields(request, obj))
+        readonly.append('password_encrypted')
+        return readonly
+    
+    # ========== CORRECTIONS CRITIQUES ==========
+    
     def display_password_status(self, obj):
-        """Affiche le statut du mot de passe (SANS CRYPTAGE)"""
-        if obj.password:
-            return format_html('<span style="color: green;">🔐 Configuré (clair)</span>')
+        """Affiche si un mot de passe est configuré"""
+        # CORRECTION ICI : utiliser password_encrypted (pas _password_encrypted)
+        has_password = False
+        has_encrypted = False
+        
+        try:
+            # Vérifier si le champ password_encrypted existe et a une valeur
+            if hasattr(obj, 'password_encrypted'):
+                has_encrypted = bool(obj.password_encrypted)
+            
+            # Vérifier via la méthode get_password
+            decrypted = obj.get_password()
+            has_password = bool(decrypted and decrypted != "ERROR_DECRYPT_FAILED")
+            
+        except Exception as e:
+            print(f"DEBUG display_password_status error: {e}")
+            pass
+        
+        if has_encrypted and has_password:
+            return format_html(
+                '<span style="color: green; font-weight: bold;" '
+                'title="Mot de passe crypté et valide">'
+                '🔐 Configuré (crypté)'
+                '</span>'
+            )
+        elif has_encrypted and not has_password:
+            return format_html(
+                '<span style="color: orange;" '
+                'title="Champ crypté mais erreur de décryptage">'
+                '⚠️ Erreur cryptage'
+                '</span>'
+            )
+        elif not has_encrypted and has_password:
+            return format_html(
+                '<span style="color: blue;" '
+                'title="Mot de passe en clair">'
+                '🔓 Configuré (clair)'
+                '</span>'
+            )
         else:
-            return format_html('<span style="color: red;">❌ Non configuré</span>')
+            return format_html(
+                '<span style="color: red;" '
+                'title="Aucun mot de passe">'
+                '❌ Non configuré'
+                '</span>'
+            )
+    
     display_password_status.short_description = "Mot de passe"
     
+    def display_encryption_status(self, obj):
+        """Affiche le statut du cryptage"""
+        try:
+            # CORRECTION ICI : votre modèle n'a pas get_decrypted_password()
+            # Il a get_password() qui décrypte automatiquement
+            
+            decrypted = obj.get_password()
+            
+            if decrypted == "ERROR_DECRYPT_FAILED":
+                return format_html(
+                    '<span style="color: red;" title="Erreur de décryptage">'
+                    '⚠️ Erreur'
+                    '</span>'
+                )
+            elif decrypted:
+                # Vérifier si c'est crypté ou en clair
+                if hasattr(obj, 'password_encrypted') and obj.password_encrypted:
+                    return format_html(
+                        '<span style="color: blue;" title="Mot de passe crypté">'
+                        '✓ Crypté'
+                        '</span>'
+                    )
+                else:
+                    return format_html(
+                        '<span style="color: #888;" title="Mot de passe en clair">'
+                        '○ Non crypté'
+                        '</span>'
+                    )
+            else:
+                return format_html(
+                    '<span style="color: orange;">'
+                    '○ Vide'
+                    '</span>'
+                )
+        except Exception as e:
+            return format_html(
+                f'<span style="color: red;" title="{str(e)[:50]}...">'
+                '❌ Erreur'
+                '</span>'
+            )
+    
+    display_encryption_status.short_description = "Cryptage"
+    
     def display_status(self, obj):
-        return format_status_display(obj.actif)
+        """Affiche le statut actif/inactif"""
+        if obj.actif:
+            return format_html(
+                '<span style="color: green; font-weight: bold;">'
+                '● Actif'
+                '</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: red;">'
+                '● Inactif'
+                '</span>'
+            )
+    
     display_status.short_description = "Statut"
     
     def display_services(self, obj):
-        services = []
-        if obj.service_employees: services.append(" ")
-        if obj.service_absences: services.append("📅")
-        if obj.service_formations: services.append("📚")
-        if obj.service_competences: services.append(" ")
-        return "".join(services) if services else "❌"
+        """Affiche les icônes des services activés"""
+        icons = []
+        if obj.service_employees: icons.append('👥')
+        if obj.service_absences: icons.append('📅')
+        if obj.service_formations: icons.append('📚')
+        if obj.service_competences: icons.append('⭐')
+        
+        if icons:
+            return format_html(
+                '<span title="Services activés">' + 
+                ' '.join(icons) + 
+                '</span>'
+            )
+        return format_html(
+            '<span style="color: gray;" title="Aucun service">'
+            '—'
+            '</span>'
+        )
+    
     display_services.short_description = "Services"
     
-    actions = ['test_connexion', 'vider_caches']
+    # ========== ACTIONS ADMIN ==========
+    
+    actions = ['test_connexion', 'vider_caches', 'forcer_cryptage', 'debug_password']
     
     def test_connexion(self, request, queryset):
-        """Action pour tester la connexion Kelio"""
+        """Teste la connexion Kelio"""
         for config in queryset:
             try:
-                # Maintenant le mot de passe est accessible directement (pas de décryptage)
-                if config.password:
-                    self.message_user(request, f"  Configuration {config.nom} - Mot de passe défini")
+                # Vérifier le mot de passe
+                password = config.get_password()
+                
+                if password == "ERROR_DECRYPT_FAILED":
+                    msg = f"❌ {config.nom}: Erreur de décryptage"
+                    self.message_user(request, msg, level=messages.ERROR)
+                elif not password:
+                    msg = f"❌ {config.nom}: Mot de passe vide"
+                    self.message_user(request, msg, level=messages.ERROR)
                 else:
-                    self.message_user(request, f"❌ Mot de passe manquant pour {config.nom}", level=messages.ERROR)
+                    # Tester la connexion
+                    from mainapp.services import KelioSyncServiceV43
+                    
+                    try:
+                        service = KelioSyncServiceV43(configuration=config)
+                        session = service._create_ultra_robust_session()
+                        
+                        msg = f"✓ {config.nom}: OK (mot de passe disponible)"
+                        self.message_user(request, msg, level=messages.SUCCESS)
+                        
+                    except Exception as e:
+                        msg = f"⚠️ {config.nom}: Mot de passe OK mais erreur Kelio: {str(e)[:100]}"
+                        self.message_user(request, msg, level=messages.WARNING)
+                        
             except Exception as e:
-                self.message_user(request, f"❌ Erreur test connexion {config.nom}: {str(e)}", level=messages.ERROR)
-    test_connexion.short_description = "Tester la configuration"
+                msg = f"❌ {config.nom}: {str(e)}"
+                self.message_user(request, msg, level=messages.ERROR)
+    
+    test_connexion.short_description = "🔍 Tester la connexion"
     
     def vider_caches(self, request, queryset):
-        """Action pour vider les caches"""
-        total_cleared = 0
+        """Vide les caches"""
+        total = 0
         for config in queryset:
             try:
                 cleared = config.vider_cache()
-                total_cleared += cleared
-            except Exception:
-                pass
+                total += cleared
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Erreur vidage cache {config.nom}: {e}")
         
-        self.message_user(request, f"🗑️ {total_cleared} entrées de cache supprimées")
-    vider_caches.short_description = "Vider les caches"
+        if total > 0:
+            msg = f"🗑️ {total} entrées de cache supprimées"
+            self.message_user(request, msg, level=messages.SUCCESS)
+        else:
+            msg = "Aucun cache à supprimer"
+            self.message_user(request, msg, level=messages.INFO)
+    
+    vider_caches.short_description = "🗑️ Vider les caches"
+    
+    def forcer_cryptage(self, request, queryset):
+        """Force le cryptage du mot de passe en clair"""
+        for config in queryset:
+            try:
+                # Utiliser la propriété password qui appelle set_password()
+                if config.password:  # Si un mot de passe est défini
+                    # Réappliquer le cryptage
+                    config.set_password(config.password)
+                    config.save()
+                    
+                    msg = f"✓ {config.nom}: Mot de passe recrypté"
+                    self.message_user(request, msg, level=messages.SUCCESS)
+                else:
+                    msg = f"⏭️ {config.nom}: Pas de mot de passe à crypter"
+                    self.message_user(request, msg, level=messages.INFO)
+                    
+            except Exception as e:
+                msg = f"❌ {config.nom}: {str(e)}"
+                self.message_user(request, msg, level=messages.ERROR)
+    
+    forcer_cryptage.short_description = "🔐 Recrypter le mot de passe"
+    
+    def debug_password(self, request, queryset):
+        """Affiche des infos de débogage sur les mots de passe"""
+        if not request.user.is_superuser:
+            self.message_user(request, "❌ Action réservée aux superutilisateurs", level=messages.ERROR)
+            return
+        
+        for config in queryset:
+            try:
+                attrs = [attr for attr in dir(config) if 'password' in attr.lower()]
+                info = f"🔍 {config.nom}:\n"
+                
+                for attr in attrs:
+                    try:
+                        value = getattr(config, attr)
+                        if callable(value):
+                            continue
+                        if attr == 'password_encrypted' and value:
+                            info += f"  - {attr}: {value[:30]}...\n"
+                        else:
+                            info += f"  - {attr}: {value}\n"
+                    except:
+                        info += f"  - {attr}: <erreur>\n"
+                
+                info += f"  - get_password(): {config.get_password()}\n"
+                info += f"  - KELIO_CRYPTO_KEY défini: {hasattr(settings, 'KELIO_CRYPTO_KEY')}"
+                
+                self.message_user(request, info, level=messages.INFO)
+                
+            except Exception as e:
+                msg = f"❌ {config.nom}: Erreur - {str(e)}"
+                self.message_user(request, msg, level=messages.ERROR)
+    
+    debug_password.short_description = "🐛 Debug mot de passe"
+    
+    # ========== GESTION DU FORMULAIRE ==========
+    
+    def save_model(self, request, obj, form, change):
+        """
+        Surcharge pour gérer le mot de passe correctement
+        """
+        # Le champ 'password' du formulaire contient le mot de passe en clair
+        # La propriété @password.setter va appeler set_password() automatiquement
+        super().save_model(request, obj, form, change)
+    
+    def get_exclude(self, request, obj=None):
+        """Exclure le champ crypté de l'affichage"""
+        exclude = super().get_exclude(request, obj) or []
+        return exclude + ['password_encrypted']
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Définit les champs en lecture seule"""
+        readonly = list(super().get_readonly_fields(request, obj))
+        readonly.append('password_encrypted')
+        return readonly
 
 # ================================================================
 # ADMIN POUR CONFIGURATION SCORING

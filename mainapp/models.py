@@ -41,6 +41,8 @@ from datetime import datetime, date, timedelta
 from django.contrib.auth.hashers import make_password, check_password
 import base64
 
+from utils.crypto_utils import KelioPasswordCipher
+
 logger = logging.getLogger(__name__)
 
 # ================================================================
@@ -203,15 +205,17 @@ class DemandeInterimManager(BaseOptimizedManager):
 # ================================================================
 
 class ConfigurationApiKelio(TimestampedModel, ActiveModel):
-    """Configuration pour l'acces aux APIs Kelio avec mot de passe en clair"""
+    """Configuration pour l'acces aux APIs Kelio avec mot de passe CRYPTE"""
     nom = models.CharField(max_length=100, unique=True)
     url_base = models.URLField(help_text="URL de base du service SOAP Kelio")
     username = models.CharField(max_length=100)
     
-    # OK MODIFICATION : Champ password en clair (suppression du cryptage)
-    password = models.CharField(
-        max_length=200,  # Taille reduite car plus de cryptage
-        help_text="Mot de passe (stocke en clair)"
+    # MODIFICATION : Champ password CRYPTE
+    password_encrypted = models.CharField(
+        max_length=500,  # Taille augmentée pour contenir le cryptage
+        help_text="Mot de passe crypté (ne s'affiche pas en clair)",
+        blank=True,
+        default=""
     )
     
     timeout_seconds = models.IntegerField(
@@ -230,32 +234,86 @@ class ConfigurationApiKelio(TimestampedModel, ActiveModel):
     cache_taille_max_mo = models.IntegerField(default=100)
     auto_invalidation_cache = models.BooleanField(default=True)
     
+    # Instance du cipher pour cryptage/décryptage
+    _cipher = KelioPasswordCipher()
+    
     def save(self, *args, **kwargs):
-        """Sauvegarde sans cryptage du mot de passe"""
-        # Plus de logique de cryptage - sauvegarde directe
+        """Sauvegarde avec cryptage automatique du mot de passe si fourni"""
+        # Note: On suppose que si password_encrypted est vide,
+        # c'est qu'on n'a pas encore défini de mot de passe
         super().save(*args, **kwargs)
     
+    def set_password(self, plain_password):
+        """
+        Crypte et stocke un mot de passe
+        
+        Args:
+            plain_password (str): Mot de passe en clair
+        """
+        if not plain_password:
+            self.password_encrypted = ""
+            return
+        
+        try:
+            encrypted = self._cipher.encrypt(plain_password)
+            self.password_encrypted = encrypted
+            logger.debug(f"Mot de passe crypté pour {self.nom}")
+        except Exception as e:
+            logger.error(f"Erreur cryptage mot de passe: {e}")
+            raise
+    
     def get_password(self):
-        """Recupere le mot de passe (maintenant en clair)"""
-        return self.password
+        """
+        Récupère le mot de passe décrypté
+        
+        Returns:
+            str: Mot de passe en clair OU chaîne vide si erreur
+        """
+        if not self.password_encrypted:
+            return ""
+        
+        try:
+            return self._cipher.decrypt(self.password_encrypted)
+        except Exception as e:
+            logger.error(f"Erreur décryptage mot de passe: {e}")
+            return ""
     
-    def set_password(self, raw_password):
-        """Definit un nouveau mot de passe (stocke en clair)"""
-        self.password = raw_password
-    
-    def check_password(self, raw_password):
-        """Verifie un mot de passe"""
-        return self.password == raw_password
+    def check_password(self, plain_password):
+        """
+        Vérifie si un mot de passe correspond
+        
+        Args:
+            plain_password (str): Mot de passe à vérifier
+            
+        Returns:
+            bool: True si correspond
+        """
+        try:
+            stored_password = self.get_password()
+            return stored_password == plain_password
+        except Exception as e:
+            logger.error(f"Erreur vérification mot de passe: {e}")
+            return False
     
     @property
     def password_display(self):
-        """Affichage securise du mot de passe"""
-        if self.password:
+        """Affichage sécurisé du mot de passe"""
+        if self.password_encrypted:
             return "••••••••"
-        return "Non defini"
+        return "Non défini"
+    
+    @property
+    def password(self):
+        """Propriété pour compatibilité avec l'ancien code"""
+        return self.get_password()
+    
+    @password.setter
+    def password(self, value):
+        """Setter pour compatibilité avec l'ancien code"""
+        self.set_password(value)
     
     def vider_cache(self):
-        """Vide le cache associe"""
+        """Vide le cache associé"""
         count = self.caches.count()
         self.caches.all().delete()
         return count

@@ -28703,3 +28703,401 @@ INFO 2026-01-07 16:59:51,142 autoreload D:\DevProjects\Python\interim365\interim
 INFO 2026-01-07 16:59:55,340 autoreload Watching for file changes with StatReloader
 INFO 2026-01-08 10:09:14,469 autoreload D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
 INFO 2026-01-08 10:09:16,331 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:08:20,291 autoreload D:\DevProjects\Python\interim365\mainapp\admin.py changed, reloading.
+INFO 2026-01-09 10:08:25,215 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:18:31,369 autoreload D:\DevProjects\Python\interim365\mainapp\models.py changed, reloading.
+INFO 2026-01-09 10:18:32,630 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:19:04,668 autoreload D:\DevProjects\Python\interim365\mainapp\models.py changed, reloading.
+INFO 2026-01-09 10:19:06,988 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:19:15,157 autoreload D:\DevProjects\Python\interim365\mainapp\models.py changed, reloading.
+INFO 2026-01-09 10:19:16,723 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:28:59,343 autoreload D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
+INFO 2026-01-09 10:29:01,709 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:31:21,572 basehttp "GET / HTTP/1.1" 302 0
+INFO 2026-01-09 10:31:21,617 basehttp "GET /connexion/?next=/ HTTP/1.1" 200 22075
+WARNING 2026-01-09 10:31:23,070 log Not Found: /favicon.ico
+WARNING 2026-01-09 10:31:23,071 basehttp "GET /favicon.ico HTTP/1.1" 404 179
+INFO 2026-01-09 10:31:39,019 basehttp "POST /connexion/?next=/ HTTP/1.1" 302 0
+INFO 2026-01-09 10:31:39,141 basehttp "GET /n3/ HTTP/1.1" 200 87343
+WARNING 2026-01-09 10:31:39,442 log Not Found: /static/img/i365.png
+WARNING 2026-01-09 10:31:39,445 basehttp "GET /static/img/i365.png HTTP/1.1" 404 179
+INFO 2026-01-09 10:31:50,520 basehttp "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198473
+WARNING 2026-01-09 10:31:50,556 log Not Found: /static/img/i365.png
+WARNING 2026-01-09 10:31:50,558 basehttp "GET /static/img/i365.png HTTP/1.1" 404 179
+WARNING 2026-01-09 10:31:51,394 log Not Found: /static/img/i365.ico
+WARNING 2026-01-09 10:31:51,395 basehttp "GET /static/img/i365.ico HTTP/1.1" 404 179
+INFO 2026-01-09 10:32:17,671 basehttp "POST /interim/admin/kelio/sync-global/ HTTP/1.1" 200 2125
+INFO 2026-01-09 10:33:29,849 basehttp "GET /admin HTTP/1.1" 301 0
+INFO 2026-01-09 10:33:30,145 basehttp "GET /admin/ HTTP/1.1" 200 20830
+WARNING 2026-01-09 10:33:30,247 log Not Found: /static/admin/css/base.css
+WARNING 2026-01-09 10:33:30,249 basehttp "GET /static/admin/css/base.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:33:30,255 log Not Found: /static/admin/css/dark_mode.css
+WARNING 2026-01-09 10:33:30,264 log Not Found: /static/admin/css/nav_sidebar.css
+WARNING 2026-01-09 10:33:30,265 basehttp "GET /static/admin/css/dark_mode.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:33:30,271 log Not Found: /static/admin/js/theme.js
+WARNING 2026-01-09 10:33:30,276 log Not Found: /static/admin/css/dashboard.css
+WARNING 2026-01-09 10:33:30,294 basehttp "GET /static/admin/css/dashboard.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:33:30,284 basehttp "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:33:30,290 log Not Found: /static/admin/js/nav_sidebar.js
+WARNING 2026-01-09 10:33:30,283 log Not Found: /static/admin/css/responsive.css
+WARNING 2026-01-09 10:33:30,298 basehttp "GET /static/admin/js/theme.js HTTP/1.1" 404 179
+WARNING 2026-01-09 10:33:30,307 basehttp "GET /static/admin/css/responsive.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:33:30,308 basehttp "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 404 179
+ERROR 2026-01-09 10:33:35,568 log Internal Server Error: /admin/mainapp/configurationapikelio/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\options.py", line 681, in get_field
+    return self.fields_map[field_name]
+KeyError: 'display_password_status'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\utils.py", line 272, in lookup_field
+    f = _get_non_gfk_field(opts, name)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\utils.py", line 303, in _get_non_gfk_field
+    field = opts.get_field(name)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\options.py", line 683, in get_field
+    raise FieldDoesNotExist(
+django.core.exceptions.FieldDoesNotExist: ConfigurationApiKelio has no field named 'display_password_status'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\base.py", line 45, in render
+    return super().render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\library.py", line 258, in render
+    _dict = self.func(*resolved_args, **resolved_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 336, in result_list
+    "results": list(results(cl)),
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 312, in results
+    yield ResultList(None, items_for_result(cl, res, None))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 303, in __init__
+    super().__init__(*items)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 213, in items_for_result
+    f, attr, value = lookup_field(field_name, result, cl.model_admin)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\utils.py", line 281, in lookup_field
+    value = attr(obj)
+  File "D:\DevProjects\Python\interim365\mainapp\admin.py", line 814, in display_password_status
+    has_password = bool(obj._password_encrypted)
+AttributeError: 'ConfigurationApiKelio' object has no attribute '_password_encrypted'
+ERROR 2026-01-09 10:33:35,595 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 500 145
+INFO 2026-01-09 10:33:39,390 basehttp "GET /admin/ HTTP/1.1" 200 20830
+INFO 2026-01-09 10:34:04,357 basehttp "GET /admin/ HTTP/1.1" 200 20830
+WARNING 2026-01-09 10:34:04,392 log Not Found: /static/admin/css/base.css
+WARNING 2026-01-09 10:34:04,393 basehttp "GET /static/admin/css/base.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:34:04,407 log Not Found: /static/admin/css/dark_mode.css
+WARNING 2026-01-09 10:34:04,410 log Not Found: /static/admin/css/nav_sidebar.css
+WARNING 2026-01-09 10:34:04,414 log Not Found: /static/admin/css/dashboard.css
+WARNING 2026-01-09 10:34:04,415 basehttp "GET /static/admin/css/dark_mode.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:34:04,416 basehttp "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:34:04,419 log Not Found: /static/admin/css/responsive.css
+WARNING 2026-01-09 10:34:04,421 basehttp "GET /static/admin/css/dashboard.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:34:04,425 log Not Found: /static/admin/js/theme.js
+WARNING 2026-01-09 10:34:04,430 log Not Found: /static/admin/js/nav_sidebar.js
+WARNING 2026-01-09 10:34:04,430 basehttp "GET /static/admin/css/responsive.css HTTP/1.1" 404 179
+WARNING 2026-01-09 10:34:04,431 basehttp "GET /static/admin/js/theme.js HTTP/1.1" 404 179
+INFO 2026-01-09 10:34:04,433 basehttp - Broken pipe from ('127.0.0.1', 54607)
+WARNING 2026-01-09 10:34:04,434 basehttp "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 404 179
+ERROR 2026-01-09 10:34:07,509 log Internal Server Error: /admin/mainapp/configurationapikelio/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\options.py", line 681, in get_field
+    return self.fields_map[field_name]
+KeyError: 'display_password_status'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\utils.py", line 272, in lookup_field
+    f = _get_non_gfk_field(opts, name)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\utils.py", line 303, in _get_non_gfk_field
+    field = opts.get_field(name)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\options.py", line 683, in get_field
+    raise FieldDoesNotExist(
+django.core.exceptions.FieldDoesNotExist: ConfigurationApiKelio has no field named 'display_password_status'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\base.py", line 45, in render
+    return super().render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\library.py", line 258, in render
+    _dict = self.func(*resolved_args, **resolved_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 336, in result_list
+    "results": list(results(cl)),
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 312, in results
+    yield ResultList(None, items_for_result(cl, res, None))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 303, in __init__
+    super().__init__(*items)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\templatetags\admin_list.py", line 213, in items_for_result
+    f, attr, value = lookup_field(field_name, result, cl.model_admin)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\utils.py", line 281, in lookup_field
+    value = attr(obj)
+  File "D:\DevProjects\Python\interim365\mainapp\admin.py", line 814, in display_password_status
+    has_password = bool(obj._password_encrypted)
+AttributeError: 'ConfigurationApiKelio' object has no attribute '_password_encrypted'
+ERROR 2026-01-09 10:34:07,513 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 500 145
+INFO 2026-01-09 10:34:12,337 basehttp "GET /admin/ HTTP/1.1" 200 20830
+WARNING 2026-01-09 10:34:12,379 log Not Found: /static/admin/css/responsive.css
+WARNING 2026-01-09 10:34:12,380 basehttp "GET /static/admin/css/responsive.css HTTP/1.1" 404 179
+INFO 2026-01-09 10:49:55,686 autoreload D:\DevProjects\Python\interim365\mainapp\admin.py changed, reloading.
+INFO 2026-01-09 10:49:59,252 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 10:50:25,128 basehttp "GET /admin/ HTTP/1.1" 200 20830
+INFO 2026-01-09 10:50:26,912 basehttp "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198262
+INFO 2026-01-09 10:50:29,432 basehttp "GET /n3/ HTTP/1.1" 200 87343
+INFO 2026-01-09 10:50:52,265 basehttp - Broken pipe from ('127.0.0.1', 60612)
+INFO 2026-01-09 10:50:52,278 basehttp - Broken pipe from ('127.0.0.1', 54683)
+INFO 2026-01-09 10:50:52,281 basehttp "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2929
+INFO 2026-01-09 10:50:52,283 basehttp - Broken pipe from ('127.0.0.1', 64913)
+INFO 2026-01-09 10:50:53,528 basehttp - Broken pipe from ('127.0.0.1', 52948)
+INFO 2026-01-09 10:51:01,448 basehttp "GET /admin/ HTTP/1.1" 200 20830
+INFO 2026-01-09 10:51:01,865 basehttp "GET /static/admin/css/base.css HTTP/1.1" 200 21310
+INFO 2026-01-09 10:51:02,042 basehttp "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2694
+INFO 2026-01-09 10:51:02,130 basehttp "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+INFO 2026-01-09 10:51:02,142 basehttp "GET /static/admin/css/responsive.css HTTP/1.1" 200 18559
+INFO 2026-01-09 10:51:02,182 basehttp "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+INFO 2026-01-09 10:51:02,223 basehttp "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2026-01-09 10:51:02,875 basehttp "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+INFO 2026-01-09 10:51:02,876 basehttp "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+INFO 2026-01-09 10:51:02,879 basehttp "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+INFO 2026-01-09 10:51:09,690 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 200 20809
+INFO 2026-01-09 10:51:11,399 basehttp "GET /static/admin/css/changelists.css HTTP/1.1" 200 6566
+INFO 2026-01-09 10:51:11,740 basehttp "GET /static/admin/js/core.js HTTP/1.1" 200 5682
+INFO 2026-01-09 10:51:11,740 basehttp "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2026-01-09 10:51:11,749 basehttp "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 8943
+INFO 2026-01-09 10:51:11,839 basehttp "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-09 10:51:11,879 basehttp "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 292458
+INFO 2026-01-09 10:51:11,894 basehttp "GET /static/admin/js/actions.js HTTP/1.1" 200 7872
+INFO 2026-01-09 10:51:11,912 basehttp "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2026-01-09 10:51:11,915 basehttp "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2026-01-09 10:51:11,961 basehttp "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2026-01-09 10:51:12,163 basehttp "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 232381
+INFO 2026-01-09 10:51:12,529 basehttp "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2026-01-09 10:51:12,546 basehttp "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+ERROR 2026-01-09 10:51:24,629 log Internal Server Error: /admin/mainapp/configurationapikelio/1/change/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 809, in get_form
+    return modelform_factory(self.model, **defaults)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\forms\models.py", line 642, in modelform_factory
+    return type(form)(class_name, (form,), form_class_attrs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\forms\models.py", line 321, in __new__
+    raise FieldError(message)
+django.core.exceptions.FieldError: Unknown field(s) (password) specified for ConfigurationApiKelio
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 688, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\utils\decorators.py", line 134, in _wrapper_view
+    response = view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\views\decorators\cache.py", line 62, in _wrapper_view_func
+    response = view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\sites.py", line 242, in inner
+    return view(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 1889, in change_view
+    return self.changeform_view(request, object_id, form_url, extra_context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\utils\decorators.py", line 46, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\utils\decorators.py", line 134, in _wrapper_view
+    response = view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 1747, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 1782, in _changeform_view
+    ModelForm = self.get_form(
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 811, in get_form
+    raise FieldError(
+django.core.exceptions.FieldError: Unknown field(s) (password) specified for ConfigurationApiKelio. Check fields/fieldsets/exclude attributes of class ConfigurationApiKelioAdmin.
+ERROR 2026-01-09 10:51:24,672 basehttp "GET /admin/mainapp/configurationapikelio/1/change/ HTTP/1.1" 500 142961
+INFO 2026-01-09 10:58:17,297 autoreload D:\DevProjects\Python\interim365\mainapp\services\kelio_sync_v43.py changed, reloading.
+INFO 2026-01-09 10:58:19,155 autoreload Watching for file changes with StatReloader
+ERROR 2026-01-09 10:58:40,884 log Internal Server Error: /admin/mainapp/configurationapikelio/1/change/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 809, in get_form
+    return modelform_factory(self.model, **defaults)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\forms\models.py", line 642, in modelform_factory
+    return type(form)(class_name, (form,), form_class_attrs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\forms\models.py", line 321, in __new__
+    raise FieldError(message)
+django.core.exceptions.FieldError: Unknown field(s) (password) specified for ConfigurationApiKelio
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 688, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\utils\decorators.py", line 134, in _wrapper_view
+    response = view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\views\decorators\cache.py", line 62, in _wrapper_view_func
+    response = view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\sites.py", line 242, in inner
+    return view(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 1889, in change_view
+    return self.changeform_view(request, object_id, form_url, extra_context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\utils\decorators.py", line 46, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\utils\decorators.py", line 134, in _wrapper_view
+    response = view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 1747, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 1782, in _changeform_view
+    ModelForm = self.get_form(
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\admin\options.py", line 811, in get_form
+    raise FieldError(
+django.core.exceptions.FieldError: Unknown field(s) (password) specified for ConfigurationApiKelio. Check fields/fieldsets/exclude attributes of class ConfigurationApiKelioAdmin.
+ERROR 2026-01-09 10:58:40,891 basehttp "GET /admin/mainapp/configurationapikelio/1/change/ HTTP/1.1" 500 143098
+INFO 2026-01-09 11:13:28,742 autoreload D:\DevProjects\Python\interim365\mainapp\admin.py changed, reloading.
+INFO 2026-01-09 11:13:30,181 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 11:13:47,969 autoreload D:\DevProjects\Python\interim365\mainapp\admin.py changed, reloading.
+INFO 2026-01-09 11:14:13,353 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 11:14:36,659 basehttp "GET /admin/ HTTP/1.1" 200 20830
+INFO 2026-01-09 11:14:41,301 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 200 20809
+INFO 2026-01-09 11:14:41,604 basehttp "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-09 11:14:44,630 basehttp "GET /admin/mainapp/configurationapikelio/1/change/ HTTP/1.1" 200 27270
+INFO 2026-01-09 11:14:44,886 basehttp "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-09 11:14:46,854 basehttp "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+INFO 2026-01-09 11:14:46,855 basehttp "GET /static/admin/css/forms.css HTTP/1.1" 200 9090
+INFO 2026-01-09 11:14:46,860 basehttp "GET /static/admin/js/collapse.js HTTP/1.1" 200 1803
+INFO 2026-01-09 11:14:46,875 basehttp "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+INFO 2026-01-09 11:14:46,876 basehttp "GET /static/admin/css/widgets.css HTTP/1.1" 200 11921
+INFO 2026-01-09 11:15:03,454 basehttp "POST /admin/mainapp/configurationapikelio/1/change/ HTTP/1.1" 302 0
+INFO 2026-01-09 11:15:03,522 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 200 21202
+INFO 2026-01-09 11:15:03,640 basehttp "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-09 11:15:03,690 basehttp "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+INFO 2026-01-09 11:15:33,297 autoreload D:\DevProjects\Python\interim365\mainapp\admin.py changed, reloading.
+INFO 2026-01-09 11:15:37,070 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 11:15:50,697 basehttp "GET /admin/mainapp/configurationapikelio/1/change/ HTTP/1.1" 200 27277
+INFO 2026-01-09 11:15:50,767 basehttp "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-09 11:16:01,226 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 200 20879
+INFO 2026-01-09 11:16:05,317 basehttp "GET /admin/mainapp/configurationapikelio/1/change/ HTTP/1.1" 200 27277
+INFO 2026-01-09 11:16:07,265 basehttp "GET /admin/mainapp/configurationapikelio/ HTTP/1.1" 200 20879
+INFO 2026-01-09 11:16:16,773 basehttp "GET / HTTP/1.1" 302 0
+INFO 2026-01-09 11:16:16,892 basehttp "GET /n3/ HTTP/1.1" 200 87343
+INFO 2026-01-09 11:16:17,514 basehttp "GET /static/img/i365.png HTTP/1.1" 200 44672
+INFO 2026-01-09 11:16:27,303 basehttp "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198487
+INFO 2026-01-09 11:17:11,877 basehttp "POST /interim/admin/kelio/sync-global/ HTTP/1.1" 200 2162
+INFO 2026-01-09 11:17:16,949 basehttp "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198262
+INFO 2026-01-09 11:50:23,766 autoreload D:\DevProjects\Python\interim365\interim365\settings.py changed, reloading.
+INFO 2026-01-09 11:50:25,373 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 12:22:47,384 autoreload D:\DevProjects\Python\interim365\mainapp\services\kelio_api_simplifie.py changed, reloading.
+INFO 2026-01-09 12:22:49,823 autoreload Watching for file changes with StatReloader
+INFO 2026-01-09 12:23:23,430 autoreload Watching for file changes with StatReloader

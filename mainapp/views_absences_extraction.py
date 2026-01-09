@@ -23,6 +23,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
 def get_feries_dans_periode(date_debut, date_fin, code_pays='CI'):
     """
     Retourne la liste des jours fériés dans une période donnée

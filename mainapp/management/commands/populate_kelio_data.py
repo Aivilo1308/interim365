@@ -36,29 +36,82 @@ import random
 import uuid
 import json
 import sys
+from django.core.cache import cache
+from mainapp.models import ConfigurationApiKelio
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ================================================================
 # CONFIGURATION KELIO SAFESECUR
 # ================================================================
 
-KELIO_SAFESECUR_BASE_URL = 'https://keliodemo-safesecur.kelio.io/open'
+class KelioConfigService:
+    """Service pour gérer la configuration Kelio de façon sécurisée"""
+    
+    CACHE_KEY = 'kelio_active_config'
+    CACHE_TIMEOUT = 3600  # 1 heure
+    
+    @classmethod
+    def get_active_config(cls):
+        """Récupère la configuration active avec cache"""
+        # Vérifier d'abord le cache
+        cached_config = cache.get(cls.CACHE_KEY)
+        if cached_config:
+            return cached_config
+        
+        # Récupérer depuis la base de données
+        config = ConfigurationApiKelio.objects.filter(actif=True).first()
+        
+        if config:
+            # Mettre en cache
+            cache.set(cls.CACHE_KEY, config, cls.CACHE_TIMEOUT)
+        
+        return config
+    
+    @classmethod
+    def get_credentials(cls):
+        """Récupère les identifiants de façon sécurisée"""
+        config = cls.get_active_config()
+        
+        if not config:
+            logger.warning("Aucune configuration Kelio active trouvée, utilisation des valeurs par défaut")
+            return {
+                'base_url': '',
+                'username': '',
+                'password': ''
+            }
+        
+        # Récupérer le mot de passe décrypté de façon sécurisée
+        password = config.get_password()
+        
+        if not password:
+            logger.error("Impossible de récupérer le mot de passe décrypté")
+            raise ValueError("Mot de passe Kelio non disponible")
+        
+        return {
+            'base_url': config.url_base,
+            'username': config.username,
+            'password': password,
+            'config': config  # Optionnel : l'objet complet
+        }
+    
+    @classmethod
+    def clear_cache(cls):
+        """Vide le cache de configuration"""
+        cache.delete(cls.CACHE_KEY)
+        logger.info("Cache de configuration Kelio vidé")
+
+
+credentials = KelioConfigService.get_credentials()
+
+KELIO_SAFESECUR_BASE_URL = credentials['base_url']
 KELIO_SAFESECUR_SERVICES_URL = f'{KELIO_SAFESECUR_BASE_URL}/services'
 
 KELIO_SAFESECUR_DEFAULT_AUTH = {
-    'username': 'webservices',
-    'password': '12345'
+    'username': credentials['username'],
+    'password': credentials['password']
 }
-
-'''
-KELIO_SAFESECUR_BASE_URL = 'https://sandbox-ws.kelio.io'
-KELIO_SAFESECUR_SERVICES_URL = 'https://sandbox-ws.kelio.io/open/services'
-
-KELIO_SAFESECUR_DEFAULT_AUTH = {
-    'username': 'api-ws',
-    'password': 'ws-sandbox'
-}
-
-'''
 
 # Configuration debug avancé
 DEBUG_LEVELS = {

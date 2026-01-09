@@ -27,6 +27,7 @@ from django.db import transaction, IntegrityError, models
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from utils.crypto_utils import KelioPasswordCipher
 
 # ================================================================
 # PROTECTION ENCODAGE ULTRA-COMPLÈTE AU NIVEAU SYSTÈME
@@ -963,11 +964,11 @@ class KelioSyncServiceV43:
         if not self.config:
             raise Exception("Aucune configuration Kelio active trouvée")
         
-        # 🚀 OPTIMISATIONS PERFORMANCE V4.3 - Ajustées selon les résultats de production
-        self.max_retries = 2  # Réduit car EmployeeListService confirmé défaillant
-        self.retry_delay = 1  # Optimal validé
-        self.timeout = 30     # Optimal validé
-        self.batch_size = 15  # Optimal validé (5 lots pour 63 employés)
+        # 🚀 OPTIMISATIONS PERFORMANCE V4.3
+        self.max_retries = 2
+        self.retry_delay = 1
+        self.timeout = 30
+        self.batch_size = 15
         
         # Optimisations de performance
         self.enable_fast_mode = True
@@ -999,9 +1000,27 @@ class KelioSyncServiceV43:
         """Crée une session HTTP ultra-robuste avec retry et auth"""
         session = Session()
         
+        username = safe_str(self.config.username or '')
+        
+        # DEBUG : Voir ce qui se passe
+        print(f"DEBUG - config: {self.config}")
+        print(f"DEBUG - config.nom: {self.config.nom}")
+        print(f"DEBUG - hasattr password_encrypted: {hasattr(self.config, 'password_encrypted')}")
+        if hasattr(self.config, 'password_encrypted'):
+            print(f"DEBUG - password_encrypted value: {self.config.password_encrypted[:50] if self.config.password_encrypted else 'VIDE'}")
+
+        # Décryptage du mot de passe
+        try:
+            password = safe_str(self.config.get_password() or '')
+            if not password:
+                    print(f"DEBUG - get_password() retourne vide")
+                    print(f"DEBUG - config.password (propriété): {self.config.password}")
+        except Exception as e:
+            logger.error(f"❌ Erreur décryptage mot de passe: {e}")
+            # Fallback sécurisé
+            password = 'TEMPORARY_FALLBACK_' + str(hash(self.config.nom))[:8]
+        
         # Auth basique avec protection encodage
-        username = safe_str(self.config.username or 'webservices')
-        password = safe_str(self.config.password or '12345')
         session.auth = HTTPBasicAuth(username, password)
         
         # Headers optimisés

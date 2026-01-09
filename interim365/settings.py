@@ -9,6 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
 
+#Nouveau
+KELIO_CRYPTO_KEY = config('KELIO_CRYPTO_KEY', default='').encode('utf-8')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
