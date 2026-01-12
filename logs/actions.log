@@ -1,0 +1,154 @@
+[2026-01-11 21:09:31] [2026-01-11 21:09:31] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:20:09] [2026-01-11 22:20:09] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:21:06] [2026-01-11 22:21:06] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:22:30] [2026-01-11 22:22:30] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:34:10] [2026-01-11 22:34:10] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:35:58] [2026-01-11 22:35:58] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:42:15] [2026-01-11 22:42:15] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:42:17] [2026-01-11 22:42:17] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 22:42:53] [2026-01-11 22:42:53] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 22:43:07] [2026-01-11 22:43:07] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 22:45:10] [2026-01-11 22:45:10] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:45:16] [2026-01-11 22:45:16] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 22:46:00] [2026-01-11 22:46:00] [LOGS] [EXPORT] [User:njb2] [IP:127.0.0.1]  Export logs format json
+[2026-01-11 22:46:08] [2026-01-11 22:46:08] [LOGS] [EXPORT] [User:njb2] [IP:127.0.0.1]  Export logs format csv
+[2026-01-11 22:52:23] [2026-01-11 22:52:23] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-11 22:52:33] [2026-01-11 22:52:33] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 22:58:09] [2026-01-11 22:58:09] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:58:33] [2026-01-11 22:58:33] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:03:31] [2026-01-11 23:03:31] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:04:25] [2026-01-11 23:04:25] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:04:30] [2026-01-11 23:04:30] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:04:33] [2026-01-11 23:04:33] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:04:33] [2026-01-11 23:04:33] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:05:18] [2026-01-11 23:05:18] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:05:23] [2026-01-11 23:05:23] [LOGS] [DOWNLOAD_ZIP] [User:njb2] [IP:127.0.0.1]  Téléchargement archive ZIP des logs
+[2026-01-11 23:05:23] [2026-01-11 23:05:23] [LOGS] [DOWNLOAD_ZIP_OK] [User:njb2] [IP:127.0.0.1] [fichiers:5] Archive ZIP créée: 5 fichiers, 36.2 KB
+[2026-01-11 23:05:33] [2026-01-11 23:05:33] [LOGS] [DOWNLOAD_ZIP] [User:njb2] [IP:127.0.0.1]  Téléchargement archive ZIP des logs
+[2026-01-11 23:05:33] [2026-01-11 23:05:33] [LOGS] [DOWNLOAD_ZIP_OK] [User:njb2] [IP:127.0.0.1] [fichiers:5] Archive ZIP créée: 5 fichiers, 37.2 KB
+[2026-01-11 23:09:42] [2026-01-11 23:09:42] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:13:55] [2026-01-11 23:13:55] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:13:58] [2026-01-11 23:13:58] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:19:20] [2026-01-11 23:19:20] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:19:24] [2026-01-11 23:19:24] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:22:19] [2026-01-11 23:22:19] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:26:55] [2026-01-11 23:26:55] [LOGS] [ACCES_JOURNAL] [User:njb2] [IP:127.0.0.1]  Accès journal des logs
+[2026-01-11 23:39:55] [2026-01-11 23:39:55] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:54:04] [2026-01-11 23:54:04] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 00:02:00] [2026-01-12 00:02:00] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 00:03:17] [2026-01-12 00:03:17] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 00:03:26] [2026-01-12 00:03:26] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 01:37:38] [2026-01-12 01:37:38] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 02:22:00] [2026-01-12 02:22:00] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 02:22:59] [2026-01-12 02:22:59] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 02:25:24] [2026-01-12 02:25:24] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 02:47:30] [2026-01-12 02:47:30] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 02:47:36] [2026-01-12 02:47:36] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 02:51:41] [2026-01-12 02:51:41] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 02:51:48] [2026-01-12 02:51:48] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 02:51:53] [njb2] Accès au dashboard paramètres
+[2026-01-12 03:03:45] [2026-01-12 03:03:45] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:05:05] [2026-01-12 03:05:05] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:09:10] [2026-01-12 03:09:10] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:11:07] [2026-01-12 03:11:07] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:11:54] [njb2] Modification configuration API Kelio - ID: 1
+[2026-01-12 03:12:09] [njb2] Modification configuration API Kelio - ID: 1
+[2026-01-12 03:12:19] [njb2] Vidage cache Kelio - Config: Configuration Kelio SafeSecur Hiérarchique, Entrées: 0
+[2026-01-12 03:13:48] [njb2] Accès au dashboard paramètres
+[2026-01-12 03:13:51] [2026-01-12 03:13:51] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 03:13:54] [2026-01-12 03:13:54] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-12 03:13:54] [2026-01-12 03:13:54] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-12 03:21:55] [2026-01-12 03:21:55] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:22:09] [njb2] Accès au dashboard paramètres
+[2026-01-12 03:22:20] [njb2] Test connexion API Kelio - Résultat: OK (5/5 tests)
+[2026-01-12 03:22:33] [njb2] Test connexion API Kelio - Résultat: OK (5/5 tests)
+[2026-01-12 03:36:34] [2026-01-12 03:36:34] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:37:38] [2026-01-12 03:37:38] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:38:21] [2026-01-12 03:38:21] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:40:08] [2026-01-12 03:40:08] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:42:18] [2026-01-12 03:42:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:43:44] [njb2] Accès dashboard paramètres
+[2026-01-12 03:58:54] [2026-01-12 03:58:54] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:00:18] [2026-01-12 04:00:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:05:52] [njb2] Modification config scoring - Nom: Scoring Hiérarchique SafeSecur
+[2026-01-12 04:08:57] [2026-01-12 04:08:57] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:09:46] [njb2] Modification config scoring - Nom: Scoring Hiérarchique SafeSecur
+[2026-01-12 04:15:46] [2026-01-12 04:15:46] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:16:25] [njb2] Modification config scoring - Nom: Scoring Hiérarchique SafeSecur
+[2026-01-12 04:21:33] [2026-01-12 04:21:33] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:22:07] [njb2] Modification config scoring - Nom: Scoring Hiérarchique SafeSecur
+[2026-01-12 04:26:40] [2026-01-12 04:26:40] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:27:14] [njb2] Modification config scoring - Nom: Scoring Hiérarchique SafeSecur
+[2026-01-12 04:41:36] [2026-01-12 04:41:36] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 04:41:54] [njb2] Accès dashboard paramètres
+[2026-01-12 04:42:00] [njb2] Accès dashboard paramètres
+[2026-01-12 04:42:43] [njb2] Modification config scoring - Nom: Scoring Hiérarchique SafeSecur
+[2026-01-12 04:46:23] [njb2] Modification département - Nom: DSI
+[2026-01-12 04:46:49] [njb2] Modification département - Nom: DSII
+[2026-01-12 04:47:11] [njb2] Modification département - Nom: DSI
+[2026-01-12 04:47:34] [njb2] Accès dashboard paramètres
+[2026-01-12 04:48:24] [2026-01-12 04:48:24] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 05:09:07] [2026-01-12 05:09:07] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 05:11:15] [2026-01-12 05:11:15] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 05:11:20] [2026-01-12 05:11:20] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 05:16:33] [2026-01-12 05:16:33] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 05:35:43] [2026-01-12 05:35:43] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 05:35:44] [2026-01-12 05:35:44] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 05:35:45] [2026-01-12 05:35:45] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:37:22] [2026-01-12 16:37:22] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:37:43] [2026-01-12 16:37:43] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:37:43] [2026-01-12 16:37:43] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:38:10] [2026-01-12 16:38:10] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:38:10] [2026-01-12 16:38:10] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:39:25] [2026-01-12 16:39:25] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 16:39:36] [2026-01-12 16:39:36] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:40:13] [2026-01-12 16:40:13] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:49:47] [2026-01-12 16:49:47] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:49:53] [2026-01-12 16:49:53] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:49:53] [2026-01-12 16:49:53] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:56:36] [2026-01-12 16:56:36] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:56:38] [2026-01-12 16:56:38] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:56:39] [2026-01-12 16:56:39] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:56:39] [2026-01-12 16:56:39] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:56:39] [2026-01-12 16:56:39] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:58:45] [2026-01-12 16:58:45] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:58:48] [2026-01-12 16:58:48] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 16:58:48] [2026-01-12 16:58:48] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:00:00] [2026-01-12 17:00:00] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:00:01] [2026-01-12 17:00:01] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:00:02] [2026-01-12 17:00:02] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:00:02] [2026-01-12 17:00:02] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:01:10] [2026-01-12 17:01:10] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:01:13] [2026-01-12 17:01:13] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:01:13] [2026-01-12 17:01:13] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:02:01] [2026-01-12 17:02:01] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:02:02] [2026-01-12 17:02:02] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:02:02] [2026-01-12 17:02:02] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:02:03] [2026-01-12 17:02:03] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:02:03] [2026-01-12 17:02:03] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:04:18] [2026-01-12 17:04:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:04:29] [2026-01-12 17:04:29] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:04:32] [2026-01-12 17:04:32] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:04:47] [2026-01-12 17:04:47] [DEMANDE] [FORMULAIRE_CREATION] [User:njb2] [IP:127.0.0.1]  Affichage formulaire création demande
+[2026-01-12 17:05:28] [2026-01-12 17:05:28] [DEMANDE] [FORMULAIRE_CREATION] [User:njb2] [IP:127.0.0.1]  Affichage formulaire création demande
+[2026-01-12 17:05:42] [2026-01-12 17:05:42] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:05:49] [2026-01-12 17:05:49] [DEMANDE] [FORMULAIRE_CREATION] [User:njb2] [IP:127.0.0.1]  Affichage formulaire création demande
+[2026-01-12 17:05:50] [2026-01-12 17:05:50] [DEMANDE] [FORMULAIRE_CREATION] [User:njb2] [IP:127.0.0.1]  Affichage formulaire création demande
+[2026-01-12 17:07:43] [2026-01-12 17:07:43] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:09:33] [2026-01-12 17:09:33] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:09:37] [2026-01-12 17:09:37] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:09:40] [2026-01-12 17:09:40] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:10:11] [2026-01-12 17:10:11] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:10:15] [2026-01-12 17:10:15] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:10:19] [2026-01-12 17:10:19] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:37:39] [2026-01-12 17:37:39] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:37:44] [2026-01-12 17:37:44] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:37:59] [2026-01-12 17:37:59] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:38:06] [2026-01-12 17:38:06] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:38:11] [2026-01-12 17:38:11] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:50:49] [2026-01-12 17:50:49] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:50:52] [njb2] Accès dashboard paramètres
+[2026-01-12 17:50:54] [njb2] Accès dashboard paramètres
+[2026-01-12 17:52:00] [2026-01-12 17:52:00] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-12 17:53:27] [2026-01-12 17:53:27] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-12 17:53:27] [2026-01-12 17:53:27] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio

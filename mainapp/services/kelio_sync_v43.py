@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Service de synchronisation Kelio - Version 4.3 FINALE COMPLÈTE
+Service de synchronisation Kelio - Version 4.3.1 FINALE COMPLÈTE
 Solution DÉFINITIVE aux problèmes identifiés dans les logs
 
 CORRECTIONS V4.3 FINALES :
@@ -13,6 +13,13 @@ CORRECTIONS V4.3 FINALES :
 - ✅ Transactions atomiques pour éviter les conflits
 - ✅ Protection COMPLÈTE contre les erreurs d'encodage ASCII
 - ✅ Optimisations basées sur les résultats de production
+
+NOUVEAUTÉS V4.3.1 - LOGGING AVANCÉ :
+- ✅ Système de logging avancé avec résumés détaillés
+- ✅ Détection automatique d'anomalies (taux d'erreur, durée, volume)
+- ✅ Logs dans fichiers ET base de données (JournalLog)
+- ✅ Métriques de performance intégrées
+- ✅ Configuration via settings.py (KELIO_SYNC_LOGGING)
 """
 
 import json
@@ -20,6 +27,7 @@ import logging
 import time
 import hashlib
 import uuid
+import traceback
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, date, timedelta
 from django.utils import timezone
@@ -27,7 +35,41 @@ from django.db import transaction, IntegrityError, models
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from utils.crypto_utils import KelioPasswordCipher
+
+# ================================================================
+# CONFIGURATION DU LOGGING AVANCÉ DEPUIS SETTINGS.PY
+# ================================================================
+# Ajoutez dans votre settings.py pour personnaliser:
+# KELIO_SYNC_LOGGING = {
+#     'enabled': True,
+#     'log_to_db': True,
+#     'anomaly_thresholds': {'error_rate_warning': 0.05, ...}
+# }
+KELIO_LOGGING_CONFIG = getattr(settings, 'KELIO_SYNC_LOGGING', {
+    'enabled': True,
+    'log_level': 'INFO',
+    'log_to_file': True,
+    'log_to_db': True,
+    'log_anomalies': True,
+    'log_performance': True,
+    'log_resume': True,
+    'anomaly_thresholds': {
+        'error_rate_warning': 0.05,      # 5% d'erreurs = warning
+        'error_rate_critical': 0.20,     # 20% d'erreurs = critical
+        'duration_warning_seconds': 60,   # Plus de 60s = warning
+        'duration_critical_seconds': 300, # Plus de 5min = critical
+        'min_employees_expected': 10,     # Moins de 10 employés = anomalie
+        'max_retries_warning': 5,         # Plus de 5 retries = warning
+    },
+    'resume_details': {
+        'include_error_details': True,
+        'include_performance_metrics': True,
+        'include_config_info': True,
+        'max_error_details': 50,
+    }
+})
 
 # ================================================================
 # PROTECTION ENCODAGE ULTRA-COMPLÈTE AU NIVEAU SYSTÈME
@@ -51,6 +93,13 @@ from ..models import (
     Competence, CompetenceUtilisateur, FormationUtilisateur, 
     AbsenceUtilisateur, MotifAbsence
 )
+
+# Import optionnel du modèle JournalLog pour logging en BDD
+try:
+    from ..models import JournalLog
+    JOURNAL_LOG_AVAILABLE = True
+except ImportError:
+    JOURNAL_LOG_AVAILABLE = False
 
 # Imports SOAP avec gestion des erreurs ET protection encodage complète
 try:
@@ -132,41 +181,284 @@ def ultra_safe_str(text):
         return "ERREUR_CRITIQUE_ENCODAGE"
 
 # ================================================================
-# LOGGER ULTRA-SÉCURISÉ
+# CLASSE DE LOGGING AVANCÉ POUR KELIO V4.3.1
 # ================================================================
 
-class UltraSafeLogger:
-    """Logger wrapper qui protège contre toutes les erreurs d'encodage"""
+class KelioSyncLogger:
+    """
+    Logger avancé pour la synchronisation Kelio avec:
+    - Logging dans fichiers via logging standard
+    - Logging dans BDD via JournalLog (si disponible)
+    - Détection d'anomalies automatique
+    - Génération de résumés détaillés
+    - Métriques de performance
+    """
     
-    def __init__(self, base_logger):
-        self.logger = base_logger
+    def __init__(self, sync_type='GLOBAL'):
+        self.sync_type = sync_type
+        self.base_logger = logging.getLogger('kelio.sync')
+        self.config = KELIO_LOGGING_CONFIG
+        self.start_time = None
+        self.stats = {
+            'info_count': 0,
+            'warning_count': 0,
+            'error_count': 0,
+            'critical_count': 0,
+            'anomalies': [],
+            'errors_details': [],
+        }
     
-    def _safe_log(self, level, msg):
+    def _safe_log(self, level, msg, extra_data=None):
         """Méthode interne ultra-sécurisée pour logging"""
         try:
             safe_msg = ultra_safe_str(msg)
-            getattr(self.logger, level)(safe_msg)
+            getattr(self.base_logger, level)(safe_msg)
+            
+            # Comptage
+            stat_key = f'{level}_count'
+            if stat_key in self.stats:
+                self.stats[stat_key] += 1
+            
+            # Logging en BDD si activé et disponible
+            if (self.config.get('log_to_db') and JOURNAL_LOG_AVAILABLE and 
+                level in ['error', 'critical', 'warning']):
+                self._log_to_db(level, safe_msg, extra_data)
+                
         except:
             try:
-                getattr(self.logger, level)("LOG_ENCODING_ERROR")
+                getattr(self.base_logger, level)("LOG_ENCODING_ERROR")
             except:
-                pass  # Dernier fallback : ne pas planter
+                pass
     
-    def info(self, msg):
-        self._safe_log('info', msg)
+    def _log_to_db(self, level, message, extra_data=None):
+        """Log dans la base de données via JournalLog"""
+        try:
+            severite_map = {
+                'debug': 'DEBUG', 'info': 'INFO', 'warning': 'WARNING',
+                'error': 'ERROR', 'critical': 'CRITICAL'
+            }
+            JournalLog.objects.create(
+                source='KELIO_SYNC',
+                categorie='SYNCHRONISATION',
+                action=f'KELIO_{self.sync_type}',
+                description=message[:500],
+                severite=severite_map.get(level, 'INFO'),
+                donnees_apres=extra_data if isinstance(extra_data, dict) else None
+            )
+        except:
+            pass
     
-    def error(self, msg):
-        self._safe_log('error', msg)
+    def info(self, msg, extra_data=None):
+        self._safe_log('info', msg, extra_data)
     
-    def warning(self, msg):
-        self._safe_log('warning', msg)
+    def debug(self, msg, extra_data=None):
+        self._safe_log('debug', msg, extra_data)
     
-    def debug(self, msg):
-        self._safe_log('debug', msg)
+    def warning(self, msg, extra_data=None):
+        self._safe_log('warning', msg, extra_data)
+    
+    def error(self, msg, extra_data=None):
+        self._safe_log('error', msg, extra_data)
+        if len(self.stats['errors_details']) < self.config.get('resume_details', {}).get('max_error_details', 50):
+            self.stats['errors_details'].append({
+                'timestamp': timezone.now().isoformat(),
+                'message': msg[:200]
+            })
+    
+    def critical(self, msg, extra_data=None):
+        self._safe_log('critical', msg, extra_data)
+    
+    def start_sync(self, config_name=None, params=None):
+        """Démarre le tracking d'une synchronisation"""
+        self.start_time = timezone.now()
+        self.stats = {
+            'info_count': 0, 'warning_count': 0, 'error_count': 0, 
+            'critical_count': 0, 'anomalies': [], 'errors_details': []
+        }
+        msg = f"[KELIO-SYNC-START] === DEBUT {self.sync_type} ==="
+        if config_name:
+            msg += f" | Config: {safe_str(config_name)}"
+        self.info(msg)
+        if params:
+            self.info(f"[KELIO-SYNC-CONFIG] Parametres: {params}")
+        return self.start_time
+    
+    def end_sync(self, results, config_name=None):
+        """Termine le tracking et génère le résumé"""
+        end_time = timezone.now()
+        duration = (end_time - self.start_time).total_seconds() if self.start_time else 0
+        
+        # Extraction des métriques depuis les résultats
+        statut = results.get('statut_global', results.get('statut', 'inconnu'))
+        donnees = results.get('donnees_globales', {})
+        traites = donnees.get('employes_traites', 
+                  results.get('absences_traitees',
+                  results.get('formations_traitees',
+                  results.get('competences_traitees', 0))))
+        crees = donnees.get('nouveaux_employes',
+                results.get('absences_creees',
+                results.get('formations_creees',
+                results.get('competences_creees', 0))))
+        maj = donnees.get('employes_mis_a_jour',
+              results.get('absences_mises_a_jour',
+              results.get('formations_mises_a_jour',
+              results.get('competences_mises_a_jour', 0))))
+        erreurs = donnees.get('erreurs', results.get('erreurs', 0))
+        
+        # Détection d'anomalies
+        self._detect_anomalies(traites, erreurs, duration, results)
+        
+        # Génération du résumé
+        resume = self._generate_resume(statut, traites, crees, maj, erreurs, duration, config_name, results)
+        
+        # Log du résumé
+        self._log_resume(resume)
+        
+        # Log en BDD si activé
+        if self.config.get('log_resume') and JOURNAL_LOG_AVAILABLE:
+            self._log_resume_to_db(resume)
+        
+        return resume
+    
+    def _detect_anomalies(self, traites, erreurs, duration, results):
+        """Détecte les anomalies basées sur les seuils configurés"""
+        thresholds = self.config.get('anomaly_thresholds', {})
+        
+        # Anomalie: Taux d'erreur élevé
+        if traites > 0:
+            error_rate = erreurs / traites
+            if error_rate >= thresholds.get('error_rate_critical', 0.20):
+                self._add_anomaly('CRITICAL', 'TAUX_ERREUR_CRITIQUE', 
+                    f"Taux d'erreur critique: {error_rate*100:.1f}% ({erreurs}/{traites})")
+            elif error_rate >= thresholds.get('error_rate_warning', 0.05):
+                self._add_anomaly('WARNING', 'TAUX_ERREUR_ELEVE',
+                    f"Taux d'erreur eleve: {error_rate*100:.1f}% ({erreurs}/{traites})")
+        
+        # Anomalie: Durée excessive
+        if duration >= thresholds.get('duration_critical_seconds', 300):
+            self._add_anomaly('CRITICAL', 'DUREE_CRITIQUE',
+                f"Duree critique: {duration:.0f}s (seuil: {thresholds.get('duration_critical_seconds', 300)}s)")
+        elif duration >= thresholds.get('duration_warning_seconds', 60):
+            self._add_anomaly('WARNING', 'DUREE_ELEVEE',
+                f"Duree elevee: {duration:.0f}s (seuil: {thresholds.get('duration_warning_seconds', 60)}s)")
+        
+        # Anomalie: Volume insuffisant
+        if traites < thresholds.get('min_employees_expected', 10) and traites > 0:
+            self._add_anomaly('WARNING', 'VOLUME_FAIBLE',
+                f"Volume faible: {traites} traites (attendu minimum: {thresholds.get('min_employees_expected', 10)})")
+        
+        # Anomalie: Aucune donnée
+        if traites == 0:
+            self._add_anomaly('CRITICAL', 'AUCUNE_DONNEE',
+                "Aucune donnee traitee - verifier la connexion Kelio")
+        
+        # Anomalie: Nombre de retries élevé
+        retries = results.get('metadata', {}).get('retries_total', 0)
+        if retries >= thresholds.get('max_retries_warning', 5):
+            self._add_anomaly('WARNING', 'RETRIES_ELEVES', f"Nombre de retries eleve: {retries}")
+    
+    def _add_anomaly(self, severity, anomaly_type, description):
+        """Ajoute une anomalie détectée"""
+        anomaly = {
+            'severity': severity,
+            'type': anomaly_type,
+            'description': description,
+            'timestamp': timezone.now().isoformat()
+        }
+        self.stats['anomalies'].append(anomaly)
+        if severity == 'CRITICAL':
+            self.critical(f"[ANOMALIE-{anomaly_type}] {description}")
+        else:
+            self.warning(f"[ANOMALIE-{anomaly_type}] {description}")
+    
+    def _generate_resume(self, statut, traites, crees, maj, erreurs, duration, config_name, results):
+        """Génère le résumé complet de la synchronisation"""
+        return {
+            'sync_type': self.sync_type,
+            'statut': statut,
+            'timestamp_debut': self.start_time.isoformat() if self.start_time else None,
+            'timestamp_fin': timezone.now().isoformat(),
+            'duree_secondes': round(duration, 2),
+            'metriques': {
+                'total_traites': traites,
+                'total_crees': crees,
+                'total_mis_a_jour': maj,
+                'total_erreurs': erreurs,
+                'taux_succes': round((traites - erreurs) / max(1, traites) * 100, 1),
+                'items_par_seconde': round(traites / max(1, duration), 2)
+            },
+            'configuration': {
+                'nom': safe_str(config_name) if config_name else None,
+                'version': results.get('metadata', {}).get('version', 'V4.3.1')
+            },
+            'logging': self.stats.copy(),
+            'anomalies': self.stats['anomalies'],
+            'anomalies_count': len(self.stats['anomalies']),
+            'performance': results.get('metadata', {}).get('performance', {})
+        }
+    
+    def _log_resume(self, resume):
+        """Log le résumé de manière formatée"""
+        self.info("=" * 100)
+        self.info(f"[KELIO-SYNC-RESUME] === RESUME {self.sync_type} ===")
+        self.info("=" * 100)
+        self.info(f"[RESUME] Statut: {resume['statut'].upper()}")
+        self.info(f"[RESUME] Duree: {resume['duree_secondes']:.2f}s")
+        self.info(f"[RESUME] Traites: {resume['metriques']['total_traites']} | "
+                 f"Crees: {resume['metriques']['total_crees']} | "
+                 f"MAJ: {resume['metriques']['total_mis_a_jour']} | "
+                 f"Erreurs: {resume['metriques']['total_erreurs']}")
+        self.info(f"[RESUME] Taux succes: {resume['metriques']['taux_succes']}%")
+        self.info(f"[RESUME] Performance: {resume['metriques']['items_par_seconde']} items/sec")
+        
+        if resume['anomalies_count'] > 0:
+            self.warning(f"[RESUME] ANOMALIES DETECTEES: {resume['anomalies_count']}")
+            for anomaly in resume['anomalies']:
+                self.warning(f"[RESUME]   - [{anomaly['severity']}] {anomaly['type']}: {anomaly['description']}")
+        self.info("=" * 100)
+    
+    def _log_resume_to_db(self, resume):
+        """Log le résumé dans la base de données"""
+        try:
+            severite = 'INFO'
+            if resume['anomalies_count'] > 0:
+                has_critical = any(a['severity'] == 'CRITICAL' for a in resume['anomalies'])
+                severite = 'CRITICAL' if has_critical else 'WARNING'
+            elif resume['statut'] == 'echec':
+                severite = 'ERROR'
+            
+            JournalLog.objects.create(
+                source='KELIO_SYNC',
+                categorie='RESUME',
+                action=f'KELIO_SYNC_RESUME_{self.sync_type}',
+                description=(
+                    f"Sync {self.sync_type}: {resume['statut']} | "
+                    f"Traites: {resume['metriques']['total_traites']} | "
+                    f"Erreurs: {resume['metriques']['total_erreurs']} | "
+                    f"Duree: {resume['duree_secondes']:.1f}s | "
+                    f"Anomalies: {resume['anomalies_count']}"
+                ),
+                severite=severite,
+                donnees_apres=resume
+            )
+        except Exception as e:
+            self.debug(f"Erreur log resume BDD: {safe_exception_msg(e)}")
+    
+    def log_batch_progress(self, batch_num, total_batches, batch_results):
+        """Log la progression des lots"""
+        self.info(f"[BATCH {batch_num}/{total_batches}] "
+                 f"Traites: {batch_results.get('processed', 0)} | "
+                 f"Crees: {batch_results.get('created', 0)} | "
+                 f"MAJ: {batch_results.get('updated', 0)} | "
+                 f"Erreurs: {batch_results.get('errors', 0)}")
 
-# Initialisation du logger ultra-sécurisé
-base_logger = logging.getLogger('kelio.sync')
-logger = UltraSafeLogger(base_logger)
+# Alias pour compatibilité avec le code existant
+class UltraSafeLogger(KelioSyncLogger):
+    """Alias de compatibilité pour UltraSafeLogger"""
+    pass
+
+# Initialisation du logger avancé global
+logger = KelioSyncLogger('GLOBAL')
 
 # ================================================================
 # SERVICE PRINCIPAL KELIO V4.3 FINAL
@@ -205,7 +497,7 @@ class KelioGlobalSyncManagerV43:
             'completed_at': None,
             'service_utilise': 'KelioSyncServiceV43-FINAL-COMPLETE',
             'fallback_utilise': False,
-            'version': 'V4.3-FINAL-EXTENDED'
+            'version': 'V4.3.1-LOGGING-AVANCE'
         }
         
         logger.info(f"[KELIO-GLOBAL-MANAGER-V43] Initialise pour synchronisation {sync_mode}")
@@ -685,7 +977,7 @@ def obtenir_statistiques_sync_v43():
                 'dependances_soap': SOAP_AVAILABLE
             },
             'performance': {
-                'version_service': 'V4.3-FINAL-COMPLETE',
+                'version_service': 'V4.3.1-LOGGING-AVANCE',
                 'mode_rapide_disponible': True,
                 'transactions_atomiques': True,
                 'deduplication_avancee': True,
@@ -813,7 +1105,7 @@ class KelioAdminV43:
                 'configuration': verifier_configuration_kelio_v43(),
                 'statistiques': obtenir_statistiques_sync_v43(),
                 'diagnostic': diagnostiquer_problemes_sync_v43(),
-                'version': 'V4.3-FINAL-COMPLETE',
+                'version': 'V4.3.1-LOGGING-AVANCE',
                 'fonctionnalites': {
                     'mode_rapide': True,
                     'transactions_atomiques': True,
@@ -1361,8 +1653,21 @@ class KelioSyncServiceV43:
         return resultats_globaux
         
     def synchroniser_tous_employes_ultra_robuste(self):
-        """Synchronisation ULTRA-ROBUSTE de tous les employés avec protection encodage complète"""
-        logger.info("[DEBUT] === DEBUT SYNCHRONISATION EMPLOYES V4.3 ULTRA-ROBUSTE ===")
+        """Synchronisation ULTRA-ROBUSTE de tous les employés avec protection encodage complète et logging avancé"""
+        
+        # ===== LOGGING AVANCÉ V4.3.1 =====
+        sync_logger = KelioSyncLogger('EMPLOYES')
+        sync_logger.start_sync(
+            config_name=self.config.nom if self.config else None,
+            params={
+                'batch_size': self.batch_size,
+                'max_retries': self.max_retries,
+                'timeout': self.timeout,
+                'fast_mode': self.enable_fast_mode
+            }
+        )
+        
+        logger.info("[DEBUT] === DEBUT SYNCHRONISATION EMPLOYES V4.3.1 ULTRA-ROBUSTE ===")
         
         start_time = timezone.now()
         
@@ -1382,7 +1687,7 @@ class KelioSyncServiceV43:
                 'service_utilise': None,
                 'fallback_utilise': False,
                 'retries_total': 0,
-                'version': 'V4.3-FINAL-COMPLETE'
+                'version': 'V4.3.1-LOGGING-AVANCE'
             },
             'erreurs_details': []
         }
@@ -1411,9 +1716,10 @@ class KelioSyncServiceV43:
                 batch = employees_deduplicated[i:i + self.batch_size]
                 batch_num = (i // self.batch_size) + 1
                 
-                logger.info(f"[BATCH] Traitement micro-lot {batch_num}/{total_batches} ({len(batch)} employes)")
-                
                 batch_results = self._process_employee_batch_atomic(batch)
+                
+                # Log de progression avec le nouveau logger
+                sync_logger.log_batch_progress(batch_num, total_batches, batch_results)
                 
                 # Agrégation des résultats avec nouvelles métriques
                 resultats['donnees_globales']['employes_traites'] += batch_results['processed']
@@ -1459,17 +1765,27 @@ class KelioSyncServiceV43:
                 }
             })
             
-            logger.info(f"[SUCCESS] Synchronisation V4.3 terminee: {resultats['statut_global']} en {duration:.2f}s")
+            logger.info(f"[SUCCESS] Synchronisation V4.3.1 terminee: {resultats['statut_global']} en {duration:.2f}s")
+            
+            # ===== GÉNÉRATION DU RÉSUMÉ AVEC DÉTECTION D'ANOMALIES =====
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
+            
             return resultats
             
         except Exception as e:
             error_safe = ultra_safe_str(e)
-            logger.error(f"[ERROR] Erreur critique synchronisation V4.3: {error_safe}")
+            logger.error(f"[ERROR] Erreur critique synchronisation V4.3.1: {error_safe}")
+            sync_logger.error(f"[EXCEPTION] {error_safe}", {'traceback': traceback.format_exc()})
+            
             resultats.update({
                 'statut_global': 'erreur_critique',
                 'erreur': error_safe,
                 'timestamp_fin': timezone.now()
             })
+            
+            # Générer le résumé même en cas d'erreur critique
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
+            
             return resultats
 
     # ============================================================================
@@ -1487,8 +1803,15 @@ class KelioSyncServiceV43:
         Returns:
             dict: Résultats avec statut, compteurs et erreurs
         """
+        # ===== LOGGING AVANCÉ V4.3.1 =====
+        sync_logger = KelioSyncLogger('ABSENCES')
+        sync_logger.start_sync(
+            config_name=self.config.nom if self.config else None,
+            params={'date_debut': str(date_debut), 'date_fin': str(date_fin)}
+        )
+        
         logger.info("=" * 80)
-        logger.info("[ABSENCES-SYNC] DEBUT SYNCHRONISATION DES ABSENCES KELIO")
+        logger.info("[ABSENCES-SYNC] DEBUT SYNCHRONISATION DES ABSENCES KELIO V4.3.1")
         logger.info("=" * 80)
         
         start_time = timezone.now()
@@ -1632,14 +1955,21 @@ class KelioSyncServiceV43:
             logger.info(f"[ABSENCES-SYNC] Durée: {duration:.2f}s")
             logger.info("=" * 80)
             
+            # ===== GÉNÉRATION DU RÉSUMÉ =====
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
+            
             return resultats
             
         except Exception as e:
             error_msg = ultra_safe_str(e)
             logger.error(f"[ABSENCES-SYNC] ERREUR CRITIQUE: {error_msg}")
+            sync_logger.error(f"[EXCEPTION] {error_msg}", {'traceback': traceback.format_exc()})
+            
             resultats['statut'] = 'erreur_critique'
             resultats['erreur'] = error_msg
             resultats['timestamp_fin'] = timezone.now().isoformat()
+            
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
             return resultats
     
 
@@ -1893,8 +2223,12 @@ class KelioSyncServiceV43:
         - diplome_obtenu (BooleanField)
         - source_donnee (CharField)
         """
+        # ===== LOGGING AVANCÉ V4.3.1 =====
+        sync_logger = KelioSyncLogger('FORMATIONS')
+        sync_logger.start_sync(config_name=self.config.nom if self.config else None)
+        
         logger.info("=" * 80)
-        logger.info("[FORMATIONS-SYNC] DEBUT SYNCHRONISATION DES FORMATIONS KELIO")
+        logger.info("[FORMATIONS-SYNC] DEBUT SYNCHRONISATION DES FORMATIONS KELIO V4.3.1")
         logger.info("=" * 80)
         
         start_time = timezone.now()
@@ -2001,13 +2335,20 @@ class KelioSyncServiceV43:
                        f"MAJ: {resultats['formations_mises_a_jour']}")
             logger.info("=" * 80)
             
+            # ===== GÉNÉRATION DU RÉSUMÉ =====
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
+            
             return resultats
             
         except Exception as e:
             error_msg = ultra_safe_str(e)
             logger.error(f"[FORMATIONS-SYNC] ERREUR CRITIQUE: {error_msg}")
+            sync_logger.error(f"[EXCEPTION] {error_msg}")
+            
             resultats['statut'] = 'erreur_critique'
             resultats['erreur'] = error_msg
+            
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
             return resultats
     
 
@@ -2204,8 +2545,12 @@ class KelioSyncServiceV43:
         - Competence: nom, description, kelio_skill_key, kelio_skill_abbreviation
         - CompetenceUtilisateur: niveau_maitrise (IntegerField 1-4), kelio_level, kelio_skill_assignment_key
         """
+        # ===== LOGGING AVANCÉ V4.3.1 =====
+        sync_logger = KelioSyncLogger('COMPETENCES')
+        sync_logger.start_sync(config_name=self.config.nom if self.config else None)
+        
         logger.info("=" * 80)
-        logger.info("[COMPETENCES-SYNC] DEBUT SYNCHRONISATION DES COMPETENCES KELIO")
+        logger.info("[COMPETENCES-SYNC] DEBUT SYNCHRONISATION DES COMPETENCES KELIO V4.3.1")
         logger.info("=" * 80)
         
         start_time = timezone.now()
@@ -2308,13 +2653,20 @@ class KelioSyncServiceV43:
                        f"MAJ: {resultats['competences_mises_a_jour']}")
             logger.info("=" * 80)
             
+            # ===== GÉNÉRATION DU RÉSUMÉ =====
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
+            
             return resultats
             
         except Exception as e:
             error_msg = ultra_safe_str(e)
             logger.error(f"[COMPETENCES-SYNC] ERREUR CRITIQUE: {error_msg}")
+            sync_logger.error(f"[EXCEPTION] {error_msg}")
+            
             resultats['statut'] = 'erreur_critique'
             resultats['erreur'] = error_msg
+            
+            sync_logger.end_sync(resultats, self.config.nom if self.config else None)
             return resultats
     
 

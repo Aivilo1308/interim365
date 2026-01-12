@@ -684,7 +684,7 @@ Administration système - Accès complet à {{ stats.employes_total }} collabora
 </div>
 
 <div class="admin-actions">
-  <a href="{% url 'admin_config' %}" class="admin-action">
+  <a href="{% url 'parametres_dashboard' %}" class="admin-action">
     <div class="admin-action-icon">
       <i class="fas fa-cog"></i>
     </div>
@@ -692,7 +692,7 @@ Administration système - Accès complet à {{ stats.employes_total }} collabora
     <div class="admin-action-desc">Paramètres globaux et workflow</div>
   </a>
   
-  <a href="{% url 'admin_utilisateurs' %}" class="admin-action">
+  <a href="{% url 'admin_users_liste' %}" class="admin-action">
     <div class="admin-action-icon">
       <i class="fas fa-users-cog"></i>
     </div>
@@ -716,7 +716,7 @@ Administration système - Accès complet à {{ stats.employes_total }} collabora
     <div class="admin-action-desc">Rapports et tendances globales</div>
   </a>
   
-  <a href="{% url 'admin_logs' %}" class="admin-action">
+  <a href="{% url 'journal_logs' %}" class="admin-action">
     <div class="admin-action-icon">
       <i class="fas fa-file-alt"></i>
     </div>

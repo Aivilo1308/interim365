@@ -1,1 +1,543 @@
 # Test écriture repair_logs - 2025-06-22 22:47:03.062518+00:00
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 20:17:23] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 20:40:51] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 21:06:40] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 21:09:31] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 21:09:31] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 21:09:31] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:20:09] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:20:09] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:20:09] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:21:06] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:21:06] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:21:06] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:22:30] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:22:30] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:22:30] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:34:10] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:34:10] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:34:10] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:35:58] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:35:58] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:35:58] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:42:15] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:42:15] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:42:15] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:45:10] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:45:10] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:45:10] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:58:08] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:58:09] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:58:09] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 22:58:33] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 22:58:33] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 22:58:33] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 23:03:31] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 23:03:31] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 23:03:31] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3348] >>> =================================================
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3349] >>> SERVICE KELIO SYNCHRONIZATION V4.1 DEMARRE
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3350] >>> =================================================
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3351] OK Nouvelles fonctionnalites V4.1:
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3352]    >>> • EmployeeProfessionalDataService comme service principal
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3353]    >>> • Synchronisation complete User + ProfilUtilisateur + donnees etendues
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3354]    >>> • Iteration automatique sur tous les employes
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3355]    >>> • Support de tous les nouveaux services documentes
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3356]    >>> • Mapping precis vers les modeles Django existants
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3357]    >>> • Cache intelligent optimise pour les nouvelles API
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3358]    >>> • Gestion d'erreurs robuste avec fallback
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3359]    >>> • Integration complete avec les modeles Django
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3360] 
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3361] >>> Services API V4.1 supportes:
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_professional_data: Donnees professionnelles des employes (service principal) (KELIO) -> ProfilUtilisateur, ProfilUtilisateurExtended, ProfilUtilisateurKelio
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_list: Liste des employes (KELIO) -> ProfilUtilisateur (KELIO) -> ProfilUtilisateur
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • job_assignments: Affectations a des postes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_job_assignments: Affectations aux emplois (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • professional_experience: Experiences professionnelles (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • skill_assignments: Competences et niveaux (KELIO) -> Competence, CompetenceUtilisateur
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • labor_contracts: Contrats de travail (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • initial_formations: Formations initiales (KELIO) -> FormationUtilisateur
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • absence_requests: Demandes d'absences (KELIO) -> AbsenceUtilisateur, MotifAbsence
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • employee_pictures: Photos des employes (Kelio-only) (KELIO_ONLY) [LECTURE SEULE] -> Cache
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • training_history: Historique des formations (KELIO) -> FormationUtilisateur
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3366]    • coefficient_assignments: Coefficients et classifications (KELIO) -> ProfilUtilisateurExtended
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3368] 
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3369] >>> Authentification par defaut:
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3370]    • Username: webservices
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3371]    • Password: 123
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3372] >>> =================================================
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3375] OK Dependances SOAP disponibles (zeep, requests)
+[2026-01-11 23:04:25] [INFO] [kelio.sync] [kelio_api_simplifie:3379] >>> =================================================
+[2026-01-11 23:04:25] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 23:04:25] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:39:55] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 23:39:55] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-11 23:54:04] [INFO] [interim.kelio] [views_kelio:55] [2026-01-11 23:54:04] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 00:02:00] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 00:02:00] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 02:22:59] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 02:22:59] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 02:25:24] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 02:25:24] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 02:51:41] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 02:51:41] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:03:45] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:03:45] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:05:05] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:05:05] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:09:10] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:09:10] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:11:07] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:11:07] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:13:54] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:13:54] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-12 03:13:54] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:13:54] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-12 03:21:55] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:21:55] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:36:34] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:36:34] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:37:38] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:37:38] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:38:21] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:38:21] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:40:08] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:40:08] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:42:18] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:42:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 03:58:54] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 03:58:54] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:00:18] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 04:00:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:08:57] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 04:08:57] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:15:46] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 04:15:46] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:21:33] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 04:21:33] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 04:26:40] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 04:26:40] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 05:09:07] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 05:09:07] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 05:11:15] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 05:11:15] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 05:16:33] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 05:16:33] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 16:39:25] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 16:39:25] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:04:18] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:04:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:05:42] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:05:42] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:07:43] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:07:43] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:10:11] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:10:11] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:37:59] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:37:59] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-12 17:53:27] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:53:27] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-12 17:53:27] [INFO] [interim.kelio] [views_kelio:55] [2026-01-12 17:53:27] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio

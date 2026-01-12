@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuration API Kelio{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Configuration API Kelio</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-primary text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-plug me-2"></i>
+              Configuration API Kelio
+            </h4>
+            {% if not config %}
+            <a href="{% url 'config_kelio_modifier' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Configurer
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Alerte info -->
+          <div class="alert alert-info mb-4">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+              <div>
+                <strong>API Kelio</strong>
+                <p class="mb-0">
+                  Configuration de la connexion au système Kelio pour la synchronisation 
+                  des données employés, absences et compétences.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {% if config %}
+          <!-- Configuration existante -->
+          <div class="card border-{% if config.actif %}success{% else %}secondary{% endif %} mb-4">
+            <div class="card-header bg-{% if config.actif %}success{% else %}secondary{% endif %} text-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <i class="fas fa-{% if config.actif %}check-circle{% else %}pause-circle{% endif %} me-2"></i>
+                  {{ config.nom }}
+                </h6>
+                <span class="badge bg-{% if config.actif %}light text-success{% else %}light text-secondary{% endif %}">
+                  {% if config.actif %}Active{% else %}Inactive{% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Informations de connexion -->
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-3"><i class="fas fa-server me-2"></i>Connexion</h6>
+                  <table class="table table-sm table-borderless">
+                    <tr>
+                      <td class="text-muted" style="width: 40%;">URL de base</td>
+                      <td><code>{{ config.url_base }}</code></td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Utilisateur</td>
+                      <td><strong>{{ config.username }}</strong></td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Mot de passe</td>
+                      <td>{{ config.password_display }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Timeout</td>
+                      <td>{{ config.timeout_seconds }} secondes</td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-3"><i class="fas fa-database me-2"></i>Cache</h6>
+                  <table class="table table-sm table-borderless">
+                    <tr>
+                      <td class="text-muted" style="width: 50%;">Durée par défaut</td>
+                      <td>{{ config.cache_duree_defaut_minutes }} minutes</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Taille max</td>
+                      <td>{{ config.cache_taille_max_mo }} Mo</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Auto-invalidation</td>
+                      <td>
+                        {% if config.auto_invalidation_cache %}
+                        <span class="badge bg-success">Activée</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Désactivée</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted">Entrées en cache</td>
+                      <td><span class="badge bg-info">{{ stats_cache.total|default:0 }}</span></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Services activés -->
+              <h6 class="text-muted mb-3"><i class="fas fa-plug me-2"></i>Services activés</h6>
+              <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="badge {% if config.service_employees %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                  <i class="fas fa-{% if config.service_employees %}check{% else %}times{% endif %} me-1"></i>
+                  Employés
+                </span>
+                <span class="badge {% if config.service_absences %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                  <i class="fas fa-{% if config.service_absences %}check{% else %}times{% endif %} me-1"></i>
+                  Absences
+                </span>
+                <span class="badge {% if config.service_formations %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                  <i class="fas fa-{% if config.service_formations %}check{% else %}times{% endif %} me-1"></i>
+                  Formations
+                </span>
+                <span class="badge {% if config.service_competences %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                  <i class="fas fa-{% if config.service_competences %}check{% else %}times{% endif %} me-1"></i>
+                  Compétences
+                </span>
+              </div>
+
+              <!-- Métadonnées -->
+              <div class="small text-muted mb-4">
+                <i class="fas fa-clock me-1"></i>
+                Dernière modification : {{ config.updated_at|date:"d/m/Y H:i" }}
+              </div>
+
+              <hr>
+
+              <!-- Actions -->
+              <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'config_kelio_modifier' %}" class="btn btn-outline-primary">
+                  <i class="fas fa-edit me-1"></i> Modifier
+                </a>
+                <button type="button" class="btn btn-outline-success" id="btnTester" onclick="testerConnexion()">
+                  <i class="fas fa-sync-alt me-1"></i> Tester la connexion
+                </button>
+                <button type="button" class="btn btn-outline-warning" onclick="viderCache()">
+                  <i class="fas fa-trash-alt me-1"></i> Vider le cache
+                </button>
+                <button type="button" class="btn btn-outline-{% if config.actif %}secondary{% else %}success{% endif %}" onclick="toggleActif()">
+                  <i class="fas fa-{% if config.actif %}pause{% else %}play{% endif %} me-1"></i>
+                  {% if config.actif %}Désactiver{% else %}Activer{% endif %}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Résultat du test de connexion -->
+          <div id="resultatsTest" class="d-none">
+            <div class="card border-0 mb-4">
+              <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-vial me-2"></i>Résultats du test de connexion</h6>
+              </div>
+              <div class="card-body" id="resultatsTestBody">
+                <!-- Rempli par JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          {% else %}
+          <!-- Aucune configuration -->
+          <div class="text-center py-5">
+            <i class="fas fa-plug fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">Aucune configuration API Kelio</h4>
+            <p class="text-muted mb-4">
+              Configurez la connexion à l'API Kelio pour synchroniser les données employés.
+            </p>
+            <a href="{% url 'config_kelio_modifier' %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-plus me-2"></i> Configurer l'API Kelio
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Statut de connexion -->
+      {% if config %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-{% if config.actif %}success{% else %}secondary{% endif %} text-white">
+          <h6 class="mb-0"><i class="fas fa-heartbeat me-2"></i>Statut</h6>
+        </div>
+        <div class="card-body text-center">
+          <div class="display-1 mb-2">
+            <i class="fas fa-{% if config.actif %}check-circle text-success{% else %}pause-circle text-secondary{% endif %}"></i>
+          </div>
+          <h5>{% if config.actif %}Connecté{% else %}Déconnecté{% endif %}</h5>
+          <p class="small text-muted mb-0">
+            {% if config.actif %}
+            La synchronisation Kelio est active
+            {% else %}
+            La synchronisation Kelio est en pause
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Aide -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Aide</h6>
+        </div>
+        <div class="card-body">
+          <h6 class="small fw-bold">Services disponibles :</h6>
+          <ul class="small mb-3">
+            <li><strong>Employés</strong> : Synchronisation des profils utilisateurs</li>
+            <li><strong>Absences</strong> : Récupération des absences planifiées</li>
+            <li><strong>Formations</strong> : Historique des formations</li>
+            <li><strong>Compétences</strong> : Compétences des employés</li>
+          </ul>
+          <hr>
+          <p class="small text-muted mb-0">
+            <i class="fas fa-shield-alt me-1"></i>
+            Le mot de passe est stocké de manière cryptée (AES-256).
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions rapides -->
+      {% if config %}
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          <a href="{% url 'cache_kelio_liste' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-database me-2 text-warning"></i> Gérer le cache
+            <span class="badge bg-info float-end">{{ stats_cache.total|default:0 }}</span>
+          </a>
+          <a href="#" class="list-group-item list-group-item-action" onclick="lancerSynchro(); return false;">
+            <i class="fas fa-sync me-2 text-primary"></i> Lancer une synchronisation
+          </a>
+          <a href="{% url 'parametres_dashboard' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-arrow-left me-2 text-secondary"></i> Retour aux paramètres
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function testerConnexion() {
+  const btn = document.getElementById('btnTester');
+  const resultatsDiv = document.getElementById('resultatsTest');
+  const resultatsBody = document.getElementById('resultatsTestBody');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Test en cours...';
+  resultatsDiv.classList.add('d-none');
+  
+  fetch('{% url "config_kelio_tester" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Tester la connexion';
+    
+    // Afficher les résultats
+    let html = '';
+    
+    if (data.success) {
+      html += '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><strong>Connexion réussie!</strong> ' + data.message + '</div>';
+    } else {
+      html += '<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i><strong>Échec de connexion</strong> ' + data.message + '</div>';
+    }
+    
+    if (data.tests && data.tests.length > 0) {
+      html += '<table class="table table-sm">';
+      html += '<thead><tr><th>Test</th><th>Résultat</th><th>Détails</th></tr></thead><tbody>';
+      
+      data.tests.forEach(test => {
+        const icon = test.success ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>';
+        const details = test.details ? test.details.join('<br><small class="text-muted">') : '-';
+        html += `<tr>
+          <td>${test.nom}</td>
+          <td class="text-center">${icon}</td>
+          <td><small>${details}</small></td>
+        </tr>`;
+      });
+      
+      html += '</tbody></table>';
+    }
+    
+    if (data.temps_execution) {
+      html += '<div class="small text-muted"><i class="fas fa-clock me-1"></i>Temps d\'exécution: ' + data.temps_execution + '</div>';
+    }
+    
+    resultatsBody.innerHTML = html;
+    resultatsDiv.classList.remove('d-none');
+  })
+  .catch(error => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Tester la connexion';
+    alert('❌ Erreur lors du test: ' + error.message);
+  });
+}
+
+function viderCache() {
+  if (!confirm('Voulez-vous vraiment vider tout le cache Kelio ?\nCela forcera une nouvelle synchronisation des données.')) return;
+  
+  fetch('{% url "cache_kelio_purger" %}', {
+    method: 'POST',
+    headers: { 
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'type=all'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('✅ ' + data.message);
+      location.reload();
+    } else {
+      alert('❌ ' + data.message);
+    }
+  });
+}
+
+function toggleActif() {
+  const action = '{{ config.actif|yesno:"désactiver,activer" }}';
+  if (!confirm(`Voulez-vous vraiment ${action} la configuration API Kelio ?`)) return;
+  
+  fetch('{% url "config_kelio_toggle_actif" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('❌ ' + data.message);
+    }
+  });
+}
+
+function lancerSynchro() {
+  if (!confirm('Lancer une synchronisation complète avec Kelio ?\nCette opération peut prendre plusieurs minutes.')) return;
+  
+  alert('🔄 Synchronisation lancée en arrière-plan.\nConsultez les logs pour suivre la progression.');
+  
+  fetch('{% url "lancer_sync_kelio" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.success ? '✅ ' + data.message : '❌ ' + data.message);
+  });
+}
+</script>
+{% endblock %}

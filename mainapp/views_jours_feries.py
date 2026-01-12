@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Vues Django pour la gestion des jours fériés
+Vues Django pour la gestion des jours fériés avec logging avancé
 
 À ajouter dans: mainapp/views_jours_feries.py
-Ou à intégrer dans views.py ou views_suite.py
-
-Importer dans urls.py:
-    from mainapp import views_jours_feries
 """
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -18,14 +14,132 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import date, datetime, timedelta
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import transaction
 import json
 import logging
+import time
+import traceback
 
-logger = logging.getLogger(__name__)
+# ================================================================
+# CONFIGURATION LOGGING AVANCÉ
+# ================================================================
+
+logger = logging.getLogger('interim')
+action_logger = logging.getLogger('interim.actions')
+anomaly_logger = logging.getLogger('interim.anomalies')
+perf_logger = logging.getLogger('interim.performance')
+
+
+def log_action(category, action, message, request=None, **kwargs):
+    """Log une action utilisateur avec contexte"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    ip_addr = "-"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+        ip_addr = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '-'))
+        if ',' in ip_addr:
+            ip_addr = ip_addr.split(',')[0].strip()
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [{category}] [{action}] [User:{user_info}] [IP:{ip_addr}] {extra_info} {message}"
+    
+    action_logger.info(log_msg)
+    logger.info(log_msg)
+
+
+def log_anomalie(category, message, severite='WARNING', request=None, **kwargs):
+    """Log une anomalie détectée"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [ANOMALIE] [{category}] [{severite}] [User:{user_info}] {extra_info} {message}"
+    
+    if severite == 'ERROR':
+        anomaly_logger.error(f"❌ {log_msg}")
+        logger.error(f"❌ ANOMALIE: {log_msg}")
+    elif severite == 'CRITICAL':
+        anomaly_logger.critical(f"🔥 {log_msg}")
+        logger.critical(f"🔥 ANOMALIE CRITIQUE: {log_msg}")
+    else:
+        anomaly_logger.warning(f"⚠️ {log_msg}")
+        logger.warning(f"⚠️ ANOMALIE: {log_msg}")
+
+
+def log_resume(operation, stats, duree_ms=None):
+    """Log un résumé d'opération avec statistiques"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    lines = [
+        "",
+        "=" * 60,
+        f"📊 RÉSUMÉ: {operation}",
+        "=" * 60,
+        f"⏰ Date/Heure: {timestamp}",
+    ]
+    
+    if duree_ms is not None:
+        if duree_ms >= 1000:
+            duree_str = f"{duree_ms/1000:.1f} sec"
+        else:
+            duree_str = f"{duree_ms:.0f} ms"
+        lines.append(f"⏱️ Durée: {duree_str}")
+    
+    lines.append("📈 Statistiques:")
+    for key, value in stats.items():
+        icon = '✅' if 'succes' in key.lower() or 'ok' in key.lower() else \
+               '❌' if 'erreur' in key.lower() or 'echec' in key.lower() else '•'
+        lines.append(f"   {icon} {key}: {value}")
+    
+    lines.extend(["=" * 60, ""])
+    
+    resume_text = '\n'.join(lines)
+    perf_logger.info(resume_text)
+    logger.info(resume_text)
+
+
+def log_erreur(category, message, exception=None, request=None, **kwargs):
+    """Log une erreur avec stack trace"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [ERREUR] [{category}] [User:{user_info}] {extra_info} {message}"
+    
+    if exception:
+        log_msg += f"\n  Exception: {type(exception).__name__}: {str(exception)}"
+        log_msg += f"\n  Stack trace:\n{traceback.format_exc()}"
+    
+    logger.error(log_msg)
+    anomaly_logger.error(log_msg)
+
+
+# ================================================================
+# FONCTIONS UTILITAIRES
+# ================================================================
+
+def user_est_admin(user):
+    """Vérifie si l'utilisateur a les droits admin/RH"""
+    if hasattr(user, 'profilutilisateur'):
+        return user.profilutilisateur.type_profil in ['ADMIN', 'RH']
+    return user.is_superuser
+
+
+def invalider_cache_ferie():
+    """Invalide le cache du prochain férié"""
+    today_str = date.today().isoformat()
+    cache_key = f'prochain_ferie_context_{today_str}'
+    cache.delete(cache_key)
+    cache.delete('prochain_ferie_context')
+    log_action('CACHE', 'INVALIDATION', "Cache jours fériés invalidé")
 
 
 # ============================================================================
@@ -38,12 +152,15 @@ def api_feries_musulmans(request):
     """
     Retourne la liste des jours fériés musulmans de l'année en cours et suivante
     """
+    start_time = time.time()
+    
     try:
         from mainapp.models import JourFerie, TypeJourFerie
         
+        log_action('FERIES', 'API_MUSULMANS', "Récupération fériés musulmans", request=request)
+        
         annee_courante = date.today().year
         
-        # Fériés musulmans à venir
         feries = JourFerie.objects.filter(
             type_ferie=TypeJourFerie.FERIE_MUSULMAN,
             annee__in=[annee_courante, annee_courante + 1],
@@ -66,10 +183,16 @@ def api_feries_musulmans(request):
                 'jours_avant': jours_avant,
             })
         
+        duree_ms = (time.time() - start_time) * 1000
+        log_resume('API_FERIES_MUSULMANS', {
+            'nb_feries': len(result),
+            'annees': f"{annee_courante}, {annee_courante + 1}",
+        }, duree_ms=duree_ms)
+        
         return JsonResponse({'success': True, 'feries': result})
         
     except Exception as e:
-        logger.error(f"Erreur api_feries_musulmans: {e}")
+        log_erreur('FERIES', "Erreur api_feries_musulmans", exception=e, request=request)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -83,12 +206,17 @@ def api_signalements_feries(request):
     """
     Retourne la liste des signalements en attente (pour les admins)
     """
+    start_time = time.time()
+    
     try:
         from mainapp.models import SignalementDateFerie
         
-        # Vérifier les droits admin
+        log_action('FERIES', 'API_SIGNALEMENTS', "Récupération signalements", request=request)
+        
         profil = request.user.profilutilisateur
         if profil.type_profil not in ['ADMIN', 'RH']:
+            log_anomalie('FERIES', "Accès signalements non autorisé", 
+                        severite='WARNING', request=request, type_profil=profil.type_profil)
             return JsonResponse({'success': False, 'error': 'Accès non autorisé'}, status=403)
         
         signalements = SignalementDateFerie.objects.filter(
@@ -111,10 +239,16 @@ def api_signalements_feries(request):
                 'date_signalement_formatee': s.date_signalement.strftime('%d/%m/%Y %H:%M'),
             })
         
+        duree_ms = (time.time() - start_time) * 1000
+        log_resume('API_SIGNALEMENTS_FERIES', {
+            'nb_signalements': len(result),
+            'statut_filtre': 'EN_ATTENTE',
+        }, duree_ms=duree_ms)
+        
         return JsonResponse({'success': True, 'signalements': result})
         
     except Exception as e:
-        logger.error(f"Erreur api_signalements_feries: {e}")
+        log_erreur('FERIES', "Erreur api_signalements_feries", exception=e, request=request)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -124,6 +258,8 @@ def signaler_correction_ferie(request):
     """
     Permet à un utilisateur de signaler une correction de date
     """
+    start_time = time.time()
+    
     try:
         from mainapp.models import JourFerie, SignalementDateFerie
         
@@ -132,31 +268,37 @@ def signaler_correction_ferie(request):
         source_info = request.POST.get('source_info')
         commentaire = request.POST.get('commentaire', '')
         
+        log_action('FERIES', 'SIGNALEMENT', f"Signalement correction férié {ferie_id}",
+                  request=request, ferie_id=ferie_id, date_suggeree=date_suggeree)
+        
         if not all([ferie_id, date_suggeree, source_info]):
+            log_anomalie('FERIES', "Signalement avec données manquantes", 
+                        severite='INFO', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Données manquantes'
             }, status=400)
         
-        # Récupérer le jour férié
         try:
             ferie = JourFerie.objects.get(pk=ferie_id)
         except JourFerie.DoesNotExist:
+            log_anomalie('FERIES', f"Férié {ferie_id} non trouvé pour signalement",
+                        severite='WARNING', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Jour férié non trouvé'
             }, status=404)
         
-        # Convertir la date
         try:
             date_obj = datetime.strptime(date_suggeree, '%Y-%m-%d').date()
         except ValueError:
+            log_anomalie('FERIES', f"Format date invalide: {date_suggeree}",
+                        severite='WARNING', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Format de date invalide'
             }, status=400)
         
-        # Créer le signalement
         profil = getattr(request.user, 'profilutilisateur', None)
         
         signalement = SignalementDateFerie.objects.create(
@@ -168,7 +310,17 @@ def signaler_correction_ferie(request):
             statut='EN_ATTENTE'
         )
         
-        logger.info(f"Signalement créé: {signalement.id} pour {ferie.nom} par {profil}")
+        duree_ms = (time.time() - start_time) * 1000
+        log_action('FERIES', 'SIGNALEMENT_CREE', f"Signalement créé: {signalement.id} pour {ferie.nom}",
+                  request=request, signalement_id=signalement.id, ferie_nom=ferie.nom)
+        
+        log_resume('SIGNALEMENT_FERIE', {
+            'signalement_id': signalement.id,
+            'ferie': ferie.nom,
+            'date_actuelle': ferie.date_ferie.isoformat(),
+            'date_suggeree': date_obj.isoformat(),
+            'source': source_info,
+        }, duree_ms=duree_ms)
         
         return JsonResponse({
             'success': True,
@@ -177,7 +329,7 @@ def signaler_correction_ferie(request):
         })
         
     except Exception as e:
-        logger.error(f"Erreur signaler_correction_ferie: {e}")
+        log_erreur('FERIES', "Erreur signaler_correction_ferie", exception=e, request=request)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -187,19 +339,27 @@ def traiter_signalement_ferie(request):
     """
     Traite un signalement (accepter ou rejeter) - Admin uniquement
     """
+    start_time = time.time()
+    
     try:
         from mainapp.models import JourFerie, SignalementDateFerie
         
-        # Vérifier les droits admin
         profil = request.user.profilutilisateur
         if profil.type_profil not in ['ADMIN', 'RH']:
+            log_anomalie('FERIES', "Traitement signalement non autorisé",
+                        severite='WARNING', request=request, type_profil=profil.type_profil)
             return JsonResponse({'success': False, 'error': 'Accès non autorisé'}, status=403)
         
         data = json.loads(request.body)
         signalement_id = data.get('signalement_id')
-        action = data.get('action')  # 'accepter' ou 'rejeter'
+        action = data.get('action')
+        
+        log_action('FERIES', 'TRAITEMENT_SIGNALEMENT', f"Traitement signalement {signalement_id}: {action}",
+                  request=request, signalement_id=signalement_id, action=action)
         
         if not signalement_id or action not in ['accepter', 'rejeter']:
+            log_anomalie('FERIES', "Traitement signalement avec données invalides",
+                        severite='INFO', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Données invalides'
@@ -208,6 +368,8 @@ def traiter_signalement_ferie(request):
         try:
             signalement = SignalementDateFerie.objects.select_related('jour_ferie').get(pk=signalement_id)
         except SignalementDateFerie.DoesNotExist:
+            log_anomalie('FERIES', f"Signalement {signalement_id} non trouvé",
+                        severite='WARNING', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Signalement non trouvé'
@@ -215,8 +377,8 @@ def traiter_signalement_ferie(request):
         
         with transaction.atomic():
             if action == 'accepter':
-                # Modifier la date du jour férié
                 ferie = signalement.jour_ferie
+                ancienne_date = ferie.date_ferie
                 
                 ferie.modifier_date(
                     nouvelle_date=signalement.date_suggeree,
@@ -225,19 +387,28 @@ def traiter_signalement_ferie(request):
                 )
                 
                 signalement.statut = 'ACCEPTE'
+                invalider_cache_ferie()
                 
-                # Invalider le cache
-                cache.delete('prochain_ferie_context')
+                log_action('FERIES', 'SIGNALEMENT_ACCEPTE', 
+                          f"Signalement {signalement_id} accepté, date modifiée {ancienne_date} -> {signalement.date_suggeree}",
+                          request=request)
                 
-                logger.info(f"Signalement {signalement_id} accepté par {profil}")
-                
-            else:  # rejeter
+            else:
                 signalement.statut = 'REJETE'
-                logger.info(f"Signalement {signalement_id} rejeté par {profil}")
+                log_action('FERIES', 'SIGNALEMENT_REJETE', f"Signalement {signalement_id} rejeté",
+                          request=request)
             
             signalement.traite_par = profil
             signalement.date_traitement = timezone.now()
             signalement.save()
+        
+        duree_ms = (time.time() - start_time) * 1000
+        log_resume('TRAITEMENT_SIGNALEMENT', {
+            'signalement_id': signalement_id,
+            'action': action.upper(),
+            'ferie': signalement.jour_ferie.nom,
+            'traite_par': profil.nom_complet,
+        }, duree_ms=duree_ms)
         
         return JsonResponse({
             'success': True,
@@ -245,7 +416,7 @@ def traiter_signalement_ferie(request):
         })
         
     except Exception as e:
-        logger.error(f"Erreur traiter_signalement_ferie: {e}")
+        log_erreur('FERIES', "Erreur traiter_signalement_ferie", exception=e, request=request)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -259,18 +430,24 @@ def modifier_date_ferie(request):
     """
     Modifie la date d'un jour férié - Admin uniquement
     """
+    start_time = time.time()
+    
     try:
         from mainapp.models import JourFerie
         
-        # Vérifier les droits admin
         profil = request.user.profilutilisateur
         if profil.type_profil not in ['ADMIN', 'RH']:
+            log_anomalie('FERIES', "Modification date non autorisée",
+                        severite='WARNING', request=request)
             return JsonResponse({'success': False, 'error': 'Accès non autorisé'}, status=403)
         
         ferie_id = request.POST.get('ferie_id')
         nouvelle_date = request.POST.get('nouvelle_date')
         motif = request.POST.get('motif')
         source = request.POST.get('source', '')
+        
+        log_action('FERIES', 'MODIFICATION_DATE', f"Modification date férié {ferie_id}",
+                  request=request, ferie_id=ferie_id, nouvelle_date=nouvelle_date)
         
         if not all([ferie_id, nouvelle_date, motif]):
             return JsonResponse({
@@ -281,12 +458,13 @@ def modifier_date_ferie(request):
         try:
             ferie = JourFerie.objects.get(pk=ferie_id)
         except JourFerie.DoesNotExist:
+            log_anomalie('FERIES', f"Férié {ferie_id} non trouvé",
+                        severite='WARNING', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Jour férié non trouvé'
             }, status=404)
         
-        # Convertir la date
         try:
             date_obj = datetime.strptime(nouvelle_date, '%Y-%m-%d').date()
         except ValueError:
@@ -295,7 +473,7 @@ def modifier_date_ferie(request):
                 'error': 'Format de date invalide'
             }, status=400)
         
-        # Modifier la date
+        ancienne_date = ferie.date_ferie
         motif_complet = motif
         if source:
             motif_complet += f" (Source: {source})"
@@ -306,10 +484,20 @@ def modifier_date_ferie(request):
             utilisateur=profil.nom_complet
         )
         
-        # Invalider le cache
-        cache.delete('prochain_ferie_context')
+        invalider_cache_ferie()
         
-        logger.info(f"Date modifiée pour {ferie.nom}: {date_obj} par {profil}")
+        duree_ms = (time.time() - start_time) * 1000
+        log_action('FERIES', 'DATE_MODIFIEE', 
+                  f"Date modifiée pour {ferie.nom}: {ancienne_date} -> {date_obj}",
+                  request=request, ferie_id=ferie_id)
+        
+        log_resume('MODIFICATION_DATE_FERIE', {
+            'ferie': ferie.nom,
+            'ancienne_date': ancienne_date.isoformat(),
+            'nouvelle_date': date_obj.isoformat(),
+            'motif': motif[:50] + '...' if len(motif) > 50 else motif,
+            'modifie_par': profil.nom_complet,
+        }, duree_ms=duree_ms)
         
         return JsonResponse({
             'success': True,
@@ -319,7 +507,7 @@ def modifier_date_ferie(request):
         })
         
     except Exception as e:
-        logger.error(f"Erreur modifier_date_ferie: {e}")
+        log_erreur('FERIES', "Erreur modifier_date_ferie", exception=e, request=request)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -329,16 +517,22 @@ def reinitialiser_date_ferie(request):
     """
     Réinitialise la date d'un jour férié à sa valeur calculée - Admin uniquement
     """
+    start_time = time.time()
+    
     try:
         from mainapp.models import JourFerie
         
-        # Vérifier les droits admin
         profil = request.user.profilutilisateur
         if profil.type_profil not in ['ADMIN', 'RH']:
+            log_anomalie('FERIES', "Réinitialisation non autorisée",
+                        severite='WARNING', request=request)
             return JsonResponse({'success': False, 'error': 'Accès non autorisé'}, status=403)
         
         data = json.loads(request.body)
         ferie_id = data.get('ferie_id')
+        
+        log_action('FERIES', 'REINITIALISATION', f"Réinitialisation date férié {ferie_id}",
+                  request=request, ferie_id=ferie_id)
         
         if not ferie_id:
             return JsonResponse({
@@ -349,24 +543,36 @@ def reinitialiser_date_ferie(request):
         try:
             ferie = JourFerie.objects.get(pk=ferie_id)
         except JourFerie.DoesNotExist:
+            log_anomalie('FERIES', f"Férié {ferie_id} non trouvé pour réinitialisation",
+                        severite='WARNING', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Jour férié non trouvé'
             }, status=404)
         
         if not ferie.date_calculee:
+            log_anomalie('FERIES', f"Férié {ferie.nom} sans date calculée",
+                        severite='WARNING', request=request)
             return JsonResponse({
                 'success': False, 
                 'error': 'Ce jour férié n\'a pas de date calculée'
             }, status=400)
         
-        # Réinitialiser
+        ancienne_date = ferie.date_ferie
         ferie.reinitialiser_date(utilisateur=profil.nom_complet)
+        invalider_cache_ferie()
         
-        # Invalider le cache
-        cache.delete('prochain_ferie_context')
+        duree_ms = (time.time() - start_time) * 1000
+        log_action('FERIES', 'DATE_REINITIALISEE', 
+                  f"Date réinitialisée pour {ferie.nom}: {ancienne_date} -> {ferie.date_ferie}",
+                  request=request)
         
-        logger.info(f"Date réinitialisée pour {ferie.nom} par {profil}")
+        log_resume('REINITIALISATION_DATE_FERIE', {
+            'ferie': ferie.nom,
+            'ancienne_date': ancienne_date.isoformat(),
+            'nouvelle_date': ferie.date_ferie.isoformat(),
+            'reinitialise_par': profil.nom_complet,
+        }, duree_ms=duree_ms)
         
         return JsonResponse({
             'success': True,
@@ -375,21 +581,8 @@ def reinitialiser_date_ferie(request):
         })
         
     except Exception as e:
-        logger.error(f"Erreur reinitialiser_date_ferie: {e}")
+        log_erreur('FERIES', "Erreur reinitialiser_date_ferie", exception=e, request=request)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-    
-def user_est_admin(user):
-    """Vérifie si l'utilisateur a les droits admin/RH"""
-    if hasattr(user, 'profilutilisateur'):
-        return user.profilutilisateur.type_profil in ['ADMIN', 'RH']
-    return user.is_superuser
-
-
-def invalider_cache_ferie():
-    """Invalide le cache du prochain férié"""
-    today_str = date.today().isoformat()
-    cache_key = f'prochain_ferie_context_{today_str}'
-    cache.delete(cache_key)
 
 
 # =============================================================================
@@ -400,39 +593,34 @@ def invalider_cache_ferie():
 def jourferie_liste(request):
     """
     Liste tous les jours fériés de l'année sélectionnée
-    
-    URL: /interim/jours-feries/
-    Template: jourferie_liste.html
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie, TypeJourFerie
     
-    # Année sélectionnée (par défaut: année en cours)
+    log_action('FERIES', 'ACCES_LISTE', "Accès liste jours fériés", request=request)
+    
     annee_courante = date.today().year
     annee = request.GET.get('annee', annee_courante)
     
     try:
         annee = int(annee)
     except (ValueError, TypeError):
+        log_anomalie('FERIES', f"Année invalide: {annee}", severite='INFO', request=request)
         annee = annee_courante
     
-    # Années disponibles pour le filtre
     annees_disponibles = list(range(annee_courante - 2, annee_courante + 3))
-    
-    # Filtre par type
     type_filtre = request.GET.get('type', '')
     
-    # Récupérer les jours fériés
     feries = JourFerie.objects.filter(
         annee=annee,
         code_pays='CI',
         statut='ACTIF'
     ).select_related('modele').order_by('date_ferie')
     
-    # Appliquer le filtre par type
     if type_filtre and type_filtre in dict(TypeJourFerie.choices):
         feries = feries.filter(type_ferie=type_filtre)
     
-    # Statistiques
     stats = {
         'total': feries.count(),
         'civil': feries.filter(type_ferie=TypeJourFerie.FERIE_CIVIL).count(),
@@ -441,9 +629,15 @@ def jourferie_liste(request):
         'interne': feries.filter(type_ferie=TypeJourFerie.FERIE_INTERNE).count(),
     }
     
-    # Vérifier les droits admin
     est_admin = user_est_admin(request.user)
     est_superuser = request.user.is_superuser
+    
+    duree_ms = (time.time() - start_time) * 1000
+    log_resume('LISTE_JOURS_FERIES', {
+        'annee': annee,
+        'total_feries': stats['total'],
+        'filtre_type': type_filtre or 'aucun',
+    }, duree_ms=duree_ms)
 
     context = {
         'feries': feries,
@@ -469,29 +663,31 @@ def jourferie_liste(request):
 def jourferie_afficher(request, pk):
     """
     Affiche les détails d'un jour férié
-    
-    URL: /interim/jours-feries/<pk>/
-    Template: jourferie_afficher.html
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie, HistoriqueModification
+    
+    log_action('FERIES', 'AFFICHER_DETAIL', f"Affichage détail férié {pk}", request=request)
     
     ferie = get_object_or_404(JourFerie, pk=pk)
     
-    # Récupérer l'historique des modifications
     historique = HistoriqueModification.objects.filter(
         jour_ferie=ferie
     ).order_by('-date_action')[:10]
     
-    # Vérifier si modifiable (musulman uniquement)
     est_modifiable = (
         ferie.type_ferie == 'FERIE_MUSULMAN' and
         ferie.modele and
         ferie.modele.est_modifiable
     )
     
-    # Vérifier les droits admin
     est_admin = user_est_admin(request.user)
     est_superuser = request.user.is_superuser
+    
+    duree_ms = (time.time() - start_time) * 1000
+    log_action('FERIES', 'DETAIL_AFFICHE', f"Détail {ferie.nom} affiché",
+              request=request, ferie_id=pk, duree_ms=f"{duree_ms:.0f}")
     
     context = {
         'ferie': ferie,
@@ -513,41 +709,39 @@ def jourferie_afficher(request, pk):
 def jourferie_creer(request):
     """
     Crée un nouveau jour férié interne
-    
-    URL: /interim/jours-feries/creer/
-    Template: jourferie_creer.html
-    
-    Seuls les admins/RH peuvent créer des jours fériés internes.
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie, TypeJourFerie
     
-    # Vérifier les droits
+    log_action('FERIES', 'ACCES_CREATION', "Accès formulaire création férié", request=request)
+    
     if not user_est_admin(request.user) or not request.user.is_superuser:
+        log_anomalie('FERIES', "Accès création non autorisé", severite='WARNING', request=request)
         messages.error(request, "Vous n'avez pas les droits pour créer un jour férié.")
         return redirect('jourferie_liste')
     
     if request.method == 'POST':
         try:
-            # Récupérer les données du formulaire
             nom = request.POST.get('nom', '').strip()
             date_ferie_str = request.POST.get('date_ferie', '')
             description = request.POST.get('description', '').strip()
             est_paye = request.POST.get('est_paye') == 'on'
             
-            # Validation
+            log_action('FERIES', 'TENTATIVE_CREATION', f"Tentative création férié: {nom}",
+                      request=request, date=date_ferie_str)
+            
             if not nom:
                 raise ValidationError("Le nom du jour férié est obligatoire.")
             
             if not date_ferie_str:
                 raise ValidationError("La date est obligatoire.")
             
-            # Parser la date
             try:
                 date_ferie = datetime.strptime(date_ferie_str, '%Y-%m-%d').date()
             except ValueError:
                 raise ValidationError("Format de date invalide.")
             
-            # Créer le jour férié interne
             with transaction.atomic():
                 ferie = JourFerie.objects.creer_personnalise(
                     annee=date_ferie.year,
@@ -561,20 +755,31 @@ def jourferie_creer(request):
                     utilisateur=request.user.get_full_name() or request.user.username
                 )
                 
-                # Invalider le cache
                 invalider_cache_ferie()
                 
-                logger.info(f"Jour férié interne créé: {ferie.nom} ({ferie.date_ferie}) par {request.user}")
+                duree_ms = (time.time() - start_time) * 1000
+                log_action('FERIES', 'CREATION_REUSSIE', f"Férié créé: {nom} ({date_ferie})",
+                          request=request, ferie_id=ferie.pk)
+                
+                log_resume('CREATION_JOUR_FERIE', {
+                    'ferie_id': ferie.pk,
+                    'nom': nom,
+                    'date': date_ferie.isoformat(),
+                    'type': 'INTERNE',
+                    'est_paye': est_paye,
+                    'cree_par': request.user.username,
+                }, duree_ms=duree_ms)
+                
                 messages.success(request, f"Le jour férié '{nom}' a été créé avec succès.")
                 return redirect('jourferie_afficher', pk=ferie.pk)
         
         except ValidationError as e:
+            log_anomalie('FERIES', f"Validation échouée: {e}", severite='INFO', request=request)
             messages.error(request, str(e.message if hasattr(e, 'message') else e))
         except Exception as e:
-            logger.error(f"Erreur création jour férié: {e}")
+            log_erreur('FERIES', "Erreur création jour férié", exception=e, request=request)
             messages.error(request, f"Erreur lors de la création : {e}")
     
-    # Années disponibles pour le formulaire
     annee_courante = date.today().year
     
     context = {
@@ -593,28 +798,29 @@ def jourferie_creer(request):
 def jourferiemusulman_modifier(request, pk):
     """
     Modifie la date d'un jour férié musulman
-    
-    URL: /interim/jours-feries/musulman/<pk>/modifier/
-    Template: jourferiemusulman_modifier.html
-    
-    Seuls les fériés musulmans avec est_modifiable=True peuvent être modifiés.
-    Seuls les admins/RH peuvent modifier.
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie, HistoriqueModification
+    
+    log_action('FERIES', 'ACCES_MODIFICATION', f"Accès modification férié musulman {pk}",
+              request=request, ferie_id=pk)
     
     ferie = get_object_or_404(JourFerie, pk=pk)
     
-    # Vérifier les droits
     if not user_est_admin(request.user) or not request.user.is_superuser:
+        log_anomalie('FERIES', "Modification non autorisée", severite='WARNING', request=request)
         messages.error(request, "Vous n'avez pas les droits pour modifier ce jour férié.")
         return redirect('jourferie_afficher', pk=pk)
     
-    # Vérifier que c'est un férié musulman modifiable
     if ferie.type_ferie != 'FERIE_MUSULMAN':
+        log_anomalie('FERIES', f"Tentative modification férié non-musulman: {ferie.type_ferie}",
+                    severite='WARNING', request=request, ferie_id=pk)
         messages.error(request, "Seuls les jours fériés musulmans peuvent être modifiés.")
         return redirect('jourferie_afficher', pk=pk)
     
     if ferie.modele and not ferie.modele.est_modifiable:
+        log_anomalie('FERIES', f"Férié {pk} non modifiable", severite='INFO', request=request)
         messages.error(request, "Ce jour férié n'est pas modifiable.")
         return redirect('jourferie_afficher', pk=pk)
     
@@ -624,19 +830,23 @@ def jourferiemusulman_modifier(request, pk):
         try:
             with transaction.atomic():
                 if action == 'reinitialiser':
-                    # Réinitialiser à la date calculée
                     if not ferie.date_calculee:
                         raise ValidationError("Impossible de réinitialiser : pas de date calculée.")
                     
+                    ancienne_date = ferie.date_ferie
                     ferie.reinitialiser_date(
                         utilisateur=request.user.get_full_name() or request.user.username
                     )
                     
                     invalider_cache_ferie()
+                    
+                    log_action('FERIES', 'REINITIALISATION_REUSSIE',
+                              f"Férié {ferie.nom} réinitialisé: {ancienne_date} -> {ferie.date_ferie}",
+                              request=request)
+                    
                     messages.success(request, f"La date de '{ferie.nom}' a été réinitialisée.")
                     
                 else:
-                    # Modifier la date
                     nouvelle_date_str = request.POST.get('nouvelle_date', '')
                     motif = request.POST.get('motif', '').strip()
                     source = request.POST.get('source', '').strip()
@@ -647,17 +857,16 @@ def jourferiemusulman_modifier(request, pk):
                     if not motif:
                         raise ValidationError("Le motif de modification est obligatoire.")
                     
-                    # Parser la date
                     try:
                         nouvelle_date = datetime.strptime(nouvelle_date_str, '%Y-%m-%d').date()
                     except ValueError:
                         raise ValidationError("Format de date invalide.")
                     
-                    # Construire le motif complet
                     motif_complet = motif
                     if source:
                         motif_complet += f" (Source: {source})"
                     
+                    ancienne_date = ferie.date_ferie
                     ferie.modifier_date(
                         nouvelle_date=nouvelle_date,
                         motif=motif_complet,
@@ -665,7 +874,20 @@ def jourferiemusulman_modifier(request, pk):
                     )
                     
                     invalider_cache_ferie()
-                    logger.info(f"Jour férié modifié: {ferie.nom} -> {nouvelle_date} par {request.user}")
+                    
+                    duree_ms = (time.time() - start_time) * 1000
+                    log_action('FERIES', 'MODIFICATION_REUSSIE',
+                              f"Férié {ferie.nom} modifié: {ancienne_date} -> {nouvelle_date}",
+                              request=request)
+                    
+                    log_resume('MODIFICATION_FERIE_MUSULMAN', {
+                        'ferie': ferie.nom,
+                        'ancienne_date': ancienne_date.isoformat(),
+                        'nouvelle_date': nouvelle_date.isoformat(),
+                        'motif': motif[:50] + '...' if len(motif) > 50 else motif,
+                        'modifie_par': request.user.username,
+                    }, duree_ms=duree_ms)
+                    
                     messages.success(request, f"La date de '{ferie.nom}' a été modifiée.")
                 
                 return redirect('jourferie_afficher', pk=pk)
@@ -673,10 +895,9 @@ def jourferiemusulman_modifier(request, pk):
         except ValidationError as e:
             messages.error(request, str(e.message if hasattr(e, 'message') else e))
         except Exception as e:
-            logger.error(f"Erreur modification jour férié: {e}")
+            log_erreur('FERIES', "Erreur modification jour férié", exception=e, request=request)
             messages.error(request, f"Erreur lors de la modification : {e}")
     
-    # Récupérer l'historique des modifications
     historique = HistoriqueModification.objects.filter(
         jour_ferie=ferie
     ).order_by('-date_action')[:5]
@@ -699,26 +920,26 @@ def jourferiemusulman_modifier(request, pk):
 def jourferie_supprimer(request, pk):
     """
     Supprime (désactive) un jour férié
-    
-    URL: /interim/jours-feries/<pk>/supprimer/
-    
-    Ne supprime pas réellement, mais désactive le jour férié.
-    Seuls les admins/RH peuvent supprimer.
-    Seuls les fériés internes ou personnalisés peuvent être supprimés.
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie
+    
+    log_action('FERIES', 'TENTATIVE_SUPPRESSION', f"Tentative suppression férié {pk}",
+              request=request, ferie_id=pk)
     
     ferie = get_object_or_404(JourFerie, pk=pk)
     
-    # Vérifier les droits
     if not user_est_admin(request.user) or not request.user.is_superuser:
+        log_anomalie('FERIES', "Suppression non autorisée", severite='WARNING', request=request)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': "Droits insuffisants"}, status=403)
         messages.error(request, "Vous n'avez pas les droits pour supprimer ce jour férié.")
         return redirect('jourferie_liste')
     
-    # Vérifier que c'est un férié interne ou personnalisé
     if ferie.type_ferie != 'FERIE_INTERNE' and not ferie.est_personnalise:
+        log_anomalie('FERIES', f"Tentative suppression férié non-interne: {ferie.type_ferie}",
+                    severite='WARNING', request=request, ferie_id=pk)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': False, 
@@ -731,14 +952,23 @@ def jourferie_supprimer(request, pk):
         motif = request.POST.get('motif', 'Suppression manuelle')
         nom = ferie.nom
         
-        # Désactiver le jour férié
         ferie.desactiver(
             motif=motif,
             utilisateur=request.user.get_full_name() or request.user.username
         )
         
         invalider_cache_ferie()
-        logger.info(f"Jour férié supprimé: {nom} par {request.user}")
+        
+        duree_ms = (time.time() - start_time) * 1000
+        log_action('FERIES', 'SUPPRESSION_REUSSIE', f"Férié supprimé: {nom}",
+                  request=request, ferie_id=pk)
+        
+        log_resume('SUPPRESSION_JOUR_FERIE', {
+            'ferie_id': pk,
+            'nom': nom,
+            'motif': motif,
+            'supprime_par': request.user.username,
+        }, duree_ms=duree_ms)
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': True, 'message': f"'{nom}' a été supprimé."})
@@ -747,7 +977,7 @@ def jourferie_supprimer(request, pk):
         return redirect('jourferie_liste')
     
     except Exception as e:
-        logger.error(f"Erreur suppression jour férié: {e}")
+        log_erreur('FERIES', "Erreur suppression jour férié", exception=e, request=request)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
         messages.error(request, f"Erreur lors de la suppression : {e}")
@@ -763,10 +993,12 @@ def jourferie_supprimer(request, pk):
 def api_jourferie_details(request, pk):
     """
     API pour récupérer les détails d'un jour férié en JSON
-    
-    URL: /interim/api/jours-feries/<pk>/
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie
+    
+    log_action('FERIES', 'API_DETAILS', f"API détails férié {pk}", request=request)
     
     ferie = get_object_or_404(JourFerie, pk=pk)
     
@@ -789,6 +1021,10 @@ def api_jourferie_details(request, pk):
         'annee': ferie.annee,
     }
     
+    duree_ms = (time.time() - start_time) * 1000
+    log_action('FERIES', 'API_DETAILS_OK', f"Détails {ferie.nom} retournés",
+              request=request, duree_ms=f"{duree_ms:.0f}")
+    
     return JsonResponse(data)
 
 
@@ -797,14 +1033,12 @@ def api_jourferie_details(request, pk):
 def api_jourferie_liste(request):
     """
     API pour récupérer la liste des jours fériés en JSON
-    
-    URL: /interim/api/jours-feries/
-    
-    Paramètres GET:
-        - annee: Année (défaut: année courante)
-        - type: Type de férié (optionnel)
     """
+    start_time = time.time()
+    
     from mainapp.models import JourFerie, TypeJourFerie
+    
+    log_action('FERIES', 'API_LISTE', "API liste jours fériés", request=request)
     
     annee = request.GET.get('annee', date.today().year)
     type_filtre = request.GET.get('type', '')
@@ -845,5 +1079,12 @@ def api_jourferie_liste(request):
             'est_modifiable': est_modifiable,
             'peut_supprimer': f.type_ferie == 'FERIE_INTERNE' or f.est_personnalise,
         })
+    
+    duree_ms = (time.time() - start_time) * 1000
+    log_resume('API_LISTE_FERIES', {
+        'annee': annee,
+        'type_filtre': type_filtre or 'aucun',
+        'nb_feries': len(data),
+    }, duree_ms=duree_ms)
     
     return JsonResponse({'feries': data, 'annee': annee, 'count': len(data)})

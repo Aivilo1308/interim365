@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuration du Scoring{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}"><i class="fas fa-cogs me-1"></i> Paramètres</a>
+      </li>
+      <li class="breadcrumb-item active">Configuration Scoring</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-lg-9">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-success text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-balance-scale me-2"></i>
+              Configuration du Scoring Candidats
+            </h4>
+            {% if not config %}
+            <a href="{% url 'config_scoring_modifier' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Configurer
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Alerte info -->
+          <div class="alert alert-info mb-4">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+              <div>
+                <strong>Scoring des candidats</strong>
+                <p class="mb-0">
+                  Ces barèmes définissent comment les candidats sont notés et classés lors des propositions d'intérim.
+                  Les poids des critères doivent totaliser 100%.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {% if config %}
+          <!-- Configuration existante -->
+          <div class="card border-{% if config.actif %}success{% else %}secondary{% endif %} mb-4">
+            <div class="card-header bg-{% if config.actif %}success{% else %}secondary{% endif %} text-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <i class="fas fa-{% if config.actif %}check-circle{% else %}pause-circle{% endif %} me-2"></i>
+                  {{ config.nom }}
+                </h6>
+                <span class="badge bg-{% if config.actif %}light text-success{% else %}light text-secondary{% endif %}">
+                  {% if config.actif %}Active{% else %}Inactive{% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="card-body">
+              {% if config.description %}
+              <p class="text-muted mb-4">{{ config.description }}</p>
+              {% endif %}
+
+              <!-- Poids des critères -->
+              <h6 class="text-muted mb-3"><i class="fas fa-balance-scale me-2"></i>Poids des critères</h6>
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Similarité de poste</span>
+                    <div class="d-flex align-items-center">
+                      <div class="progress me-2" style="width: 100px; height: 20px;">
+                        {% widthratio config.poids_similarite_poste 1 100 as pct_similarite %}
+                        <div class="progress-bar bg-primary" style="width: {{ pct_similarite }}%"></div>
+                      </div>
+                      <small class="fw-bold">{% widthratio config.poids_similarite_poste 1 100 %}%</small>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Compétences</span>
+                    <div class="d-flex align-items-center">
+                      <div class="progress me-2" style="width: 100px; height: 20px;">
+                        {% widthratio config.poids_competences 1 100 as pct_comp %}
+                        <div class="progress-bar bg-success" style="width: {{ pct_comp }}%"></div>
+                      </div>
+                      <small class="fw-bold">{% widthratio config.poids_competences 1 100 %}%</small>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Expérience</span>
+                    <div class="d-flex align-items-center">
+                      <div class="progress me-2" style="width: 100px; height: 20px;">
+                        {% widthratio config.poids_experience 1 100 as pct_exp %}
+                        <div class="progress-bar bg-info" style="width: {{ pct_exp }}%"></div>
+                      </div>
+                      <small class="fw-bold">{% widthratio config.poids_experience 1 100 %}%</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Disponibilité</span>
+                    <div class="d-flex align-items-center">
+                      <div class="progress me-2" style="width: 100px; height: 20px;">
+                        {% widthratio config.poids_disponibilite 1 100 as pct_dispo %}
+                        <div class="progress-bar bg-warning" style="width: {{ pct_dispo }}%"></div>
+                      </div>
+                      <small class="fw-bold">{% widthratio config.poids_disponibilite 1 100 %}%</small>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Proximité</span>
+                    <div class="d-flex align-items-center">
+                      <div class="progress me-2" style="width: 100px; height: 20px;">
+                        {% widthratio config.poids_proximite 1 100 as pct_prox %}
+                        <div class="progress-bar bg-secondary" style="width: {{ pct_prox }}%"></div>
+                      </div>
+                      <small class="fw-bold">{% widthratio config.poids_proximite 1 100 %}%</small>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Ancienneté</span>
+                    <div class="d-flex align-items-center">
+                      <div class="progress me-2" style="width: 100px; height: 20px;">
+                        {% widthratio config.poids_anciennete 1 100 as pct_anc %}
+                        <div class="progress-bar bg-dark" style="width: {{ pct_anc }}%"></div>
+                      </div>
+                      <small class="fw-bold">{% widthratio config.poids_anciennete 1 100 %}%</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Bonus hiérarchiques -->
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-3"><i class="fas fa-trophy me-2 text-warning"></i>Bonus hiérarchiques</h6>
+                  <table class="table table-sm table-borderless">
+                    <tr>
+                      <td>Proposition humaine</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_proposition_humaine }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Manager direct</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_manager_direct }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Chef d'équipe</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_chef_equipe }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Responsable</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_responsable }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Directeur</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_directeur }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>RH</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_rh }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Admin</td>
+                      <td class="text-end"><span class="badge bg-success">+{{ config.bonus_admin }} pts</span></td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Pénalités -->
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-3"><i class="fas fa-minus-circle me-2 text-danger"></i>Pénalités</h6>
+                  <table class="table table-sm table-borderless">
+                    <tr>
+                      <td>Indisponibilité partielle</td>
+                      <td class="text-end"><span class="badge bg-danger">-{{ config.penalite_indisponibilite_partielle }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Indisponibilité totale</td>
+                      <td class="text-end"><span class="badge bg-danger">-{{ config.penalite_indisponibilite_totale }} pts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Distance excessive</td>
+                      <td class="text-end"><span class="badge bg-danger">-{{ config.penalite_distance_excessive }} pts</span></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Métadonnées -->
+              <div class="small text-muted mt-4 mb-3">
+                <i class="fas fa-clock me-1"></i>
+                Dernière modification : {{ config.updated_at|date:"d/m/Y H:i" }}
+              </div>
+
+              <hr>
+
+              <!-- Actions -->
+              <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'config_scoring_modifier' %}" class="btn btn-outline-success">
+                  <i class="fas fa-edit me-1"></i> Modifier les barèmes
+                </a>
+                <button type="button" class="btn btn-outline-{% if config.actif %}secondary{% else %}success{% endif %}" onclick="toggleActif()">
+                  <i class="fas fa-{% if config.actif %}pause{% else %}play{% endif %} me-1"></i>
+                  {% if config.actif %}Désactiver{% else %}Activer{% endif %}
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="reinitialiserDefaut()">
+                  <i class="fas fa-undo me-1"></i> Réinitialiser par défaut
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {% else %}
+          <!-- Aucune configuration -->
+          <div class="text-center py-5">
+            <i class="fas fa-balance-scale fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">Aucune configuration de scoring</h4>
+            <p class="text-muted mb-4">
+              Configurez les barèmes de notation pour le classement des candidats.
+            </p>
+            <a href="{% url 'config_scoring_modifier' %}" class="btn btn-success btn-lg">
+              <i class="fas fa-plus me-2"></i> Configurer le scoring
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <!-- Aide -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Aide</h6>
+        </div>
+        <div class="card-body">
+          <h6 class="small fw-bold">Poids des critères :</h6>
+          <ul class="small mb-3">
+            <li><strong>Similarité</strong> : Adéquation avec le poste demandé</li>
+            <li><strong>Compétences</strong> : Correspondance des qualifications</li>
+            <li><strong>Expérience</strong> : Années d'expérience pertinente</li>
+            <li><strong>Disponibilité</strong> : Disponibilité sur la période</li>
+            <li><strong>Proximité</strong> : Distance géographique</li>
+            <li><strong>Ancienneté</strong> : Ancienneté dans l'entreprise</li>
+          </ul>
+          <hr>
+          <h6 class="small fw-bold">Bonus :</h6>
+          <p class="small text-muted mb-0">
+            Points supplémentaires accordés lorsqu'un responsable hiérarchique 
+            propose ou valide un candidat.
+          </p>
+        </div>
+      </div>
+
+      <!-- Exemple de calcul -->
+      {% if config %}
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Exemple de calcul</h6>
+        </div>
+        <div class="card-body">
+          <p class="small mb-2">Pour un candidat avec :</p>
+          <ul class="small mb-3">
+            <li>Similarité : 80/100</li>
+            <li>Compétences : 90/100</li>
+            <li>Expérience : 70/100</li>
+            <li>Disponibilité : 100/100</li>
+            <li>Proximité : 60/100</li>
+            <li>Ancienneté : 50/100</li>
+          </ul>
+          <div class="small">
+            <strong>Score brut :</strong><br>
+            <code>
+              (80×{{ config.poids_similarite_poste|floatformat:2 }}) + 
+              (90×{{ config.poids_competences|floatformat:2 }}) + 
+              (70×{{ config.poids_experience|floatformat:2 }}) + 
+              (100×{{ config.poids_disponibilite|floatformat:2 }}) + 
+              (60×{{ config.poids_proximite|floatformat:2 }}) + 
+              (50×{{ config.poids_anciennete|floatformat:2 }})
+            </code>
+            <br><br>
+            <strong class="text-success">= ~79 points</strong>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleActif() {
+  const action = '{{ config.actif|yesno:"désactiver,activer" }}';
+  if (!confirm(`Voulez-vous vraiment ${action} la configuration de scoring ?`)) return;
+  
+  fetch('{% url "config_scoring_toggle_actif" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('❌ ' + data.message);
+    }
+  });
+}
+
+function reinitialiserDefaut() {
+  if (!confirm('Voulez-vous vraiment réinitialiser les barèmes aux valeurs par défaut ?\n\nCette action est irréversible.')) return;
+  
+  fetch('{% url "config_scoring_reinitialiser" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('✅ ' + data.message);
+      location.reload();
+    } else {
+      alert('❌ ' + data.message);
+    }
+  });
+}
+</script>
+{% endblock %}

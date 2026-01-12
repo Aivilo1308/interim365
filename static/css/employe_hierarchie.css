@@ -1,0 +1,802 @@
+
+/* ================================================================
+   STYLES POUR LA HIÉRARCHIE ORGANISATIONNELLE
+================================================================ */
+
+:root {
+  --hierarchy-primary: #2c3e50;
+  --hierarchy-secondary: #3498db;
+  --hierarchy-accent: #e74c3c;
+  --hierarchy-success: #27ae60;
+  --hierarchy-warning: #f39c12;
+  --hierarchy-light: #ecf0f1;
+  --hierarchy-dark: #34495e;
+  --border-radius: 8px;
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ================================================================
+   EN-TÊTE HIÉRARCHIE
+================================================================ */
+
+.hierarchy-header {
+  background: linear-gradient(135deg, var(--hierarchy-primary), var(--hierarchy-secondary));
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.employee-badge,
+.matricule-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.niveau-badge {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.hierarchy-depth {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: normal;
+  margin-left: 1rem;
+}
+
+/* ================================================================
+   STATISTIQUES
+================================================================ */
+
+.stat-card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  color: var(--hierarchy-secondary);
+  min-width: 60px;
+  text-align: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--hierarchy-primary);
+  line-height: 1;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* ================================================================
+   ARBRE HIÉRARCHIQUE
+================================================================ */
+
+.hierarchy-tree {
+  position: relative;
+  padding: 2rem 0;
+}
+
+.hierarchy-level {
+  position: relative;
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hierarchy-level.current-employee {
+  z-index: 10;
+}
+
+/* Connecteurs entre niveaux */
+.hierarchy-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+  height: 40px;
+}
+
+.connector-line {
+  width: 3px;
+  height: 25px;
+  background: linear-gradient(to bottom, var(--hierarchy-secondary), var(--hierarchy-primary));
+  border-radius: 2px;
+}
+
+.connector-arrow {
+  margin-top: 5px;
+  color: var(--hierarchy-secondary);
+  font-size: 1.2rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+/* ================================================================
+   CARTES EMPLOYÉ
+================================================================ */
+
+.employee-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.employee-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.employee-card.highlighted {
+  border-color: var(--hierarchy-accent);
+  background: linear-gradient(135deg, #fff, #fef9f9);
+  transform: scale(1.02);
+}
+
+.employee-card.highlighted::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--hierarchy-accent), var(--hierarchy-warning));
+}
+
+.employee-avatar {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.employee-avatar i {
+  font-size: 4rem;
+  color: var(--hierarchy-secondary);
+}
+
+.current-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--hierarchy-accent);
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.employee-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.employee-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+}
+
+.employee-name a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.employee-name a:hover {
+  color: var(--hierarchy-secondary);
+}
+
+.employee-badges {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.level-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+}
+
+.level-badge.level-1 { background: #95a5a6; }
+.level-badge.level-2 { background: #3498db; }
+.level-badge.level-3 { background: #9b59b6; }
+.level-badge.level-4 { background: #e67e22; }
+.level-badge.level-5 { background: #e74c3c; }
+
+.root-badge {
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(45deg, #f39c12, #e67e22);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.employee-details {
+  margin-bottom: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+  flex: 1;
+}
+
+.employee-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--hierarchy-light);
+  border-radius: 6px;
+}
+
+.employee-stats .stat-item {
+  text-align: center;
+}
+
+.employee-stats .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--hierarchy-primary);
+  line-height: 1;
+}
+
+.employee-stats .stat-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.employee-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* ================================================================
+   LÉGENDES DES NIVEAUX
+================================================================ */
+
+.level-legend {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.level-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.level-name {
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+  font-size: 0.9rem;
+}
+
+.level-description {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* ================================================================
+   ÉQUIPE ET COLLÈGUES
+================================================================ */
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.team-member:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+.member-avatar {
+  font-size: 1.5rem;
+  color: var(--hierarchy-secondary);
+  min-width: 30px;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.member-name a {
+  color: var(--hierarchy-primary);
+  text-decoration: none;
+}
+
+.member-name a:hover {
+  color: var(--hierarchy-secondary);
+}
+
+.member-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.member-matricule {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.member-status {
+  margin-top: 0.25rem;
+}
+
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.status-badge.status-actif { background: #d4edda; color: #155724; }
+.status-badge.status-conge { background: #fff3cd; color: #856404; }
+.status-badge.status-arret { background: #f8d7da; color: #721c24; }
+
+.member-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Collègues */
+.colleagues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.colleague-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.colleague-item:hover {
+  background: #e9ecef;
+}
+
+.colleague-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.colleague-name a {
+  color: var(--hierarchy-primary);
+  text-decoration: none;
+}
+
+.colleague-details {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.more-colleagues {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+/* ================================================================
+   DEMANDES LIÉES
+================================================================ */
+
+.demandes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.demande-item {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.demande-item:hover {
+  border-color: var(--hierarchy-secondary);
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.1);
+}
+
+.demande-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.demande-numero {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+  font-size: 0.9rem;
+}
+
+.demande-statut {
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.statut-soumise { background: #cce5ff; color: #004085; }
+.statut-en_validation { background: #fff3cd; color: #856404; }
+.statut-validee { background: #d4edda; color: #155724; }
+.statut-en_cours { background: #e2e3e5; color: #383d41; }
+
+.demande-details {
+  margin-bottom: 0.75rem;
+}
+
+.demande-poste {
+  font-weight: 600;
+  color: var(--hierarchy-primary);
+  margin-bottom: 0.25rem;
+}
+
+.demande-dates {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.demande-actions {
+  text-align: right;
+}
+
+/* ================================================================
+   ACTIONS ADMINISTRATIVES
+================================================================ */
+
+.admin-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #495057;
+}
+
+.action-btn:hover {
+  border-color: var(--hierarchy-secondary);
+  background: #f8f9fa;
+  transform: translateY(-2px);
+  color: var(--hierarchy-secondary);
+}
+
+.action-btn i {
+  font-size: 2rem;
+}
+
+.action-btn span {
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ================================================================
+   COMMUNS
+================================================================ */
+
+.card-container {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.count-badge {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--hierarchy-secondary);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.btn-outline,
+.btn-outline-light {
+  color: #6c757d;
+  background-color: transparent;
+  border-color: #6c757d;
+}
+
+.btn-outline:hover {
+  color: white;
+  background-color: #6c757d;
+}
+
+.btn-outline-light {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+/* ================================================================
+   RESPONSIVE
+================================================================ */
+
+@media (max-width: 992px) {
+  .hierarchy-tree {
+    padding: 1rem 0;
+  }
+  
+  .employee-card {
+    max-width: none;
+    padding: 1.5rem;
+  }
+  
+  .employee-stats {
+    gap: 1rem;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .admin-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .hierarchy-header {
+    padding: 1.5rem 0;
+  }
+  
+  .employee-card {
+    padding: 1rem;
+  }
+  
+  .employee-avatar i {
+    font-size: 3rem;
+  }
+  
+  .employee-name {
+    font-size: 1.2rem;
+  }
+  
+  .employee-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .team-member {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .member-actions {
+    align-self: stretch;
+  }
+  
+  .demande-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hierarchy-level {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.hierarchy-level:nth-child(1) { animation-delay: 0.1s; }
+.hierarchy-level:nth-child(2) { animation-delay: 0.2s; }
+.hierarchy-level:nth-child(3) { animation-delay: 0.3s; }
+.hierarchy-level:nth-child(4) { animation-delay: 0.4s; }
+.hierarchy-level:nth-child(5) { animation-delay: 0.5s; }
+
+/* ================================================================
+   MODE IMPRESSION
+================================================================ */
+
+@media print {
+  .hierarchy-header,
+  .btn,
+  .admin-actions {
+    display: none !important;
+  }
+  
+  .card-container {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    break-inside: avoid;
+  }
+  
+  .employee-card {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+  }
+  
+  .hierarchy-tree {
+    padding: 1rem 0;
+  }
+}
+

@@ -1,0 +1,17 @@
+.etape-item {
+  cursor: move;
+  transition: all 0.2s;
+}
+
+.etape-item:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.etape-item.dragging {
+  opacity: 0.5;
+}
+
+.etape-item.drag-over {
+  border-style: dashed !important;
+  border-color: #0dcaf0 !important;
+}

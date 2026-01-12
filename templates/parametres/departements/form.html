@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_new %}Ajouter un Département{% else %}Modifier {{ departement.nom }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'departements_liste' %}">Départements</a>
+      </li>
+      <li class="breadcrumb-item active">{% if is_new %}Ajouter{% else %}Modifier{% endif %}</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <h4 class="mb-0">
+            <i class="fas fa-{% if is_new %}plus-circle{% else %}edit{% endif %} me-2"></i>
+            {% if is_new %}Ajouter un Département{% else %}Modifier le Département{% endif %}
+          </h4>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Alerte d'information -->
+          <div class="alert alert-info mb-4">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+              <div>
+                <strong>Département</strong>
+                <p class="mb-0">
+                  Un département regroupe les employés par service ou fonction.
+                  Il peut être associé à un manager responsable.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulaire -->
+          <form method="POST" id="formDepartement">
+            {% csrf_token %}
+            
+            <!-- Code -->
+            <div class="mb-4">
+              <label for="code" class="form-label fw-semibold">
+                <i class="fas fa-hashtag me-1 text-primary"></i>
+                Code <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control form-control-lg" 
+                     id="code" 
+                     name="code" 
+                     value="{{ departement.code|default:'' }}"
+                     placeholder="Ex: RH, PROD, COMPTA"
+                     pattern="[A-Z0-9]{2,10}"
+                     maxlength="10"
+                     style="text-transform: uppercase;"
+                     required>
+              <div class="form-text">
+                Code unique de 2 à 10 caractères (lettres majuscules et chiffres).
+              </div>
+            </div>
+
+            <!-- Nom -->
+            <div class="mb-4">
+              <label for="nom" class="form-label fw-semibold">
+                <i class="fas fa-building me-1 text-primary"></i>
+                Nom du département <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control form-control-lg" 
+                     id="nom" 
+                     name="nom" 
+                     value="{{ departement.nom|default:'' }}"
+                     placeholder="Ex: Ressources Humaines"
+                     maxlength="100"
+                     required>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+              <label for="description" class="form-label fw-semibold">
+                <i class="fas fa-align-left me-1 text-primary"></i>
+                Description (optionnel)
+              </label>
+              <textarea class="form-control" 
+                        id="description" 
+                        name="description" 
+                        rows="3"
+                        placeholder="Décrivez les activités principales du département...">{{ departement.description|default:'' }}</textarea>
+            </div>
+
+            <!-- Manager -->
+            <div class="mb-4">
+              <label for="manager" class="form-label fw-semibold">
+                <i class="fas fa-user-tie me-1 text-primary"></i>
+                Manager responsable
+              </label>
+              <select class="form-select form-select-lg" id="manager" name="manager">
+                <option value="">-- Aucun manager assigné --</option>
+                {% for m in managers_disponibles %}
+                <option value="{{ m.pk }}" {% if departement and departement.manager_id == m.pk %}selected{% endif %}>
+                  {{ m.user.get_full_name }} ({{ m.get_type_profil_display }})
+                </option>
+                {% endfor %}
+              </select>
+              <div class="form-text">
+                Le manager recevra les notifications liées à ce département.
+              </div>
+            </div>
+
+            <!-- Statut actif -->
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="actif" 
+                       name="actif" 
+                       {% if is_new or departement.actif %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="actif">
+                  <i class="fas fa-toggle-on me-1 text-success"></i>
+                  Département actif
+                </label>
+              </div>
+              <div class="form-text ms-4">
+                Un département inactif ne sera plus disponible pour les nouvelles demandes.
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Boutons -->
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'departements_liste' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-times me-2"></i>
+                Annuler
+              </a>
+              <button type="submit" class="btn btn-primary btn-lg" id="btnSubmit">
+                <i class="fas fa-save me-2"></i>
+                {% if is_new %}Créer le département{% else %}Enregistrer{% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Aide -->
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-question-circle me-2"></i> Aide
+          </h6>
+        </div>
+        <div class="card-body">
+          <h6>Exemples de départements :</h6>
+          <ul class="mb-0">
+            <li><strong>RH</strong> - Ressources Humaines</li>
+            <li><strong>PROD</strong> - Production</li>
+            <li><strong>COMPTA</strong> - Comptabilité</li>
+            <li><strong>TECH</strong> - Service Technique</li>
+            <li><strong>COM</strong> - Commercial</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control-lg { font-size: 1rem; }
+.form-check-input:checked { background-color: #198754; border-color: #198754; }
+@media (max-width: 768px) {
+  .d-flex.justify-content-between { flex-direction: column; gap: 1rem; }
+  .d-flex.justify-content-between .btn { width: 100%; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const codeInput = document.getElementById('code');
+  
+  // Convertir en majuscules et filtrer
+  codeInput.addEventListener('input', function() {
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  });
+
+  // Validation du formulaire
+  document.getElementById('formDepartement').addEventListener('submit', function(e) {
+    const code = codeInput.value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    
+    if (!code || !nom) {
+      e.preventDefault();
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+    
+    if (!/^[A-Z0-9]{2,10}$/.test(code)) {
+      e.preventDefault();
+      alert('Le code doit contenir entre 2 et 10 caractères (lettres majuscules et chiffres).');
+      codeInput.focus();
+      return;
+    }
+    
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...';
+  });
+});
+</script>
+{% endblock %}

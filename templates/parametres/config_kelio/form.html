@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_new %}Configurer l'API Kelio{% else %}Modifier la configuration Kelio{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}"><i class="fas fa-cogs me-1"></i> Paramètres</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'config_kelio_liste' %}">API Kelio</a>
+      </li>
+      <li class="breadcrumb-item active">{% if is_new %}Configuration{% else %}Modification{% endif %}</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-primary text-white py-3">
+          <h4 class="mb-0">
+            <i class="fas fa-{% if is_new %}plug{% else %}edit{% endif %} me-2"></i>
+            {% if is_new %}Configuration de l'API Kelio{% else %}Modifier la configuration{% endif %}
+          </h4>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Alerte info -->
+          {% if is_new %}
+          <div class="alert alert-info mb-4">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+              <div>
+                <strong>Configuration unique</strong>
+                <p class="mb-0">
+                  Cette configuration sera utilisée pour toutes les synchronisations avec le système Kelio.
+                  Assurez-vous d'avoir les identifiants corrects avant de continuer.
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Formulaire -->
+          <form method="POST" id="formConfig">
+            {% csrf_token %}
+            
+            <!-- Nom de la configuration -->
+            <div class="mb-4">
+              <label for="nom" class="form-label fw-semibold">
+                <i class="fas fa-tag me-1 text-primary"></i>
+                Nom de la configuration <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control form-control-lg" 
+                     id="nom" 
+                     name="nom" 
+                     value="{{ config.nom|default:'Configuration Kelio Production' }}"
+                     placeholder="Ex: Configuration Kelio Production"
+                     maxlength="100"
+                     required>
+              <div class="form-text">Nom descriptif pour identifier cette configuration</div>
+            </div>
+
+            <!-- Connexion -->
+            <div class="card bg-light mb-4">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-server me-2"></i>Paramètres de connexion</h6>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="url_base" class="form-label fw-semibold">
+                    URL de base du service SOAP <span class="text-danger">*</span>
+                  </label>
+                  <input type="url" 
+                         class="form-control" 
+                         id="url_base" 
+                         name="url_base" 
+                         value="{{ config.url_base|default:'' }}"
+                         placeholder="https://kelio.entreprise.ci/KelioWebService/services"
+                         required>
+                  <div class="form-text">URL complète du serveur Kelio (sans le nom du service)</div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="username" class="form-label fw-semibold">
+                      Nom d'utilisateur <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="username" 
+                           name="username" 
+                           value="{{ config.username|default:'' }}"
+                           placeholder="utilisateur_api"
+                           required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="password" class="form-label fw-semibold">
+                      Mot de passe 
+                      {% if is_new %}<span class="text-danger">*</span>{% else %}<small class="text-muted">(laisser vide pour conserver)</small>{% endif %}
+                    </label>
+                    <div class="input-group">
+                      <input type="password" 
+                             class="form-control" 
+                             id="password" 
+                             name="password" 
+                             placeholder="{% if is_new %}Mot de passe{% else %}••••••••{% endif %}"
+                             {% if is_new %}required{% endif %}>
+                      <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility()">
+                        <i class="fas fa-eye" id="iconPassword"></i>
+                      </button>
+                    </div>
+                    {% if not is_new %}
+                    <div class="form-text">Actuel : {{ config.password_display }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="timeout_seconds" class="form-label">Timeout (secondes)</label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="timeout_seconds" 
+                           name="timeout_seconds" 
+                           value="{{ config.timeout_seconds|default:'30' }}"
+                           min="5" max="300">
+                    <div class="form-text">Durée maximale d'attente pour une requête (5-300s)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Services -->
+            <div class="card bg-light mb-4">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-plug me-2"></i>Services à activer</h6>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted mb-3">Sélectionnez les services Kelio à utiliser pour la synchronisation.</p>
+                
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="service_employees" name="service_employees"
+                             {% if is_new or config.service_employees %}checked{% endif %}>
+                      <label class="form-check-label" for="service_employees">
+                        <i class="fas fa-users me-1 text-info"></i>
+                        <strong>Employés</strong>
+                        <br><small class="text-muted">Synchronisation des profils utilisateurs</small>
+                      </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="service_absences" name="service_absences"
+                             {% if is_new or config.service_absences %}checked{% endif %}>
+                      <label class="form-check-label" for="service_absences">
+                        <i class="fas fa-calendar-times me-1 text-warning"></i>
+                        <strong>Absences</strong>
+                        <br><small class="text-muted">Récupération des absences planifiées</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="service_formations" name="service_formations"
+                             {% if config and config.service_formations %}checked{% endif %}>
+                      <label class="form-check-label" for="service_formations">
+                        <i class="fas fa-graduation-cap me-1 text-success"></i>
+                        <strong>Formations</strong>
+                        <br><small class="text-muted">Historique des formations suivies</small>
+                      </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="service_competences" name="service_competences"
+                             {% if config and config.service_competences %}checked{% endif %}>
+                      <label class="form-check-label" for="service_competences">
+                        <i class="fas fa-star me-1 text-primary"></i>
+                        <strong>Compétences</strong>
+                        <br><small class="text-muted">Compétences et qualifications</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cache -->
+            <div class="card bg-light mb-4">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-database me-2"></i>Configuration du cache</h6>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted mb-3">Le cache permet d'améliorer les performances en stockant temporairement les réponses de l'API.</p>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="cache_duree_defaut_minutes" class="form-label">Durée du cache (minutes)</label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="cache_duree_defaut_minutes" 
+                           name="cache_duree_defaut_minutes" 
+                           value="{{ config.cache_duree_defaut_minutes|default:'60' }}"
+                           min="1" max="1440">
+                    <div class="form-text">Durée de validité des données en cache (1-1440 min)</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="cache_taille_max_mo" class="form-label">Taille max du cache (Mo)</label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="cache_taille_max_mo" 
+                           name="cache_taille_max_mo" 
+                           value="{{ config.cache_taille_max_mo|default:'100' }}"
+                           min="10" max="1000">
+                  </div>
+                </div>
+                
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="auto_invalidation_cache" name="auto_invalidation_cache"
+                         {% if is_new or config.auto_invalidation_cache %}checked{% endif %}>
+                  <label class="form-check-label" for="auto_invalidation_cache">
+                    <strong>Auto-invalidation du cache</strong>
+                    <br><small class="text-muted">Invalider automatiquement le cache lors des modifications</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Statut -->
+            <div class="card {% if is_new or config.actif %}border-success{% else %}border-secondary{% endif %} mb-4">
+              <div class="card-body">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="actif" name="actif"
+                         {% if is_new or config.actif %}checked{% endif %}>
+                  <label class="form-check-label fw-semibold" for="actif">
+                    <i class="fas fa-power-off me-1 {% if is_new or config.actif %}text-success{% else %}text-secondary{% endif %}"></i>
+                    Configuration active
+                  </label>
+                </div>
+                <div class="form-text">
+                  {% if is_new %}
+                  Activez cette option pour permettre la synchronisation avec Kelio.
+                  {% else %}
+                  Désactiver la configuration interrompra toutes les synchronisations.
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Boutons -->
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'config_kelio_liste' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-times me-2"></i>Annuler
+              </a>
+              <button type="submit" class="btn btn-primary btn-lg" id="btnSubmit">
+                <i class="fas fa-save me-2"></i>
+                {% if is_new %}Créer la configuration{% else %}Enregistrer les modifications{% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+.form-switch .form-check-input {
+  width: 3em;
+  height: 1.5em;
+}
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .d-flex.justify-content-between .btn {
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+function togglePasswordVisibility() {
+  const input = document.getElementById('password');
+  const icon = document.getElementById('iconPassword');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+document.getElementById('formConfig').addEventListener('submit', function(e) {
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...';
+});
+
+// Mise à jour visuelle du switch actif
+document.getElementById('actif').addEventListener('change', function() {
+  const card = this.closest('.card');
+  const icon = this.nextElementSibling.querySelector('i');
+  
+  if (this.checked) {
+    card.classList.remove('border-secondary');
+    card.classList.add('border-success');
+    icon.classList.remove('text-secondary');
+    icon.classList.add('text-success');
+  } else {
+    card.classList.remove('border-success');
+    card.classList.add('border-secondary');
+    icon.classList.remove('text-success');
+    icon.classList.add('text-secondary');
+  }
+});
+</script>
+{% endblock %}

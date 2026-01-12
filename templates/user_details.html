@@ -1,0 +1,1342 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ profil.nom_complet }} - Détails utilisateur{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* En-tête profil */
+  .profile-header {
+    background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 50%, var(--gray-600) 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  }
+
+  .profile-header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .profile-avatar.superuser {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  }
+
+  .profile-avatar.kelio {
+    background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+  }
+
+  .profile-info {
+    flex: 1;
+  }
+
+  .profile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .profile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+  }
+
+  .profile-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .profile-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .badge-superuser {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+  }
+
+  .badge-kelio {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-local {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .badge-actif {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+  }
+
+  .badge-inactif {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+
+  .badge-primary {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  .badge-success {
+    background: var(--secondary-light);
+    color: var(--secondary-dark);
+  }
+
+  .badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  /* Boutons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .btn-white {
+    background: white;
+    color: var(--gray-800);
+  }
+
+  .btn-white:hover {
+    background: var(--gray-100);
+  }
+
+  .btn-outline-white {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: white;
+  }
+
+  .btn-outline-white:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-success {
+    background: var(--secondary);
+    color: white;
+  }
+
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--gray-300);
+    color: var(--gray-700);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  /* Layout grille */
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .details-grid.three-cols {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  /* Cards */
+  .card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-800);
+  }
+
+  .card-header.primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+  }
+
+  .card-header.primary h3 {
+    color: white;
+  }
+
+  .card-header.success {
+    background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+    color: white;
+  }
+
+  .card-header.success h3 {
+    color: white;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .card-body.no-padding {
+    padding: 0;
+  }
+
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .info-item {
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+  }
+
+  .info-item.full {
+    grid-column: 1 / -1;
+  }
+
+  .info-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-value {
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+
+  .info-value a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .info-value a:hover {
+    text-decoration: underline;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+  }
+
+  /* Liste items */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.2s;
+  }
+
+  .list-item:last-child {
+    border-bottom: none;
+  }
+
+  .list-item:hover {
+    background: var(--gray-50);
+  }
+
+  .list-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  .list-item-icon.success {
+    background: var(--secondary-light);
+    color: var(--secondary);
+  }
+
+  .list-item-icon.warning {
+    background: #fef3c7;
+    color: #f59e0b;
+  }
+
+  .list-item-icon.danger {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  .list-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .list-item-title {
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+  }
+
+  .list-item-subtitle {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+  }
+
+  .list-item-meta {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .list-item-date {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+  }
+
+  /* Compétences */
+  .competence-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .competence-name {
+    font-weight: 500;
+    color: var(--gray-800);
+  }
+
+  .competence-level {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .level-bar {
+    width: 100px;
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .level-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  .level-fill.expert {
+    background: var(--secondary);
+  }
+
+  .level-fill.avance {
+    background: #3b82f6;
+  }
+
+  .level-fill.intermediaire {
+    background: #f59e0b;
+  }
+
+  .level-fill.debutant {
+    background: var(--gray-400);
+  }
+
+  .level-text {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    min-width: 80px;
+    text-align: right;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gray-200);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+  }
+
+  .timeline-item:last-child {
+    padding-bottom: 0;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -1.75rem;
+    top: 0.25rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+
+  .timeline-content {
+    background: var(--gray-50);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .timeline-title {
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+  }
+
+  .timeline-desc {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+  }
+
+  .timeline-date {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-500);
+  }
+
+  .empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+  }
+
+  /* Équipe grid */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .team-member {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .team-member:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+  }
+
+  .team-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .team-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .team-name {
+    font-weight: 600;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .team-role {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab:hover {
+    color: var(--primary);
+  }
+
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .details-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .details-grid.three-cols {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .profile-header-content {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .profile-meta {
+      justify-content: center;
+    }
+
+    .profile-badges {
+      justify-content: center;
+    }
+
+    .profile-actions {
+      flex-direction: row;
+      width: 100%;
+    }
+
+    .profile-actions .btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête profil -->
+<div class="profile-header">
+  <div class="profile-header-content">
+    <div class="profile-avatar {% if profil.user.is_superuser %}superuser{% elif profil.kelio_employee_key %}kelio{% endif %}">
+      {% if profil.user.is_superuser %}
+      <i class="fas fa-crown"></i>
+      {% elif profil.user %}
+      {{ profil.user.first_name|slice:":1"|upper }}{{ profil.user.last_name|slice:":1"|upper }}
+      {% else %}
+      <i class="fas fa-user"></i>
+      {% endif %}
+    </div>
+    
+    <div class="profile-info">
+      <div class="profile-name">
+        {{ profil.nom_complet }}
+        {% if not profil.actif %}
+        <span class="badge badge-inactif"><i class="fas fa-ban"></i> Inactif</span>
+        {% endif %}
+      </div>
+      
+      <div class="profile-meta">
+        <div class="profile-meta-item">
+          <i class="fas fa-id-badge"></i>
+          <span>{{ profil.matricule }}</span>
+        </div>
+        {% if profil.user.email %}
+        <div class="profile-meta-item">
+          <i class="fas fa-envelope"></i>
+          <span>{{ profil.user.email }}</span>
+        </div>
+        {% endif %}
+        {% if profil.departement %}
+        <div class="profile-meta-item">
+          <i class="fas fa-building"></i>
+          <span>{{ profil.departement.nom }}</span>
+        </div>
+        {% endif %}
+        {% if profil.site %}
+        <div class="profile-meta-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>{{ profil.site.ville }}</span>
+        </div>
+        {% endif %}
+      </div>
+      
+      <div class="profile-badges">
+        {% if profil.user.is_superuser %}
+        <span class="badge badge-superuser"><i class="fas fa-crown"></i> Super Admin</span>
+        {% endif %}
+        <span class="badge badge-primary">{{ profil.get_type_profil_display }}</span>
+        <span class="badge {% if profil.actif %}badge-actif{% else %}badge-inactif{% endif %}">
+          {{ profil.get_statut_employe_display }}
+        </span>
+        {% if profil.kelio_employee_key %}
+        <span class="badge badge-kelio"><i class="fas fa-sync"></i> Kelio</span>
+        {% else %}
+        <span class="badge badge-local"><i class="fas fa-database"></i> Local</span>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div class="profile-actions">
+      <a href="{% url 'user_modifier' profil.matricule %}" class="btn btn-white">
+        <i class="fas fa-edit"></i> Modifier
+      </a>
+      <a href="{% url 'admin_users_liste' %}" class="btn btn-outline-white">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Onglets -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('general')">
+    <i class="fas fa-user"></i> Général
+  </div>
+  <div class="tab" onclick="showTab('absences')">
+    <i class="fas fa-calendar-times"></i> Absences
+    {% if absences_stats.total > 0 %}
+    <span class="badge badge-info" style="margin-left: 0.5rem;">{{ absences_stats.total }}</span>
+    {% endif %}
+  </div>
+  <div class="tab" onclick="showTab('formations')">
+    <i class="fas fa-graduation-cap"></i> Formations
+    {% if formations_stats.total > 0 %}
+    <span class="badge badge-info" style="margin-left: 0.5rem;">{{ formations_stats.total }}</span>
+    {% endif %}
+  </div>
+  <div class="tab" onclick="showTab('competences')">
+    <i class="fas fa-tools"></i> Compétences
+    {% if competences_stats.total > 0 %}
+    <span class="badge badge-info" style="margin-left: 0.5rem;">{{ competences_stats.total }}</span>
+    {% endif %}
+  </div>
+  {% if equipe_count > 0 %}
+  <div class="tab" onclick="showTab('equipe')">
+    <i class="fas fa-users"></i> Équipe
+    <span class="badge badge-info" style="margin-left: 0.5rem;">{{ equipe_count }}</span>
+  </div>
+  {% endif %}
+  <div class="tab" onclick="showTab('missions')">
+    <i class="fas fa-briefcase"></i> Missions
+    {% if missions_stats.total > 0 %}
+    <span class="badge badge-info" style="margin-left: 0.5rem;">{{ missions_stats.total }}</span>
+    {% endif %}
+  </div>
+  <div class="tab" onclick="showTab('historique')">
+    <i class="fas fa-history"></i> Historique
+  </div>
+</div>
+
+<!-- Contenu des onglets -->
+
+<!-- Onglet Général -->
+<div id="tab-general" class="tab-content active">
+  <div class="details-grid">
+    <!-- Informations personnelles -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-user"></i> Informations personnelles</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Nom d'utilisateur</div>
+            <div class="info-value">{{ profil.user.username|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Matricule</div>
+            <div class="info-value">{{ profil.matricule }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Prénom</div>
+            <div class="info-value">{{ profil.user.first_name|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Nom</div>
+            <div class="info-value">{{ profil.user.last_name|default:"-" }}</div>
+          </div>
+          <div class="info-item full">
+            <div class="info-label">Email</div>
+            <div class="info-value">
+              {% if profil.user.email %}
+              <a href="mailto:{{ profil.user.email }}">{{ profil.user.email }}</a>
+              {% else %}-{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informations professionnelles -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-briefcase"></i> Informations professionnelles</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Type de profil</div>
+            <div class="info-value">{{ profil.get_type_profil_display }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Statut</div>
+            <div class="info-value">{{ profil.get_statut_employe_display }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Département</div>
+            <div class="info-value">{{ profil.departement.nom|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Site</div>
+            <div class="info-value">{{ profil.site|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Poste</div>
+            <div class="info-value">{{ profil.poste.titre|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Manager</div>
+            <div class="info-value">
+              {% if profil.manager %}
+              <a href="{% url 'user_details' profil.manager.matricule %}">{{ profil.manager.nom_complet }}</a>
+              {% else %}-{% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Date d'embauche</div>
+            <div class="info-value">
+              {% if profil.date_embauche %}
+              {{ profil.date_embauche|date:"d/m/Y" }}
+              {% else %}-{% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Fin de contrat</div>
+            <div class="info-value">
+              {% if profil.date_fin_contrat %}
+              {{ profil.date_fin_contrat|date:"d/m/Y" }}
+              {% else %}-{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Permissions -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-shield-alt"></i> Permissions</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Super administrateur</div>
+            <div class="info-value">
+              {% if profil.user.is_superuser %}
+              <span class="badge badge-success"><i class="fas fa-check"></i> Oui</span>
+              {% else %}
+              <span class="badge badge-danger"><i class="fas fa-times"></i> Non</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Accès admin Django</div>
+            <div class="info-value">
+              {% if profil.user.is_staff %}
+              <span class="badge badge-success"><i class="fas fa-check"></i> Oui</span>
+              {% else %}
+              <span class="badge badge-danger"><i class="fas fa-times"></i> Non</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Compte actif</div>
+            <div class="info-value">
+              {% if profil.user.is_active %}
+              <span class="badge badge-success"><i class="fas fa-check"></i> Oui</span>
+              {% else %}
+              <span class="badge badge-danger"><i class="fas fa-times"></i> Non</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Profil actif</div>
+            <div class="info-value">
+              {% if profil.actif %}
+              <span class="badge badge-success"><i class="fas fa-check"></i> Oui</span>
+              {% else %}
+              <span class="badge badge-danger"><i class="fas fa-times"></i> Non</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Données Kelio -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-sync"></i> Synchronisation Kelio</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Clé employé Kelio</div>
+            <div class="info-value">{{ profil.kelio_employee_key|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Code badge</div>
+            <div class="info-value">{{ profil.kelio_badge_code|default:"-" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Dernière synchronisation</div>
+            <div class="info-value">
+              {% if profil.kelio_last_sync %}
+              {{ profil.kelio_last_sync|date:"d/m/Y H:i" }}
+              {% else %}Jamais{% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Statut sync</div>
+            <div class="info-value">
+              <span class="badge 
+                {% if profil.kelio_sync_status == 'REUSSI' %}badge-success
+                {% elif profil.kelio_sync_status == 'ECHEC' %}badge-danger
+                {% elif profil.kelio_sync_status == 'PARTIEL' %}badge-warning
+                {% else %}badge-info{% endif %}">
+                {{ profil.kelio_sync_status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Métadonnées -->
+    <div class="card full-width">
+      <div class="card-header">
+        <h3><i class="fas fa-info-circle"></i> Métadonnées</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Créé le</div>
+            <div class="info-value">{{ profil.created_at|date:"d/m/Y H:i" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Modifié le</div>
+            <div class="info-value">{{ profil.updated_at|date:"d/m/Y H:i" }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Dernière connexion</div>
+            <div class="info-value">
+              {% if profil.user.last_login %}
+              {{ profil.user.last_login|date:"d/m/Y H:i" }}
+              {% else %}Jamais{% endif %}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Date d'inscription</div>
+            <div class="info-value">{{ profil.user.date_joined|date:"d/m/Y H:i" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Onglet Absences -->
+<div id="tab-absences" class="tab-content">
+  <div class="card">
+    <div class="card-header primary">
+      <h3><i class="fas fa-calendar-times"></i> Absences</h3>
+      <span class="badge badge-info">{{ absences_stats.total }} total</span>
+    </div>
+    
+    {% if absences %}
+    <div class="card-body">
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-value">{{ absences_stats.total }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" style="color: var(--danger);">{{ absences_stats.en_cours }}</div>
+          <div class="stat-label">En cours</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" style="color: var(--secondary);">{{ absences_stats.a_venir }}</div>
+          <div class="stat-label">À venir</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body no-padding">
+      {% for absence in absences %}
+      <div class="list-item">
+        <div class="list-item-icon {% if absence.date_fin < today %}{% else %}warning{% endif %}">
+          <i class="fas fa-calendar-minus"></i>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">{{ absence.type_absence|default:"Absence" }}</div>
+          <div class="list-item-subtitle">{{ absence.motif|default:"Pas de motif renseigné" }}</div>
+        </div>
+        <div class="list-item-meta">
+          <span class="badge badge-primary">
+            {{ absence.date_debut|date:"d/m/Y" }} - {{ absence.date_fin|date:"d/m/Y" }}
+          </span>
+          <div class="list-item-date">{{ absence.nb_jours|default:"?" }} jour(s)</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-calendar-check"></i>
+        <p>Aucune absence enregistrée</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Onglet Formations -->
+<div id="tab-formations" class="tab-content">
+  <div class="card">
+    <div class="card-header success">
+      <h3><i class="fas fa-graduation-cap"></i> Formations</h3>
+      <span class="badge badge-info">{{ formations_stats.total }} total</span>
+    </div>
+    
+    {% if formations %}
+    <div class="card-body no-padding">
+      {% for formation in formations %}
+      <div class="list-item">
+        <div class="list-item-icon success">
+          <i class="fas fa-certificate"></i>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">{{ formation.titre|default:"Formation" }}</div>
+          <div class="list-item-subtitle">{{ formation.organisme|default:"" }}</div>
+        </div>
+        <div class="list-item-meta">
+          {% if formation.date_debut %}
+          <span class="badge badge-success">{{ formation.date_debut|date:"d/m/Y" }}{% if formation.date_fin %} - {{ formation.date_fin|date:"d/m/Y" }}{% endif %}</span>
+          {% endif %}
+          {% if formation.certifiante %}
+          <div class="list-item-date"><i class="fas fa-award"></i> Certifiante</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-graduation-cap"></i>
+        <p>Aucune formation enregistrée</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Onglet Compétences -->
+<div id="tab-competences" class="tab-content">
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-tools"></i> Compétences</h3>
+      <span class="badge badge-info">{{ competences_stats.total }} total</span>
+    </div>
+    
+    {% if competences %}
+    <div class="card-body">
+      {% for comp in competences %}
+      <div class="competence-item">
+        <div class="competence-name">
+          {{ comp.competence.nom|default:"Compétence" }}
+        </div>
+        <div class="competence-level">
+          <div class="level-bar">
+            <div class="level-fill 
+              {% if comp.niveau_maitrise >= 80 %}expert
+              {% elif comp.niveau_maitrise >= 60 %}avance
+              {% elif comp.niveau_maitrise >= 40 %}intermediaire
+              {% else %}debutant{% endif %}"
+              style="width: {{ comp.niveau_maitrise|default:0 }}%;">
+            </div>
+          </div>
+          <div class="level-text">{{ comp.niveau_maitrise|default:0 }}%</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-tools"></i>
+        <p>Aucune compétence enregistrée</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Onglet Équipe -->
+{% if equipe_count > 0 %}
+<div id="tab-equipe" class="tab-content">
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-users"></i> Équipe sous sa responsabilité</h3>
+      <span class="badge badge-info">{{ equipe_count }} membre(s)</span>
+    </div>
+    
+    <div class="team-grid">
+      {% for membre in equipe %}
+      <a href="{% url 'user_details' membre.matricule %}" class="team-member">
+        <div class="team-avatar">
+          {% if membre.user %}
+          {{ membre.user.first_name|slice:":1"|upper }}{{ membre.user.last_name|slice:":1"|upper }}
+          {% else %}
+          <i class="fas fa-user"></i>
+          {% endif %}
+        </div>
+        <div class="team-info">
+          <div class="team-name">{{ membre.nom_complet }}</div>
+          <div class="team-role">{{ membre.poste.titre|default:"Poste non défini" }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    
+    {% if equipe_count > 10 %}
+    <div class="card-body" style="text-align: center; border-top: 1px solid var(--gray-200);">
+      <span style="color: var(--gray-500);">Et {{ equipe_count|add:"-10" }} autre(s) membre(s)...</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Onglet Missions -->
+<div id="tab-missions" class="tab-content">
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-briefcase"></i> Missions d'intérim</h3>
+      <span class="badge badge-info">{{ missions_stats.total }} total</span>
+    </div>
+    
+    {% if missions %}
+    <div class="card-body">
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-value">{{ missions_stats.total }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" style="color: var(--primary);">{{ missions_stats.en_cours }}</div>
+          <div class="stat-label">En cours</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" style="color: var(--secondary);">{{ missions_stats.terminees }}</div>
+          <div class="stat-label">Terminées</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body no-padding">
+      {% for mission in missions %}
+      <div class="list-item">
+        <div class="list-item-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">{{ mission.demande|default:"Mission" }}</div>
+          <div class="list-item-subtitle">{{ mission.demande.poste|default:"" }}</div>
+        </div>
+        <div class="list-item-meta">
+          <span class="badge 
+            {% if mission.statut == 'EN_COURS' %}badge-primary
+            {% elif mission.statut == 'TERMINEE' %}badge-success
+            {% else %}badge-warning{% endif %}">
+            {{ mission.statut }}
+          </span>
+          <div class="list-item-date">{{ mission.created_at|date:"d/m/Y" }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-briefcase"></i>
+        <p>Aucune mission d'intérim</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Onglet Historique -->
+<div id="tab-historique" class="tab-content">
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-history"></i> Historique des actions</h3>
+    </div>
+    
+    {% if historique %}
+    <div class="card-body">
+      <div class="timeline">
+        {% for item in historique %}
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-title">{{ item.action|default:"Action" }}</div>
+            <div class="timeline-desc">{{ item.description|default:"" }}</div>
+            <div class="timeline-date">
+              <i class="fas fa-clock"></i> {{ item.created_at|date:"d/m/Y H:i" }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-history"></i>
+        <p>Aucun historique disponible</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gestion des onglets
+function showTab(tabName) {
+  // Masquer tous les contenus
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // Désactiver tous les onglets
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Activer l'onglet et le contenu sélectionné
+  document.getElementById('tab-' + tabName).classList.add('active');
+  event.currentTarget.classList.add('active');
+  
+  // Sauvegarder l'onglet actif dans l'URL
+  history.replaceState(null, '', '?tab=' + tabName);
+}
+
+// Restaurer l'onglet actif depuis l'URL
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get('tab');
+  
+  if (tab) {
+    const tabElement = document.querySelector(`.tab[onclick*="${tab}"]`);
+    if (tabElement) {
+      tabElement.click();
+    }
+  }
+  
+  console.log('Page détails utilisateur chargée');
+});
+</script>
+{% endblock %}

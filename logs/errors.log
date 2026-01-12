@@ -1,0 +1,271 @@
+[2026-01-11 22:43:07] [ERROR] [django.request] [log:241] Internal Server Error: /interim/journal-logs/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_logs.py", line 408, in journal_logs
+    file_entries = get_all_log_entries(filters=file_filters, max_per_file=3000)
+  File "D:\DevProjects\Python\interim365\mainapp\views_logs.py", line 362, in get_all_log_entries
+    all_entries.sort(key=lambda x: x['timestamp_dt'], reverse=True)
+TypeError: can't compare offset-naive and offset-aware datetimes
+[2026-01-12 00:03:26] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
+[2026-01-12 02:52:14] [ERROR] [django.request] [log:241] Internal Server Error: /interim/config-kelio/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 60, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 141, in config_kelio_liste
+    configs = ConfigurationApiKelio.objects.all().order_by('-date_modification')
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\query.py", line 1659, in order_by
+    obj.query.add_ordering(*field_names)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\sql\query.py", line 2222, in add_ordering
+    self.names_to_path(item.split(LOOKUP_SEP), self.model._meta)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\db\models\sql\query.py", line 1725, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'date_modification' into field. Choices are: actif, auto_invalidation_cache, cache_duree_defaut_minutes, cache_taille_max_mo, caches, created_at, id, nom, password_encrypted, service_absences, service_competences, service_employees, service_formations, timeout_seconds, updated_at, url_base, username
+[2026-01-12 03:05:15] [ERROR] [django.request] [log:241] Internal Server Error: /interim/config-kelio/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 60, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 145, in config_kelio_liste
+    return render(request, 'parametres/config_kelio/liste.html', context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\defaulttags.py", line 471, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'config_kelio_vider_cache' not found. 'config_kelio_vider_cache' is not a valid view function or pattern name.
+[2026-01-12 03:12:23] [ERROR] [interim] [views_parametres:244] Erreur test API Kelio: 'ConfigurationApiKelio' object has no attribute 'cle_api'
+[2026-01-12 03:38:35] [ERROR] [django.request] [log:241] Internal Server Error: /interim/config-kelio/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 55, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 126, in config_kelio_liste
+    return render(request, 'parametres/config_kelio/liste.html', context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\defaulttags.py", line 321, in render
+    return nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\defaulttags.py", line 471, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'config_kelio_modifier' with no arguments not found. 1 pattern(s) tried: ['interim/config\\-kelio/(?P<pk>[0-9]+)/modifier/\\Z']
+[2026-01-12 03:40:15] [ERROR] [django.request] [log:241] Internal Server Error: /interim/config-kelio/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 55, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 126, in config_kelio_liste
+    return render(request, 'parametres/config_kelio/liste.html', context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\defaulttags.py", line 471, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'config_kelio_toggle_actif' not found. 'config_kelio_toggle_actif' is not a valid view function or pattern name.
+[2026-01-12 03:59:27] [ERROR] [django.request] [log:241] Internal Server Error: /interim/config-scoring/1/modifier/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 55, in wrapper
+    return view_func(request, *args, **kwargs)
+TypeError: config_scoring_modifier() got an unexpected keyword argument 'pk'
+[2026-01-12 04:05:52] [ERROR] [django.request] [log:241] Internal Server Error: /interim/config-scoring/
+Traceback (most recent call last):
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\contrib\auth\decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 55, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\mainapp\views_parametres.py", line 472, in config_scoring_liste
+    return render(request, 'parametres/config_scoring/liste.html', context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\backends\django.py", line 61, in render
+    return self.template.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 175, in render
+    return self._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 157, in render
+    return compiled_parent._render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 167, in _render
+    return self.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\loader_tags.py", line 63, in render
+    result = block.nodelist.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 1005, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\base.py", line 966, in render_annotated
+    return self.render(context)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\template\defaulttags.py", line 471, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "D:\DevProjects\Python\interim365\venv\lib\site-packages\django\urls\resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'config_scoring_toggle_actif' not found. 'config_scoring_toggle_actif' is not a valid view function or pattern name.
+[2026-01-12 17:09:37] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
+[2026-01-12 17:09:40] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
+[2026-01-12 17:10:19] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
+[2026-01-12 17:37:44] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html

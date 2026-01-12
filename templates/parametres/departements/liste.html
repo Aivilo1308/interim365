@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Départements{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Départements</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-building me-2"></i>
+              Gestion des Départements
+            </h4>
+            <a href="{% url 'departement_ajouter' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Nouveau Département
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Statistiques rapides -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="alert alert-primary mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-building fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.total }}</div>
+                    <small>Total départements</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-success mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-check-circle fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.actifs }}</div>
+                    <small>Actifs</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-warning mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-pause-circle fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.total|add:"-"|add:stats.actifs }}</div>
+                    <small>Inactifs</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtres -->
+          <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-5">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Rechercher par nom ou code...">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select name="actif" class="form-select">
+                <option value="">Tous les statuts</option>
+                <option value="true" {% if actif_filtre == 'true' %}selected{% endif %}>Actifs uniquement</option>
+                <option value="false" {% if actif_filtre == 'false' %}selected{% endif %}>Inactifs uniquement</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-1"></i> Filtrer
+              </button>
+              <a href="{% url 'departements_liste' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i> Réinitialiser
+              </a>
+            </div>
+          </form>
+
+          <!-- Tableau -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Code</th>
+                  <th>Nom</th>
+                  <th>Manager</th>
+                  <th class="text-center">Employés</th>
+                  <th class="text-center">Postes</th>
+                  <th class="text-center">Statut</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for dept in departements %}
+                <tr>
+                  <td>
+                    <span class="badge bg-secondary">{{ dept.code }}</span>
+                  </td>
+                  <td>
+                    <strong>{{ dept.nom }}</strong>
+                    {% if dept.description %}
+                    <br><small class="text-muted">{{ dept.description|truncatechars:50 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if dept.manager %}
+                    <div class="d-flex align-items-center">
+                      <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;font-size:0.8rem;">
+                        {{ dept.manager.user.first_name|slice:":1" }}{{ dept.manager.user.last_name|slice:":1" }}
+                      </div>
+                      <div>
+                        <small>{{ dept.manager.user.get_full_name }}</small>
+                      </div>
+                    </div>
+                    {% else %}
+                    <span class="text-muted">Non assigné</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-info">{{ dept.nb_employes }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-secondary">{{ dept.nb_postes }}</span>
+                  </td>
+                  <td class="text-center">
+                    {% if dept.actif %}
+                    <span class="badge bg-success">
+                      <i class="fas fa-check me-1"></i> Actif
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger">
+                      <i class="fas fa-times me-1"></i> Inactif
+                    </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'departement_modifier' dept.pk %}" class="btn btn-outline-primary" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button type="button" class="btn btn-outline-{% if dept.actif %}warning{% else %}success{% endif %}" 
+                              onclick="toggleActif({{ dept.pk }}, '{{ dept.nom|escapejs }}', {{ dept.actif|yesno:'true,false' }})"
+                              title="{% if dept.actif %}Désactiver{% else %}Activer{% endif %}">
+                        <i class="fas fa-{% if dept.actif %}pause{% else %}play{% endif %}"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-5">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun département trouvé</h5>
+                    <p class="text-muted">Créez votre premier département pour commencer.</p>
+                    <a href="{% url 'departement_ajouter' %}" class="btn btn-primary">
+                      <i class="fas fa-plus me-1"></i> Créer un département
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          {% if departements.has_other_pages %}
+          <nav aria-label="Pagination" class="mt-4">
+            <ul class="pagination justify-content-center mb-0">
+              {% if departements.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ departements.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if actif_filtre %}&actif={{ actif_filtre }}{% endif %}">
+                  <i class="fas fa-chevron-left"></i>
+                </a>
+              </li>
+              {% endif %}
+              
+              <li class="page-item active">
+                <span class="page-link">
+                  Page {{ departements.number }} sur {{ departements.paginator.num_pages }}
+                </span>
+              </li>
+              
+              {% if departements.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ departements.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if actif_filtre %}&actif={{ actif_filtre }}{% endif %}">
+                  <i class="fas fa-chevron-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleActif(id, nom, estActif) {
+  const action = estActif ? 'désactiver' : 'activer';
+  if (!confirm(`Voulez-vous vraiment ${action} le département "${nom}" ?`)) return;
+  
+  fetch(`{% url 'departement_toggle_actif' 0 %}`.replace('0', id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('❌ ' + data.message);
+    }
+  });
+}
+</script>
+{% endblock %}

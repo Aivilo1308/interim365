@@ -1,0 +1,776 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ajouter un Super Utilisateur{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* En-tête de page */
+  .page-header {
+    background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Formulaire */
+  .form-container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .form-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .form-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .form-body {
+    padding: 2rem;
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+  }
+
+  .form-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row.single {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .form-label .required {
+    color: var(--danger);
+  }
+
+  .form-input {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.3s;
+    width: 100%;
+  }
+
+  .form-input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  .form-input.error {
+    border-color: var(--danger);
+  }
+
+  .form-select {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    background: white;
+  }
+
+  .form-select:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .form-hint {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+  }
+
+  .form-error {
+    font-size: 0.8rem;
+    color: var(--danger);
+    margin-top: 0.25rem;
+  }
+
+  /* Checkbox/Toggle */
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+  }
+
+  .checkbox-item:hover {
+    background: var(--primary-light);
+  }
+
+  .checkbox-item.checked {
+    background: var(--primary-light);
+    border-color: var(--primary);
+  }
+
+  .checkbox-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--primary);
+  }
+
+  .checkbox-content {
+    flex: 1;
+  }
+
+  .checkbox-label {
+    font-weight: 600;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .checkbox-desc {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    margin-top: 0.25rem;
+  }
+
+  /* Password strength */
+  .password-strength {
+    margin-top: 0.5rem;
+  }
+
+  .strength-bar {
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+
+  .strength-fill {
+    height: 100%;
+    width: 0%;
+    transition: all 0.3s;
+  }
+
+  .strength-fill.weak { width: 25%; background: var(--danger); }
+  .strength-fill.fair { width: 50%; background: var(--orange); }
+  .strength-fill.good { width: 75%; background: #eab308; }
+  .strength-fill.strong { width: 100%; background: var(--secondary); }
+
+  .strength-text {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+
+  /* Actions */
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+
+  .btn-success {
+    background: var(--secondary);
+    color: white;
+  }
+
+  .btn-success:hover {
+    background: var(--secondary-dark);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--gray-300);
+    color: var(--gray-700);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--gray-400);
+    color: var(--gray-800);
+  }
+
+  /* Alert messages */
+  .alert {
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  .alert-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  .alert-info {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+  }
+
+  .alert i {
+    margin-top: 0.125rem;
+  }
+
+  /* Info box */
+  .info-box {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #fbbf24;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .info-box i {
+    color: #92400e;
+    font-size: 1.25rem;
+  }
+
+  .info-box-content {
+    flex: 1;
+  }
+
+  .info-box-title {
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 0.25rem;
+  }
+
+  .info-box-text {
+    font-size: 0.9rem;
+    color: #78350f;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête de page -->
+<div class="page-header">
+  <div class="page-title">
+    <i class="fas fa-user-plus"></i>
+    Ajouter un Super Utilisateur
+  </div>
+  <div class="page-subtitle">
+    Créer un compte administrateur non synchronisé avec Kelio
+  </div>
+</div>
+
+<!-- Formulaire -->
+<div class="form-container">
+  <div class="form-header">
+    <i class="fas fa-user-shield"></i>
+    <h3>Nouveau compte utilisateur</h3>
+  </div>
+  
+  <form method="POST" action="{% url 'ajouter_superutilisateur' %}" id="userForm">
+    {% csrf_token %}
+    
+    <div class="form-body">
+      <!-- Messages d'erreur -->
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+        <span>{{ message }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+      
+      <!-- Info box -->
+      <div class="info-box">
+        <i class="fas fa-info-circle"></i>
+        <div class="info-box-content">
+          <div class="info-box-title">Utilisateur non-Kelio</div>
+          <div class="info-box-text">
+            Ce compte sera créé localement et ne sera pas synchronisé avec Kelio. 
+            Idéal pour les administrateurs système ou les comptes de service.
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section Identifiants -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-key"></i>
+          Identifiants de connexion
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              Nom d'utilisateur <span class="required">*</span>
+            </label>
+            <input type="text" name="username" class="form-input" 
+                   placeholder="ex: admin.dupont"
+                   value="{{ form_data.username|default:'' }}"
+                   required autocomplete="off">
+            <span class="form-hint">Utilisé pour la connexion</span>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">
+              Email <span class="required">*</span>
+            </label>
+            <input type="email" name="email" class="form-input" 
+                   placeholder="admin@entreprise.com"
+                   value="{{ form_data.email|default:'' }}"
+                   required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              Mot de passe <span class="required">*</span>
+            </label>
+            <input type="password" name="password" id="password" class="form-input" 
+                   placeholder="Minimum 8 caractères"
+                   required minlength="8" autocomplete="new-password">
+            <div class="password-strength">
+              <div class="strength-bar">
+                <div class="strength-fill" id="strengthFill"></div>
+              </div>
+              <span class="strength-text" id="strengthText">Entrez un mot de passe</span>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">
+              Confirmer le mot de passe <span class="required">*</span>
+            </label>
+            <input type="password" name="password_confirm" id="password_confirm" class="form-input" 
+                   placeholder="Répéter le mot de passe"
+                   required minlength="8" autocomplete="new-password">
+            <span class="form-hint" id="passwordMatch"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section Informations personnelles -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-user"></i>
+          Informations personnelles
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              Prénom <span class="required">*</span>
+            </label>
+            <input type="text" name="first_name" class="form-input" 
+                   placeholder="Jean"
+                   value="{{ form_data.first_name|default:'' }}"
+                   required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">
+              Nom <span class="required">*</span>
+            </label>
+            <input type="text" name="last_name" class="form-input" 
+                   placeholder="Dupont"
+                   value="{{ form_data.last_name|default:'' }}"
+                   required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              Matricule <span class="required">*</span>
+            </label>
+            <input type="text" name="matricule" class="form-input" 
+                   placeholder="ADM2025001"
+                   value="{{ form_data.matricule|default:'' }}"
+                   required pattern="[A-Za-z0-9]+"
+                   title="Lettres et chiffres uniquement">
+            <span class="form-hint">Identifiant unique (ex: ADM2025001)</span>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">
+              Type de profil <span class="required">*</span>
+            </label>
+            <select name="type_profil" class="form-select" required>
+              {% for code, label in types_profil %}
+              <option value="{{ code }}" 
+                      {% if form_data.type_profil == code or code == 'ADMIN' and not form_data.type_profil %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section Organisation -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-building"></i>
+          Organisation (optionnel)
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Département</label>
+            <select name="departement" class="form-select">
+              <option value="">-- Aucun --</option>
+              {% for dept in departements %}
+              <option value="{{ dept.id }}" 
+                      {% if form_data.departement == dept.id|stringformat:"s" %}selected{% endif %}>
+                {{ dept.nom }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Site</label>
+            <select name="site" class="form-select">
+              <option value="">-- Aucun --</option>
+              {% for site in sites %}
+              <option value="{{ site.id }}"
+                      {% if form_data.site == site.id|stringformat:"s" %}selected{% endif %}>
+                {{ site.nom }} - {{ site.ville }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Section Permissions -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fas fa-shield-alt"></i>
+          Permissions
+        </div>
+        
+        <div class="checkbox-group">
+          <label class="checkbox-item" id="superuserItem">
+            <input type="checkbox" name="is_superuser" id="is_superuser"
+                   {% if form_data.is_superuser == 'on' %}checked{% endif %}>
+            <div class="checkbox-content">
+              <div class="checkbox-label">
+                <i class="fas fa-crown" style="color: #f59e0b;"></i>
+                Super administrateur
+              </div>
+              <div class="checkbox-desc">
+                Accès complet à toutes les fonctionnalités du système, y compris l'administration Django.
+                <strong>À utiliser avec précaution.</strong>
+              </div>
+            </div>
+          </label>
+          
+          <label class="checkbox-item" id="staffItem">
+            <input type="checkbox" name="is_staff" id="is_staff"
+                   {% if form_data.is_staff == 'on' %}checked{% endif %}>
+            <div class="checkbox-content">
+              <div class="checkbox-label">
+                <i class="fas fa-cog" style="color: var(--primary);"></i>
+                Accès à l'administration Django
+              </div>
+              <div class="checkbox-desc">
+                Permet d'accéder à l'interface d'administration Django (/admin/).
+                Automatiquement activé si Super administrateur.
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <a href="{% url 'admin_users_liste' %}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i>
+        Retour à la liste
+      </a>
+      
+      <button type="submit" class="btn btn-success">
+        <i class="fas fa-user-plus"></i>
+        Créer l'utilisateur
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Password strength checker
+function checkPasswordStrength(password) {
+  let strength = 0;
+  
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+  
+  return strength;
+}
+
+function updatePasswordStrength() {
+  const password = document.getElementById('password').value;
+  const strengthFill = document.getElementById('strengthFill');
+  const strengthText = document.getElementById('strengthText');
+  
+  const strength = checkPasswordStrength(password);
+  
+  strengthFill.className = 'strength-fill';
+  
+  if (password.length === 0) {
+    strengthText.textContent = 'Entrez un mot de passe';
+    strengthFill.style.width = '0%';
+  } else if (strength <= 1) {
+    strengthFill.classList.add('weak');
+    strengthText.textContent = 'Faible - Ajoutez des majuscules, chiffres et caractères spéciaux';
+  } else if (strength <= 2) {
+    strengthFill.classList.add('fair');
+    strengthText.textContent = 'Moyen - Continuez à améliorer';
+  } else if (strength <= 3) {
+    strengthFill.classList.add('good');
+    strengthText.textContent = 'Bon - Presque parfait !';
+  } else {
+    strengthFill.classList.add('strong');
+    strengthText.textContent = 'Excellent - Mot de passe robuste';
+  }
+}
+
+function checkPasswordMatch() {
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('password_confirm').value;
+  const matchText = document.getElementById('passwordMatch');
+  
+  if (confirm.length === 0) {
+    matchText.textContent = '';
+    matchText.style.color = '';
+  } else if (password === confirm) {
+    matchText.textContent = '✓ Les mots de passe correspondent';
+    matchText.style.color = 'var(--secondary)';
+  } else {
+    matchText.textContent = '✗ Les mots de passe ne correspondent pas';
+    matchText.style.color = 'var(--danger)';
+  }
+}
+
+// Checkbox styling
+function updateCheckboxStyle(checkbox, item) {
+  if (checkbox.checked) {
+    item.classList.add('checked');
+  } else {
+    item.classList.remove('checked');
+  }
+}
+
+// Superuser implies staff
+document.getElementById('is_superuser').addEventListener('change', function() {
+  const staffCheckbox = document.getElementById('is_staff');
+  if (this.checked) {
+    staffCheckbox.checked = true;
+    staffCheckbox.disabled = true;
+    updateCheckboxStyle(staffCheckbox, document.getElementById('staffItem'));
+  } else {
+    staffCheckbox.disabled = false;
+  }
+  updateCheckboxStyle(this, document.getElementById('superuserItem'));
+});
+
+document.getElementById('is_staff').addEventListener('change', function() {
+  updateCheckboxStyle(this, document.getElementById('staffItem'));
+});
+
+// Event listeners
+document.getElementById('password').addEventListener('input', function() {
+  updatePasswordStrength();
+  checkPasswordMatch();
+});
+
+document.getElementById('password_confirm').addEventListener('input', checkPasswordMatch);
+
+// Form validation
+document.getElementById('userForm').addEventListener('submit', function(e) {
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('password_confirm').value;
+  
+  if (password !== confirm) {
+    e.preventDefault();
+    showNotification('Les mots de passe ne correspondent pas', 'error');
+    return false;
+  }
+  
+  if (password.length < 8) {
+    e.preventDefault();
+    showNotification('Le mot de passe doit contenir au moins 8 caractères', 'error');
+    return false;
+  }
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize checkbox styles
+  updateCheckboxStyle(
+    document.getElementById('is_superuser'), 
+    document.getElementById('superuserItem')
+  );
+  updateCheckboxStyle(
+    document.getElementById('is_staff'), 
+    document.getElementById('staffItem')
+  );
+  
+  // Check if superuser is already checked
+  if (document.getElementById('is_superuser').checked) {
+    document.getElementById('is_staff').disabled = true;
+  }
+  
+  console.log('Formulaire création utilisateur initialisé');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Postes{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Postes</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-briefcase me-2"></i>
+              Gestion des Postes
+            </h4>
+            <a href="{% url 'poste_ajouter' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Nouveau Poste
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Statistiques -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="alert alert-primary mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-briefcase fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.total }}</div>
+                    <small>Total postes</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-success mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-check-circle fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.actifs }}</div>
+                    <small>Actifs</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-info mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-user-clock fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.interim_autorises }}</div>
+                    <small>Intérim autorisé</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtres -->
+          <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Rechercher...">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <select name="departement" class="form-select">
+                <option value="">Tous départements</option>
+                {% for d in departements %}
+                <option value="{{ d.pk }}" {% if departement_filtre == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="site" class="form-select">
+                <option value="">Tous sites</option>
+                {% for s in sites %}
+                <option value="{{ s.pk }}" {% if site_filtre == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="niveau" class="form-select">
+                <option value="">Tous niveaux</option>
+                {% for val, label in niveaux %}
+                <option value="{{ val }}" {% if niveau_filtre == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i> Filtrer</button>
+              <a href="{% url 'postes_liste' %}" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+            </div>
+          </form>
+
+          <!-- Tableau -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Poste</th>
+                  <th>Département / Site</th>
+                  <th>Niveau</th>
+                  <th class="text-center">Intérim</th>
+                  <th class="text-center">Employés</th>
+                  <th class="text-center">Statut</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for poste in postes %}
+                <tr>
+                  <td>
+                    <strong>{{ poste.titre }}</strong>
+                    {% if poste.description %}
+                    <br><small class="text-muted">{{ poste.description|truncatechars:40 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ poste.departement.code }}</span> {{ poste.departement.nom }}
+                    <br><small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ poste.site.nom }}</small>
+                  </td>
+                  <td>
+                    {% if poste.niveau_responsabilite == 1 %}
+                    <span class="badge bg-info">Exécution</span>
+                    {% elif poste.niveau_responsabilite == 2 %}
+                    <span class="badge bg-warning text-dark">Maîtrise</span>
+                    {% else %}
+                    <span class="badge bg-primary">Cadre</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if poste.interim_autorise %}
+                    <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                    {% else %}
+                    <span class="badge bg-secondary"><i class="fas fa-times"></i></span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-info">{{ poste.nb_employes }}</span>
+                  </td>
+                  <td class="text-center">
+                    {% if poste.actif %}
+                    <span class="badge bg-success">Actif</span>
+                    {% else %}
+                    <span class="badge bg-danger">Inactif</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'poste_modifier' poste.pk %}" class="btn btn-outline-primary" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button type="button" class="btn btn-outline-{% if poste.actif %}warning{% else %}success{% endif %}" 
+                              onclick="toggleActif({{ poste.pk }}, '{{ poste.titre|escapejs }}', {{ poste.actif|yesno:'true,false' }})">
+                        <i class="fas fa-{% if poste.actif %}pause{% else %}play{% endif %}"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-5">
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun poste trouvé</h5>
+                    <a href="{% url 'poste_ajouter' %}" class="btn btn-primary">
+                      <i class="fas fa-plus me-1"></i> Créer un poste
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          {% if postes.has_other_pages %}
+          <nav class="mt-4">
+            <ul class="pagination justify-content-center mb-0">
+              {% if postes.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ postes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                  <i class="fas fa-chevron-left"></i>
+                </a>
+              </li>
+              {% endif %}
+              <li class="page-item active">
+                <span class="page-link">Page {{ postes.number }} sur {{ postes.paginator.num_pages }}</span>
+              </li>
+              {% if postes.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ postes.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                  <i class="fas fa-chevron-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleActif(id, nom, estActif) {
+  const action = estActif ? 'désactiver' : 'activer';
+  if (!confirm(`Voulez-vous vraiment ${action} le poste "${nom}" ?`)) return;
+  
+  fetch(`{% url 'poste_toggle_actif' 0 %}`.replace('0', id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => { if (data.success) location.reload(); else alert('❌ ' + data.message); });
+}
+</script>
+{% endblock %}

@@ -9,6 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
 
+#Nouveau
+KELIO_CRYPTO_KEY = config('KELIO_CRYPTO_KEY', default='').encode('utf-8')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -72,6 +75,24 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': config('DB_NAME', default='interim365'),
+        'USER': config('DB_USER', default=''),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='1433'),
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            # Options supplémentaires si nécessaire
+            'extra_params': 'TrustServerCertificate=yes',
+        },
+    }
+}
+'''
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

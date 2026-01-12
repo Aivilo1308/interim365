@@ -10,7 +10,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 # Import des vues existantes
-from mainapp import views, views_ajax, views_kelio, views_workflow_notif, views_employee_search, views_suite, views_jours_feries, views_absences_extraction
+from mainapp import (
+    views, views_ajax, views_kelio, views_workflow_notif, 
+    views_employee_search, views_suite, views_jours_feries, 
+    views_absences_extraction, views_users, views_logs, 
+    views_parametres, views_maintenance
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,12 +28,22 @@ urlpatterns = [
     path('password-change/', views.password_change, name='password_change'),
 
     path('admin-config/', views.admin_configuration_view, name='admin_config'),
-    path('admin-utilisateurs/', views.admin_utilisateurs_view, name='admin_utilisateurs'),    
-    path('admin-logs/', views.admin_logs_view, name='admin_logs'),        
+    #path('admin-utilisateurs/', views.admin_utilisateurs_view, name='admin_utilisateurs'),    
+    #path('admin-logs/', views.admin_logs_view, name='admin_logs'),        
 
-    path('admin-maintenance/', views.admin_maintenance_view, name='admin_maintenance'),    
     path('mentions-legales/', views.mentions_legales, name='mentions_legales'),    
 
+    # Gestion des utilisateurs
+    path('interim/admin-users/', views_users.admin_users_liste, name='admin_users_liste'),
+    path('interim/admin-users/ajouter/', views_users.ajouter_superutilisateur, name='ajouter_superutilisateur'),
+    # Détails par matricule
+    path('interim/admin-users/details/<str:matricule>/', views_users.user_details, name='user_details'),
+    # Modifier un utilisateur - par matricule
+    path('interim/admin-users/modifier/<str:matricule>/', views_users.user_modifier, name='user_modifier'),
+
+    path('interim/admin-users/<int:user_id>/toggle-actif/', views_users.toggle_user_actif, name='toggle_user_actif'),
+    path('interim/admin-users/<int:user_id>/detail/', views_users.user_detail_ajax, name='user_detail_ajax'),
+    path('interim/admin-users/<int:user_id>/reset-password/', views_users.reset_user_password, name='reset_user_password'),    
     
     # ================================================================
     # TABLEAUX DE BORD HIÉRARCHIQUES (views_auth.py)
@@ -437,6 +452,121 @@ urlpatterns = [
     
     # API JSON
     path('interim/api/extraction/', views_absences_extraction.api_absences_extraction, name='api_absences_extraction'),
+
+    # Journal des logs et audits
+    path('interim/journal-logs/', views_logs.journal_logs, name='journal_logs'),
+    path('interim/journal-logs/export/<str:format_export>/', views_logs.journal_logs_export, name='journal_logs_export'),
+    path('interim/journal-logs/<int:log_id>/detail/', views_logs.journal_logs_detail, name='journal_logs_detail'),
+
+    path('interim/journal-logs/fichiers/', views_logs.journal_fichiers_logs, name='journal_fichiers_logs'),
+    path('interim/journal-logs/fichier/<str:filename>/', views_logs.journal_fichier_contenu, name='journal_fichier_contenu'),
+    path('interim/api/logs/stats/', views_logs.journal_stats_api, name='journal_stats_api'),
+
+    # Téléchargement des logs
+    path('interim/journal-logs/download/zip/', views_logs.journal_logs_download_zip, name='journal_logs_download_zip'),
+    path('interim/journal-logs/download/<str:filename>/', views_logs.journal_logs_download_file, name='journal_logs_download_file'),
+
+    # Purge des logs
+    path('interim/journal-logs/purge/', views_logs.journal_logs_purge, name='journal_logs_purge'),
+    path('interim/journal-logs/purge/info/', views_logs.journal_logs_purge_info, name='journal_logs_purge_info'),
+
+    # ================================================================
+    # DASHBOARD PRINCIPAL PARAMÈTRES
+    # ================================================================
+    path('interim/config-kelio/parametres/', views_parametres.parametres_dashboard, name='parametres_dashboard'),
+    
+    # ================================================================
+    # CONFIGURATION API KELIO
+    # ================================================================
+    path('interim/config-kelio/', views_parametres.config_kelio_liste, name='config_kelio_liste'),
+    path('interim/config-kelio/modifier/', views_parametres.config_kelio_modifier, name='config_kelio_modifier'),
+    path('interim/config-kelio/tester/', views_parametres.config_kelio_tester, name='config_kelio_tester'),
+    path('interim/config-kelio/toggle-actif/', views_parametres.config_kelio_toggle_actif, name='config_kelio_toggle_actif'),
+    path('interim/config-kelio/vider-cache/', views_parametres.config_kelio_vider_cache, name='config_kelio_vider_cache'),
+    path('interim/config-kelio/sync/', views_parametres.lancer_sync_kelio, name='lancer_sync_kelio'),
+
+    # ================================================================
+    # CONFIGURATION SCORING
+    # ================================================================   
+    path('interim/config-scoring/', views_parametres.config_scoring_liste, name='config_scoring_liste'),
+    path('interim/config-scoring/modifier/', views_parametres.config_scoring_modifier, name='config_scoring_modifier'),
+    path('interim/config-scoring/toggle-actif/', views_parametres.config_scoring_toggle_actif, name='config_scoring_toggle_actif'),
+    path('interim/config-scoring/reinitialiser/', views_parametres.config_scoring_reinitialiser, name='config_scoring_reinitialiser'),    
+
+    # ================================================================
+    # CACHE API KELIO
+    # ================================================================
+    path('interim/cache-kelio/', views_parametres.cache_kelio_liste, name='cache_kelio_liste'),
+    path('interim/cache-kelio/purger/', views_parametres.cache_kelio_purger, name='cache_kelio_purger'),
+    path('interim/cache-kelio/<int:pk>/supprimer/', views_parametres.cache_kelio_supprimer, name='cache_kelio_supprimer'),
+    path('interim/cache-kelio/<int:pk>/vider/', views_parametres.config_kelio_vider_cache, name='config_kelio_vider_cache'),
+    
+    # ================================================================
+    # WORKFLOW ÉTAPES
+    # ================================================================
+    path('interim/workflow/', views_parametres.workflow_etapes_liste, name='workflow_etapes_liste'),
+    path('interim/workflow/ajouter/', views_parametres.workflow_etape_modifier, name='workflow_etape_ajouter'),
+    path('interim/workflow/<int:pk>/modifier/', views_parametres.workflow_etape_modifier, name='workflow_etape_modifier'),
+    path('interim/workflow/<int:pk>/supprimer/', views_parametres.workflow_etape_supprimer, name='workflow_etape_supprimer'),
+    path('interim/workflow/reordonner/', views_parametres.workflow_etapes_reordonner, name='workflow_etapes_reordonner'),
+    
+    # ================================================================
+    # DÉPARTEMENTS
+    # ================================================================
+    path('interim/departements/', views_parametres.departements_liste, name='departements_liste'),
+    path('interim/departements/ajouter/', views_parametres.departement_modifier, name='departement_ajouter'),
+    path('interim/departements/<int:pk>/modifier/', views_parametres.departement_modifier, name='departement_modifier'),
+    path('interim/departements/<int:pk>/toggle-actif/', views_parametres.departement_toggle_actif, name='departement_toggle_actif'),
+    
+    # ================================================================
+    # SITES
+    # ================================================================
+    path('interim/sites/', views_parametres.sites_liste, name='sites_liste'),
+    path('interim/sites/ajouter/', views_parametres.site_modifier, name='site_ajouter'),
+    path('interim/sites/<int:pk>/modifier/', views_parametres.site_modifier, name='site_modifier'),
+    path('interim/sites/<int:pk>/toggle-actif/', views_parametres.site_toggle_actif, name='site_toggle_actif'),
+    
+    # ================================================================
+    # POSTES
+    # ================================================================
+    path('interim/postes/', views_parametres.postes_liste, name='postes_liste'),
+    path('interim/postes/ajouter/', views_parametres.poste_modifier, name='poste_ajouter'),
+    path('interim/postes/<int:pk>/modifier/', views_parametres.poste_modifier, name='poste_modifier'),
+    path('interim/postes/<int:pk>/toggle-actif/', views_parametres.poste_toggle_actif, name='poste_toggle_actif'),
+    
+    # ================================================================
+    # MOTIFS D'ABSENCE
+    # ================================================================
+    path('interim/motifs-absence/', views_parametres.motifs_absence_liste, name='motifs_absence_liste'),
+    path('interim/motifs-absence/ajouter/', views_parametres.motif_absence_modifier, name='motif_absence_ajouter'),
+    path('interim/motifs-absence/<int:pk>/modifier/', views_parametres.motif_absence_modifier, name='motif_absence_modifier'),
+    path('interim/motifs-absence/<int:pk>/supprimer/', views_parametres.motif_absence_supprimer, name='motif_absence_supprimer'),
+    
+    # ================================================================
+    # EXPORT / IMPORT
+    # ================================================================
+    path('interim/parametres/export/', views_parametres.parametres_export, name='parametres_export'),
+    path('interim/parametres/import/', views_parametres.parametres_import, name='parametres_import'),
+
+    # Dashboard principal
+    path('interim/maintenance/', views_maintenance.admin_maintenance, name='admin_maintenance'),
+    
+    # Sauvegardes
+    path('interim/maintenance/sauvegardes/', views_maintenance.backup_liste, name='backup_liste'),
+    path('interim/maintenance/sauvegardes/creer/', views_maintenance.backup_creer, name='backup_creer'),
+    path('interim/maintenance/sauvegardes/telecharger/<str:filename>/', views_maintenance.backup_telecharger, name='backup_telecharger'),
+    path('interim/maintenance/sauvegardes/supprimer/<str:filename>/', views_maintenance.backup_supprimer, name='backup_supprimer'),
+    path('interim/maintenance/sauvegardes/restaurer/<str:filename>/', views_maintenance.backup_restaurer, name='backup_restaurer'),
+    
+    # Optimisation
+    path('interim/maintenance/optimisation/', views_maintenance.optimisation_dashboard, name='optimisation_dashboard'),
+    path('interim/maintenance/optimisation/vacuum/', views_maintenance.optimisation_vacuum, name='optimisation_vacuum'),
+    path('interim/maintenance/optimisation/clear-cache/', views_maintenance.optimisation_clear_cache, name='optimisation_clear_cache'),
+    path('interim/maintenance/optimisation/clear-sessions/', views_maintenance.optimisation_clear_sessions, name='optimisation_clear_sessions'),
+    path('interim/maintenance/optimisation/archive-logs/', views_maintenance.optimisation_archive_logs, name='optimisation_archive_logs'),
+    
+    # AJAX
+    path('interim/maintenance/stats/ajax/', views_maintenance.maintenance_stats_ajax, name='maintenance_stats_ajax'),    
 ]
 
 # Gestion des fichiers statiques en développement

@@ -1,0 +1,633 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Sauvegardes{% endblock %}
+
+{% block extra_css %}
+<style>
+  .backup-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .backup-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .backup-subtitle {
+    opacity: 0.9;
+  }
+
+  .backup-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  .backup-stat {
+    text-align: center;
+  }
+
+  .backup-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .backup-stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+
+  .card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+  }
+
+  .card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .table th {
+    text-align: left;
+    padding: 1rem;
+    background: #f8fafc;
+    font-weight: 600;
+    color: #64748b;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  .table tr:hover {
+    background: #f8fafc;
+  }
+
+  .backup-filename {
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .backup-filename i {
+    color: #10b981;
+  }
+
+  .backup-type {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .backup-type.json {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+
+  .backup-type.sqlite {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .backup-type.zip {
+    background: #d1fae5;
+    color: #059669;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #2563eb;
+  }
+
+  .btn-success {
+    background: #10b981;
+    color: white;
+  }
+
+  .btn-success:hover {
+    background: #059669;
+  }
+
+  .btn-outline {
+    background: white;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+  }
+
+  .btn-outline:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .btn-danger {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .btn-danger:hover {
+    background: #fecaca;
+  }
+
+  .btn-warning {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .btn-warning:hover {
+    background: #fde68a;
+  }
+
+  .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .create-backup-section {
+    background: #f8fafc;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .create-backup-title {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1e293b;
+  }
+
+  .backup-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .backup-option {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .backup-option:hover {
+    border-color: #10b981;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+  }
+
+  .backup-option.selected {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+
+  .backup-option-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 1rem;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.25rem;
+    color: #64748b;
+  }
+
+  .backup-option:hover .backup-option-icon,
+  .backup-option.selected .backup-option-icon {
+    background: #d1fae5;
+    color: #10b981;
+  }
+
+  .backup-option-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+  }
+
+  .backup-option-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #94a3b8;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  @media (max-width: 768px) {
+    .backup-options {
+      grid-template-columns: 1fr;
+    }
+    .backup-stats {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .table {
+      font-size: 0.875rem;
+    }
+    .btn-group {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'index' %}"><i class="fas fa-home me-1"></i> Accueil</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'admin_maintenance' %}">Maintenance</a>
+      </li>
+      <li class="breadcrumb-item active">Sauvegardes</li>
+    </ol>
+  </nav>
+
+  <!-- En-tête -->
+  <div class="backup-header">
+    <h1 class="backup-title">
+      <i class="fas fa-cloud-upload-alt"></i>
+      Gestion des Sauvegardes
+    </h1>
+    <p class="backup-subtitle">
+      Créez, téléchargez et gérez vos sauvegardes de données
+    </p>
+    <div class="backup-stats">
+      <div class="backup-stat">
+        <div class="backup-stat-value">{{ backups|length }}</div>
+        <div class="backup-stat-label">Sauvegardes</div>
+      </div>
+      <div class="backup-stat">
+        <div class="backup-stat-value">{{ total_size }}</div>
+        <div class="backup-stat-label">Espace utilisé</div>
+      </div>
+      <div class="backup-stat">
+        <div class="backup-stat-value">{{ db_info.size }}</div>
+        <div class="backup-stat-label">Taille DB</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Créer une sauvegarde -->
+  <div class="create-backup-section">
+    <h5 class="create-backup-title">
+      <i class="fas fa-plus-circle me-2 text-success"></i>
+      Créer une nouvelle sauvegarde
+    </h5>
+    <div class="backup-options">
+      <div class="backup-option" data-type="json" onclick="selectBackupType(this, 'json')">
+        <div class="backup-option-icon">
+          <i class="fas fa-file-code"></i>
+        </div>
+        <div class="backup-option-title">JSON (Django)</div>
+        <div class="backup-option-desc">Export des données au format JSON</div>
+      </div>
+      <div class="backup-option" data-type="sqlite" onclick="selectBackupType(this, 'sqlite')">
+        <div class="backup-option-icon">
+          <i class="fas fa-database"></i>
+        </div>
+        <div class="backup-option-title">SQLite</div>
+        <div class="backup-option-desc">Copie directe de la base de données</div>
+      </div>
+      <div class="backup-option" data-type="full" onclick="selectBackupType(this, 'full')">
+        <div class="backup-option-icon">
+          <i class="fas fa-archive"></i>
+        </div>
+        <div class="backup-option-title">Archive complète</div>
+        <div class="backup-option-desc">DB + fichiers media (ZIP)</div>
+      </div>
+    </div>
+    <div class="text-center mt-4">
+      <button class="btn btn-success" id="createBackupBtn" onclick="createBackup()" disabled>
+        <i class="fas fa-cloud-upload-alt"></i>
+        Créer la sauvegarde
+      </button>
+    </div>
+  </div>
+
+  <!-- Liste des sauvegardes -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <i class="fas fa-history"></i>
+        Historique des sauvegardes
+      </h5>
+      <span class="text-muted">{{ backups|length }} fichier(s)</span>
+    </div>
+    <div class="card-body p-0">
+      {% if backups %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fichier</th>
+            <th>Type</th>
+            <th>Taille</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for backup in backups %}
+          <tr id="backup-{{ forloop.counter }}">
+            <td>
+              <div class="backup-filename">
+                <i class="fas fa-file-archive"></i>
+                {{ backup.filename }}
+              </div>
+            </td>
+            <td>
+              <span class="backup-type {% if backup.type == 'JSON' %}json{% elif backup.type == 'SQLite' %}sqlite{% else %}zip{% endif %}">
+                {{ backup.type }}
+              </span>
+            </td>
+            <td>{{ backup.size }}</td>
+            <td>{{ backup.created|date:"d/m/Y H:i" }}</td>
+            <td>
+              <div class="btn-group">
+                <a href="{% url 'backup_telecharger' backup.filename %}" class="btn btn-sm btn-outline" title="Télécharger">
+                  <i class="fas fa-download"></i>
+                </a>
+                <button class="btn btn-sm btn-warning" onclick="restoreBackup('{{ backup.filename }}')" title="Restaurer">
+                  <i class="fas fa-undo"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteBackup('{{ backup.filename }}')" title="Supprimer">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h5>Aucune sauvegarde</h5>
+        <p>Créez votre première sauvegarde pour protéger vos données</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Retour -->
+  <div class="mt-4">
+    <a href="{% url 'admin_maintenance' %}" class="btn btn-outline">
+      <i class="fas fa-arrow-left"></i> Retour à la maintenance
+    </a>
+  </div>
+</div>
+
+<!-- Modal de confirmation restauration -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Confirmation de restauration
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Attention !</strong> Cette action va restaurer la base de données à partir de la sauvegarde sélectionnée.</p>
+        <p>Une sauvegarde de sécurité sera créée avant la restauration.</p>
+        <p class="text-danger mb-0"><strong>Cette opération est irréversible.</strong></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-warning" id="confirmRestoreBtn">
+          <i class="fas fa-undo"></i> Restaurer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+let selectedBackupType = null;
+
+function showNotification(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  toast.innerHTML = `
+    <div class="d-flex align-items-center">
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+      <span>${message}</span>
+      <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function selectBackupType(element, type) {
+  // Désélectionner tous
+  document.querySelectorAll('.backup-option').forEach(el => el.classList.remove('selected'));
+  // Sélectionner celui-ci
+  element.classList.add('selected');
+  selectedBackupType = type;
+  // Activer le bouton
+  document.getElementById('createBackupBtn').disabled = false;
+}
+
+function createBackup() {
+  if (!selectedBackupType) {
+    showNotification('Veuillez sélectionner un type de sauvegarde', 'warning');
+    return;
+  }
+  
+  const btn = document.getElementById('createBackupBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner spinning"></i> Création en cours...';
+  btn.disabled = true;
+  
+  fetch('{% url "backup_creer" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: `backup_type=${selectedBackupType}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors de la création', 'error');
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  });
+}
+
+function deleteBackup(filename) {
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer "${filename}" ?`)) return;
+  
+  fetch(`{% url 'backup_supprimer' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', filename), {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors de la suppression', 'error');
+  });
+}
+
+let fileToRestore = null;
+
+function restoreBackup(filename) {
+  fileToRestore = filename;
+  const modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+  modal.show();
+}
+
+document.getElementById('confirmRestoreBtn').addEventListener('click', function() {
+  if (!fileToRestore) return;
+  
+  const btn = this;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner spinning"></i> Restauration...';
+  btn.disabled = true;
+  
+  fetch(`{% url 'backup_restaurer' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', fileToRestore), {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    bootstrap.Modal.getInstance(document.getElementById('restoreModal')).hide();
+    if (data.success) {
+      showNotification(data.message, 'success');
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors de la restauration', 'error');
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  });
+});
+</script>
+{% endblock %}

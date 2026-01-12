@@ -1,0 +1,19 @@
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.form-switch .form-check-input {
+  width: 3em;
+  height: 1.5em;
+}
+
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .d-flex.justify-content-between .btn {
+    width: 100%;
+  }
+}

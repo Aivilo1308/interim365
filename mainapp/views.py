@@ -20,15 +20,124 @@ from django.contrib.auth.password_validation import validate_password
 import json
 import logging
 import traceback
+import time
+from functools import wraps
 
 # Import des modèles depuis le fichier models.py fourni
 from .models import *
 
+# ================================================================
+# CONFIGURATION LOGGING AVANCÉ
+# ================================================================
+
+logger = logging.getLogger('interim')
+action_logger = logging.getLogger('interim.actions')
+anomaly_logger = logging.getLogger('interim.anomalies')
+perf_logger = logging.getLogger('interim.performance')
+
+def log_action(category, action, message, request=None, **kwargs):
+    """Log une action utilisateur avec contexte"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    ip_addr = "-"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+        ip_addr = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '-'))
+        if ',' in ip_addr:
+            ip_addr = ip_addr.split(',')[0].strip()
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [{category}] [{action}] [User:{user_info}] [IP:{ip_addr}] {extra_info} {message}"
+    
+    action_logger.info(log_msg)
+    logger.info(log_msg)
+
+def log_anomalie(category, message, severite='WARNING', request=None, **kwargs):
+    """Log une anomalie détectée"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [ANOMALIE] [{category}] [{severite}] [User:{user_info}] {extra_info} {message}"
+    
+    if severite == 'ERROR':
+        anomaly_logger.error(f"❌ {log_msg}")
+        logger.error(f"❌ ANOMALIE: {log_msg}")
+    elif severite == 'CRITICAL':
+        anomaly_logger.critical(f"🔥 {log_msg}")
+        logger.critical(f"🔥 ANOMALIE CRITIQUE: {log_msg}")
+    else:
+        anomaly_logger.warning(f"⚠️ {log_msg}")
+        logger.warning(f"⚠️ ANOMALIE: {log_msg}")
+
+def log_resume(operation, stats, duree_ms=None):
+    """Log un résumé d'opération avec statistiques"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    lines = [
+        "",
+        "=" * 60,
+        f"📊 RÉSUMÉ: {operation}",
+        "=" * 60,
+        f"⏰ Date/Heure: {timestamp}",
+    ]
+    
+    if duree_ms is not None:
+        if duree_ms >= 60000:
+            duree_str = f"{duree_ms/60000:.1f} min"
+        elif duree_ms >= 1000:
+            duree_str = f"{duree_ms/1000:.1f} sec"
+        else:
+            duree_str = f"{duree_ms:.0f} ms"
+        lines.append(f"⏱️ Durée: {duree_str}")
+    
+    lines.append("📈 Statistiques:")
+    for key, value in stats.items():
+        icon = '✅' if 'succes' in key.lower() or 'ok' in key.lower() else \
+               '❌' if 'erreur' in key.lower() or 'echec' in key.lower() else \
+               '⚠️' if 'warning' in key.lower() or 'anomalie' in key.lower() else '•'
+        lines.append(f"   {icon} {key}: {value}")
+    
+    # Statut global
+    erreurs = stats.get('erreurs', 0) + stats.get('echecs', 0)
+    if erreurs == 0:
+        lines.append("✅ Statut: SUCCÈS")
+    elif erreurs > 5:
+        lines.append("❌ Statut: ÉCHEC - Vérification requise")
+    else:
+        lines.append("⚠️ Statut: SUCCÈS PARTIEL")
+    
+    lines.extend(["=" * 60, ""])
+    
+    resume_text = '\n'.join(lines)
+    perf_logger.info(resume_text)
+    logger.info(resume_text)
+
+def log_erreur(category, message, exception=None, request=None, **kwargs):
+    """Log une erreur avec stack trace"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [ERREUR] [{category}] [User:{user_info}] {extra_info} {message}"
+    
+    if exception:
+        log_msg += f"\n  Exception: {type(exception).__name__}: {str(exception)}"
+        log_msg += f"\n  Stack trace:\n{traceback.format_exc()}"
+    
+    logger.error(log_msg)
+    anomaly_logger.error(log_msg)
+
 from .services.manager_proposals import ManagerProposalsService
 from .services.scoring_service import ScoringInterimService
 from .services.workflow_service import WorkflowIntegrationService
-
-logger = logging.getLogger(__name__)
 
 # ================================================================
 # UTILITAIRES SUPERUTILISATEUR
@@ -1275,14 +1384,19 @@ def connexion_view(request):
     
     # Si l'utilisateur est déjà connecté, rediriger selon son profil
     if request.user.is_authenticated:
+        log_action('AUTH', 'DEJA_CONNECTE', f"Utilisateur déjà connecté, redirection", request=request)
         return _redirect_according_to_profile(request.user)
     
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
+        ip_addr = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '-'))
+        
+        log_action('AUTH', 'TENTATIVE_CONNEXION', f"Tentative de connexion", request=request, username=username)
         
         # Validation des champs
         if not username or not password:
+            log_anomalie('AUTH', f"Champs vides lors de la connexion", severite='INFO', request=request, username=username)
             messages.error(request, "Veuillez saisir votre nom d'utilisateur et mot de passe")
             return render(request, 'auth/connexion.html', {
                 'username': username
@@ -1296,7 +1410,13 @@ def connexion_view(request):
             if user.is_superuser:
                 # Connexion directe pour les superutilisateurs
                 login(request, user)
-                logger.info(f"Connexion superutilisateur: {user.username}")
+                log_action('AUTH', 'CONNEXION_SUPERUSER', f"Connexion superutilisateur réussie", request=request)
+                log_resume('CONNEXION', {
+                    'utilisateur': username,
+                    'type': 'SUPERUSER',
+                    'ip': ip_addr,
+                    'statut': 'SUCCÈS'
+                })
                 messages.success(request, f"Bienvenue Superutilisateur {user.username}")
                 return _redirect_according_to_profile(user)
             
@@ -1308,6 +1428,9 @@ def connexion_view(request):
                 niveaux_autorises = ['CHEF_EQUIPE', 'RESPONSABLE', 'DIRECTEUR', 'RH', 'ADMIN']
                 
                 if profil.type_profil not in niveaux_autorises:
+                    log_anomalie('AUTH', f"Accès refusé - Niveau non autorisé: {profil.type_profil}", 
+                                severite='WARNING', request=request, username=username, 
+                                type_profil=profil.type_profil)
                     messages.error(request, 
                         "Accès réservé aux utilisateurs avec des responsabilités managériales")
                     return render(request, 'auth/connexion.html', {
@@ -1316,6 +1439,9 @@ def connexion_view(request):
                 
                 # Vérifier que le profil est actif
                 if not profil.actif or profil.statut_employe != 'ACTIF':
+                    log_anomalie('AUTH', f"Accès refusé - Profil inactif", 
+                                severite='WARNING', request=request, username=username,
+                                matricule=profil.matricule, statut=profil.statut_employe)
                     messages.error(request, 
                         "Votre compte n'est pas actif. Contactez l'administrateur.")
                     return render(request, 'auth/connexion.html', {
@@ -1325,8 +1451,19 @@ def connexion_view(request):
                 # Connexion réussie
                 login(request, user)
                 
-                # Log de connexion
-                logger.info(f"Connexion réussie: {user.username} ({profil.type_profil})")
+                # Log de connexion détaillé
+                log_action('AUTH', 'CONNEXION_REUSSIE', f"Connexion réussie", request=request,
+                          matricule=profil.matricule, type_profil=profil.type_profil,
+                          departement=profil.departement.nom if profil.departement else None)
+                
+                log_resume('CONNEXION', {
+                    'utilisateur': username,
+                    'matricule': profil.matricule,
+                    'type_profil': profil.type_profil,
+                    'departement': profil.departement.nom if profil.departement else '-',
+                    'ip': ip_addr,
+                    'statut': 'SUCCÈS'
+                })
                 
                 # Message de bienvenue
                 messages.success(request, f"Bienvenue {profil.nom_complet}")
@@ -1335,14 +1472,16 @@ def connexion_view(request):
                 return _redirect_according_to_profile(user)
                 
             except ProfilUtilisateur.DoesNotExist:
+                log_anomalie('AUTH', f"Connexion sans profil utilisateur", 
+                            severite='ERROR', request=request, username=username, user_id=user.id)
                 messages.error(request, 
                     "Aucun profil trouvé pour cet utilisateur. Contactez l'administrateur.")
-                logger.warning(f"Tentative de connexion sans profil: {user.username}")
                 
         else:
             # Échec d'authentification
+            log_anomalie('AUTH', f"Échec authentification - Identifiants invalides", 
+                        severite='WARNING', request=request, username=username, ip=ip_addr)
             messages.error(request, "Nom d'utilisateur ou mot de passe incorrect")
-            logger.warning(f"Échec de connexion pour: {username}")
     
     return render(request, 'auth/connexion.html')
 
@@ -1350,9 +1489,30 @@ def connexion_view(request):
 def deconnexion_view(request):
     """Vue de déconnexion"""
     user_name = request.user.username
+    user_id = request.user.id
+    
+    # Récupérer infos profil avant déconnexion
+    try:
+        profil = ProfilUtilisateur.objects.get(user=request.user)
+        matricule = profil.matricule
+        type_profil = profil.type_profil
+    except:
+        matricule = '-'
+        type_profil = 'SUPERUSER' if request.user.is_superuser else '-'
+    
+    log_action('AUTH', 'DECONNEXION', f"Déconnexion utilisateur", request=request,
+              matricule=matricule, type_profil=type_profil)
+    
     logout(request)
+    
+    log_resume('DECONNEXION', {
+        'utilisateur': user_name,
+        'matricule': matricule,
+        'type_profil': type_profil,
+        'statut': 'SUCCÈS'
+    })
+    
     messages.success(request, "Vous avez été déconnecté avec succès")
-    logger.info(f"Déconnexion: {user_name}")
     return redirect('connexion')
 
 # ================================================================
@@ -1909,6 +2069,10 @@ def index_n2_directeur(request):
 @user_passes_test(lambda u: _check_rh_admin_or_superuser(u), login_url='connexion')
 def index_n3_global(request):
     """Vue index N+3 pour RH/ADMIN/SUPERUSER - Version corrigée pour property nom_complet"""
+    start_time = time.time()
+    
+    log_action('DASHBOARD', 'ACCES_N3_GLOBAL', "Accès dashboard global N3", request=request)
+    
     try:
         # Gestion spéciale pour les superutilisateurs - CRÉER VRAI PROFIL
         try:
@@ -1932,10 +2096,12 @@ def index_n3_global(request):
                 )
                 
                 if created:
-                    logger.info(f"Profil admin créé automatiquement pour superutilisateur: {request.user.username}")
-                    logger.info(f"Nom complet généré automatiquement: {profil_utilisateur.nom_complet}")
+                    log_action('ADMIN', 'CREATION_PROFIL_SUPERUSER', 
+                             f"Profil admin créé automatiquement pour superutilisateur", request=request)
                     messages.info(request, "Profil administrateur créé automatiquement pour votre compte superutilisateur")
             else:
+                log_anomalie('AUTH', "Profil utilisateur non trouvé pour accès N3", 
+                            severite='ERROR', request=request)
                 messages.error(request, "Profil utilisateur non trouvé")
                 return redirect('connexion')
         
@@ -2178,10 +2344,37 @@ def index_n3_global(request):
             }
         }
         
+        # Log résumé du chargement dashboard
+        duree_ms = (time.time() - start_time) * 1000
+        log_resume('DASHBOARD_N3_GLOBAL', {
+            'utilisateur': request.user.username,
+            'type_profil': profil_utilisateur.type_profil if hasattr(profil_utilisateur, 'type_profil') else 'SUPERUSER',
+            'demandes_total': cached_stats.get('demandes_total', 0),
+            'demandes_en_attente': cached_stats.get('demandes_en_attente_validation', 0),
+            'employes_total': cached_stats.get('employes_total', 0),
+            'taux_validation': f"{cached_stats.get('taux_validation_global', 0)}%",
+            'alertes': len(notifications),
+        }, duree_ms=duree_ms)
+        
+        # Détecter anomalies
+        if cached_stats.get('demandes_en_attente_validation', 0) > 20:
+            log_anomalie('WORKFLOW', f"Nombre élevé de demandes en attente: {cached_stats['demandes_en_attente_validation']}",
+                        severite='WARNING', request=request)
+        
+        if cached_stats.get('taux_validation_global', 100) < 50:
+            log_anomalie('WORKFLOW', f"Taux de validation bas: {cached_stats['taux_validation_global']}%",
+                        severite='INFO', request=request)
+        
         return render(request, 'dashboard/index_n3_global.html', context)
         
     except Exception as e:
-        logger.error(f"Erreur critique vue globale: {e}", exc_info=True)
+        duree_ms = (time.time() - start_time) * 1000
+        log_erreur('DASHBOARD', f"Erreur critique vue globale N3", exception=e, request=request)
+        log_resume('DASHBOARD_N3_GLOBAL', {
+            'utilisateur': request.user.username,
+            'statut': 'ERREUR',
+            'erreur': str(e)[:100]
+        }, duree_ms=duree_ms)
         
         if request.user.is_superuser:
             # Fallback spécial pour superutilisateur en cas d'erreur critique
@@ -2297,6 +2490,8 @@ def interim_demande(request):
     - Combinaison des deux
     - Création classique sans candidat
     """
+    start_time = time.time()
+    
     try:
         # Récupérer le profil utilisateur
         try:
@@ -2315,13 +2510,18 @@ def interim_demande(request):
                     }
                 )
                 if created:
-                    logger.info(f"Profil créé automatiquement pour superutilisateur: {request.user.username}")
+                    log_action('ADMIN', 'CREATION_PROFIL_SUPERUSER', 
+                             "Profil créé automatiquement pour superutilisateur", request=request)
             else:
+                log_anomalie('AUTH', "Profil utilisateur non trouvé pour création demande", 
+                            severite='ERROR', request=request)
                 messages.error(request, "Profil utilisateur non trouvé")
                 return redirect('connexion')
         
         # Vérifier les permissions
         if not _peut_creer_demande_interim(profil_utilisateur):
+            log_anomalie('DEMANDE', "Tentative création demande sans autorisation", 
+                        severite='WARNING', request=request, type_profil=profil_utilisateur.type_profil)
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': False,
@@ -2332,10 +2532,11 @@ def interim_demande(request):
                 
         # Traitement POST - Création de la demande avec gestion complète
         if request.method == 'POST':
+            log_action('DEMANDE', 'TENTATIVE_CREATION', "Tentative de création de demande", request=request)
             try:
                 return _traiter_creation_demande_complete(request, profil_utilisateur)
             except Exception as e:
-                logger.error(f"Erreur traitement POST: {e}")
+                log_erreur('DEMANDE', "Erreur traitement création demande", exception=e, request=request)
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({
                         'success': False,
@@ -2346,11 +2547,19 @@ def interim_demande(request):
                     return redirect('interim_demande')
         
         # Affichage GET - Préparer les données pour le formulaire
+        log_action('DEMANDE', 'FORMULAIRE_CREATION', "Affichage formulaire création demande", request=request)
         context = _preparer_contexte_formulaire(profil_utilisateur)
+        
+        duree_ms = (time.time() - start_time) * 1000
+        if duree_ms > 2000:
+            log_anomalie('PERFORMANCE', f"Chargement formulaire lent: {duree_ms:.0f}ms", 
+                        severite='WARNING', request=request)
+        
         return render(request, 'interim_demande.html', context)
         
     except Exception as e:
-        logger.error(f"Erreur vue interim_demande: {e}")
+        duree_ms = (time.time() - start_time) * 1000
+        log_erreur('DEMANDE', "Erreur vue interim_demande", exception=e, request=request)
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
@@ -2365,7 +2574,8 @@ def _traiter_creation_demande_complete(request, profil_utilisateur):
     """
     Traite la création complète d'une demande avec toutes les combinaisons de candidats
     """
-    logger.info("🚀 DEBUT _traiter_creation_demande_complete")
+    start_time = time.time()
+    log_action('DEMANDE', 'DEBUT_CREATION', "Début création demande complète", request=request)
     
     # Récupérer les données du formulaire
     donnees_demande = _extraire_donnees_demande(request.POST)
@@ -2376,16 +2586,17 @@ def _traiter_creation_demande_complete(request, profil_utilisateur):
     candidat_specifique = _extraire_candidat_specifique(request.POST)
     mode_creation = request.POST.get('mode_creation', 'classique')
     
-    logger.info(f"Mode création: {mode_creation}")
-    logger.info(f"Candidats automatiques: {len(candidats_automatiques)}")
-    logger.info(f"Candidats sélectionnés: {len(candidats_selectionnes)}")
-    logger.info(f"Candidat spécifique: {'Oui' if candidat_specifique else 'Non'}")
+    log_action('DEMANDE', 'EXTRACTION_DONNEES', 
+              f"Mode: {mode_creation}, Candidats auto: {len(candidats_automatiques)}, Sélectionnés: {len(candidats_selectionnes)}",
+              request=request, mode=mode_creation)
     
     # Validation des données de base
     try:
         _valider_donnees_demande(donnees_demande)
         _valider_coherence_departement(donnees_demande)
     except ValidationError as e:
+        log_anomalie('DEMANDE', f"Validation données échouée: {str(e)}", 
+                    severite='WARNING', request=request)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': str(e)})
         messages.error(request, str(e))
@@ -2395,6 +2606,8 @@ def _traiter_creation_demande_complete(request, profil_utilisateur):
     try:
         _valider_donnees_candidats(request.POST, mode_creation, candidats_selectionnes, candidat_specifique)
     except ValidationError as e:
+        log_anomalie('DEMANDE', f"Validation candidats échouée: {str(e)}", 
+                    severite='WARNING', request=request)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': str(e)})
         messages.error(request, str(e))
@@ -2436,8 +2649,21 @@ def _traiter_creation_demande_complete(request, profil_utilisateur):
                 candidats_automatiques, candidats_selectionnes, candidat_specifique, request
             )
             
-            logger.info(f"Demande créée avec succès: {demande.numero_demande}")
-            logger.info(f"Propositions créées: {len(propositions_creees)}")
+            # Log de succès avec résumé
+            duree_ms = (time.time() - start_time) * 1000
+            log_action('DEMANDE', 'CREATION_REUSSIE', 
+                      f"Demande {demande.numero_demande} créée avec succès",
+                      request=request, demande_id=demande.id, numero=demande.numero_demande)
+            
+            log_resume('CREATION_DEMANDE', {
+                'numero_demande': demande.numero_demande,
+                'demande_id': demande.id,
+                'demandeur': profil_utilisateur.nom_complet,
+                'mode_creation': mode_creation,
+                'candidats_proposes': len(propositions_creees),
+                'urgence': donnees_demande.get('urgence', 'NORMALE'),
+                'statut': 'SUCCÈS'
+            }, duree_ms=duree_ms)
             
             # 5. Préparer la réponse
             response_data = {
@@ -6006,7 +6232,12 @@ def demande_interim_validation(request, demande_id):
     """
     Vue de validation complète - VERSION AMÉLIORÉE avec scores détaillés
     """
+    start_time = time.time()
+    
     try:
+        log_action('VALIDATION', 'ACCES_VALIDATION', f"Accès page validation demande #{demande_id}", 
+                  request=request, demande_id=demande_id)
+        
         # Vérifications préliminaires
         profil_utilisateur = getattr(request.user, 'profilutilisateur', None)
         if not profil_utilisateur:
@@ -6014,31 +6245,41 @@ def demande_interim_validation(request, demande_id):
                 try:
                     profil_utilisateur = get_profil_or_virtual(request.user)
                 except Exception as e:
-                    logger.error(f"Erreur création profil virtuel: {e}")
+                    log_erreur('VALIDATION', "Erreur création profil virtuel", exception=e, request=request)
                     messages.error(request, "Impossible de créer le profil utilisateur")
                     return redirect('index')
             else:
+                log_anomalie('VALIDATION', "Accès validation sans profil utilisateur", 
+                            severite='WARNING', request=request, demande_id=demande_id)
                 messages.error(request, "Profil utilisateur non trouvé")
                 return redirect('index')
         
         try:
             demande = get_object_or_404(DemandeInterim, id=demande_id)
         except Http404:
+            log_anomalie('VALIDATION', f"Demande #{demande_id} non trouvée", 
+                        severite='WARNING', request=request, demande_id=demande_id)
             messages.error(request, f"Demande d'intérim #{demande_id} non trouvée")
             return redirect('index')
         
         # Vérifier les permissions de validation
         permissions = _get_permissions_validation_detaillees(profil_utilisateur, demande)
         if not permissions['peut_valider']:
+            log_anomalie('VALIDATION', f"Accès refusé: {permissions['raison_refus']}", 
+                        severite='WARNING', request=request, demande_id=demande_id,
+                        type_profil=profil_utilisateur.type_profil)
             messages.error(request, permissions['raison_refus'])
             return redirect('demande_detail', demande_id=demande.id)
         
         # Traitement POST si nécessaire
         if request.method == 'POST':
+            log_action('VALIDATION', 'SOUMISSION_VALIDATION', f"Soumission validation demande #{demande_id}",
+                      request=request, demande_id=demande_id)
             try:
                 return _traiter_validation_workflow_complete(request, demande, profil_utilisateur)
             except Exception as e:
-                logger.error(f"Erreur traitement validation: {e}")
+                log_erreur('VALIDATION', f"Erreur traitement validation demande #{demande_id}", 
+                          exception=e, request=request, demande_id=demande_id)
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({
                         'success': False,
@@ -6097,13 +6338,26 @@ def demande_interim_validation(request, demande_id):
             }
         }
         
-        logger.info(f"Vue validation chargée - {len(propositions_precedentes)} propositions + {len(candidats_automatiques)} candidats automatiques")
+        duree_ms = (time.time() - start_time) * 1000
+        log_action('VALIDATION', 'CHARGEMENT_TERMINE', 
+                  f"Vue validation chargée - {len(propositions_precedentes)} propositions",
+                  request=request, demande_id=demande_id, propositions=len(propositions_precedentes))
+        
+        # Détection anomalies
+        if len(propositions_precedentes) == 0 and demande.statut == 'EN_VALIDATION':
+            log_anomalie('VALIDATION', f"Demande en validation sans proposition", 
+                        severite='WARNING', request=request, demande_id=demande_id)
+        
+        if duree_ms > 3000:
+            log_anomalie('PERFORMANCE', f"Chargement validation lent: {duree_ms:.0f}ms", 
+                        severite='WARNING', request=request)
         
         return render(request, 'interim_validation.html', context)
         
     except Exception as e:
-        logger.error(f"Erreur générale vue validation: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        duree_ms = (time.time() - start_time) * 1000
+        log_erreur('VALIDATION', f"Erreur générale vue validation demande #{demande_id}", 
+                  exception=e, request=request, demande_id=demande_id)
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
@@ -12411,10 +12665,17 @@ def obtenir_validateurs_niveau(demande, niveau):
 @require_POST
 def approuver_demande_view(request, demande_id):
     """Approuve directement une demande d'intérim"""
+    start_time = time.time()
+    
     try:
+        log_action('VALIDATION', 'TENTATIVE_APPROBATION', f"Tentative approbation demande #{demande_id}",
+                  request=request, demande_id=demande_id)
+        
         # Récupérer les objets nécessaires
         profil_utilisateur = get_profil_or_virtual(request.user)
         if not profil_utilisateur:
+            log_anomalie('VALIDATION', "Approbation sans profil utilisateur", 
+                        severite='ERROR', request=request, demande_id=demande_id)
             messages.error(request, "Profil utilisateur non trouvé")
             return redirect('interim_validation_liste')
         
@@ -12423,6 +12684,9 @@ def approuver_demande_view(request, demande_id):
         # Vérifier les permissions
         peut_valider, raison = verifier_permissions_validation(profil_utilisateur, demande)
         if not peut_valider:
+            log_anomalie('VALIDATION', f"Permission approbation refusée: {raison}", 
+                        severite='WARNING', request=request, demande_id=demande_id,
+                        type_profil=profil_utilisateur.type_profil)
             messages.error(request, f"Permission refusée: {raison}")
             return redirect('interim_validation', demande.id)
         
@@ -12432,6 +12696,8 @@ def approuver_demande_view(request, demande_id):
         candidat_final = request.POST.get('candidat_final')
         
         if not commentaire:
+            log_anomalie('VALIDATION', "Approbation sans commentaire", 
+                        severite='INFO', request=request, demande_id=demande_id)
             messages.error(request, "Un commentaire est obligatoire")
             return redirect('interim_validation', demande.id)
         
@@ -12511,11 +12777,30 @@ def approuver_demande_view(request, demande_id):
             
             # Créer les notifications
             creer_notification_validation(demande, validation, "approuvée")
+            
+            # Log de succès
+            duree_ms = (time.time() - start_time) * 1000
+            log_action('VALIDATION', 'APPROBATION_REUSSIE', 
+                      f"Demande {demande.numero_demande} approuvée niveau {niveau_validation}",
+                      request=request, demande_id=demande_id, niveau=niveau_validation)
+            
+            log_resume('APPROBATION_DEMANDE', {
+                'numero_demande': demande.numero_demande,
+                'demande_id': demande_id,
+                'validateur': profil_utilisateur.nom_complet,
+                'type_validation': type_validation,
+                'niveau_validation': niveau_validation,
+                'candidats_retenus': len(candidats_data),
+                'statut_final': demande.statut,
+                'statut': 'SUCCÈS'
+            }, duree_ms=duree_ms)
         
         return redirect('interim_validation_liste')
         
     except Exception as e:
-        logger.error(f"Erreur approbation demande {demande_id}: {e}")
+        duree_ms = (time.time() - start_time) * 1000
+        log_erreur('VALIDATION', f"Erreur approbation demande #{demande_id}", 
+                  exception=e, request=request, demande_id=demande_id)
         messages.error(request, f"Erreur lors de l'approbation: {str(e)}")
         return redirect('interim_validation', demande_id)
 
@@ -12527,10 +12812,17 @@ def approuver_demande_view(request, demande_id):
 @require_POST
 def refuser_demande_view(request, demande_id):
     """Refuse directement une demande d'intérim"""
+    start_time = time.time()
+    
     try:
+        log_action('VALIDATION', 'TENTATIVE_REFUS', f"Tentative refus demande #{demande_id}",
+                  request=request, demande_id=demande_id)
+        
         # Récupérer les objets nécessaires
         profil_utilisateur = get_profil_or_virtual(request.user)
         if not profil_utilisateur:
+            log_anomalie('VALIDATION', "Refus sans profil utilisateur", 
+                        severite='ERROR', request=request, demande_id=demande_id)
             messages.error(request, "Profil utilisateur non trouvé")
             return redirect('interim_validation_liste')
         
@@ -12539,6 +12831,9 @@ def refuser_demande_view(request, demande_id):
         # Vérifier les permissions
         peut_valider, raison = verifier_permissions_validation(profil_utilisateur, demande)
         if not peut_valider:
+            log_anomalie('VALIDATION', f"Permission refus refusée: {raison}", 
+                        severite='WARNING', request=request, demande_id=demande_id,
+                        type_profil=profil_utilisateur.type_profil)
             messages.error(request, f"Permission refusée: {raison}")
             return redirect('interim_validation', demande.id)
         
@@ -12547,6 +12842,8 @@ def refuser_demande_view(request, demande_id):
         motif_refus = request.POST.get('motif_refus', '')
         
         if not commentaire:
+            log_anomalie('VALIDATION', "Refus sans commentaire - bloqué", 
+                        severite='INFO', request=request, demande_id=demande_id)
             messages.error(request, "Un commentaire est obligatoire pour le refus")
             return redirect('interim_validation', demande.id)
         
@@ -12587,12 +12884,30 @@ def refuser_demande_view(request, demande_id):
             
             # Créer les notifications
             creer_notification_validation(demande, validation, "refusée")
+            
+            # Log de succès
+            duree_ms = (time.time() - start_time) * 1000
+            log_action('VALIDATION', 'REFUS_REUSSI', 
+                      f"Demande {demande.numero_demande} refusée niveau {niveau_validation}",
+                      request=request, demande_id=demande_id, niveau=niveau_validation)
+            
+            log_resume('REFUS_DEMANDE', {
+                'numero_demande': demande.numero_demande,
+                'demande_id': demande_id,
+                'validateur': profil_utilisateur.nom_complet,
+                'type_validation': type_validation,
+                'niveau_validation': niveau_validation,
+                'motif_refus': motif_refus or 'Non spécifié',
+                'statut': 'REFUSÉE'
+            }, duree_ms=duree_ms)
         
         messages.success(request, "Demande refusée avec succès")
         return redirect('interim_validation_liste')
         
     except Exception as e:
-        logger.error(f"Erreur refus demande {demande_id}: {e}")
+        duree_ms = (time.time() - start_time) * 1000
+        log_erreur('VALIDATION', f"Erreur refus demande #{demande_id}", 
+                  exception=e, request=request, demande_id=demande_id)
         messages.error(request, f"Erreur lors du refus: {str(e)}")
         return redirect('interim_validation', demande_id)
 
@@ -17310,4 +17625,3 @@ def _format_temps_restant(timedelta_obj):
             
     except Exception:
         return "N/A"
-

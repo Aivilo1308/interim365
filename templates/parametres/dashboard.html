@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paramètres Globaux et Workflow{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'index' %}">
+          <i class="fas fa-home me-1"></i> Accueil
+        </a>
+      </li>
+      <li class="breadcrumb-item active">
+        <i class="fas fa-cogs me-1"></i> Paramètres Globaux
+      </li>
+    </ol>
+  </nav>
+
+  <!-- En-tête de la page -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white py-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+          <i class="fas fa-sliders-h me-2"></i>
+          Paramètres Globaux et Workflow
+        </h4>
+        <div class="btn-group">
+          <a href="{% url 'parametres_export' %}" class="btn btn-light btn-sm">
+            <i class="fas fa-download me-1"></i> Exporter
+          </a>
+          <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalImport">
+            <i class="fas fa-upload me-1"></i> Importer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerte d'information -->
+  <div class="alert alert-info mb-4">
+    <div class="d-flex">
+      <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+      <div>
+        <strong>Configuration du système</strong>
+        <p class="mb-0">
+          Cette section permet de configurer les paramètres globaux de l'application : 
+          API Kelio, critères de scoring, workflow de validation, et entités organisationnelles.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Configuration Technique -->
+  <h5 class="mb-3">
+    <i class="fas fa-server me-2 text-primary"></i>
+    Configuration Technique
+  </h5>
+  
+  <div class="row mb-4">
+    <!-- Configuration API Kelio -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100 border-start border-4 border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-plug fa-lg text-primary"></i>
+            </div>
+            {% if config_kelio %}
+            <span class="badge bg-success">
+              <i class="fas fa-check-circle me-1"></i> Actif
+            </span>
+            {% else %}
+            <span class="badge bg-warning text-dark">
+              <i class="fas fa-exclamation-triangle me-1"></i> Non configuré
+            </span>
+            {% endif %}
+          </div>
+          <h6 class="card-title fw-bold">API Kelio</h6>
+          <p class="card-text text-muted small">
+            {% if config_kelio %}
+            URL: {{ config_kelio.url_base|truncatechars:30 }}<br>
+            Timeout: {{ config_kelio.timeout_seconds }}s
+            {% else %}
+            Aucune configuration active
+            {% endif %}
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <div class="d-flex gap-2">
+            <a href="{% url 'config_kelio_liste' %}" class="btn btn-outline-primary btn-sm flex-fill">
+              <i class="fas fa-cog me-1"></i> Configurer
+            </a>
+            {% if config_kelio %}
+            <button type="button" class="btn btn-outline-success btn-sm" onclick="testerConnexionKelio()">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration Scoring -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100 border-start border-4 border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-balance-scale fa-lg text-success"></i>
+            </div>
+            {% if config_scoring %}
+            <span class="badge bg-success">
+              <i class="fas fa-check-circle me-1"></i> Actif
+            </span>
+            {% else %}
+            <span class="badge bg-warning text-dark">
+              <i class="fas fa-exclamation-triangle me-1"></i> Non configuré
+            </span>
+            {% endif %}
+          </div>
+          <h6 class="card-title fw-bold">Scoring Candidats</h6>
+          <p class="card-text text-muted small">
+            {% if config_scoring %}
+            Config: {{ config_scoring.nom }}<br>
+            {% if config_scoring.configuration_par_defaut %}Par défaut{% endif %}
+            {% else %}
+            Aucune configuration active
+            {% endif %}
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <a href="{% url 'config_scoring_liste' %}" class="btn btn-outline-success btn-sm w-100">
+            <i class="fas fa-cog me-1"></i> Configurer
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache API -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100 border-start border-4 border-warning">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-database fa-lg text-warning"></i>
+            </div>
+            <span class="badge bg-secondary">
+              {{ stats.cache_entries }} entrées
+            </span>
+          </div>
+          <h6 class="card-title fw-bold">Cache API</h6>
+          <p class="card-text text-muted small">
+            Gestion du cache des appels API Kelio pour optimiser les performances.
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <div class="d-flex gap-2">
+            <a href="{% url 'cache_kelio_liste' %}" class="btn btn-outline-warning btn-sm flex-fill">
+              <i class="fas fa-eye me-1"></i> Voir
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="purgerCache()">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100 border-start border-4 border-info">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="bg-info bg-opacity-10 rounded-circle p-3">
+              <i class="fas fa-project-diagram fa-lg text-info"></i>
+            </div>
+            <span class="badge bg-info">
+              {{ stats.workflow_etapes }} étapes
+            </span>
+          </div>
+          <h6 class="card-title fw-bold">Workflow Validation</h6>
+          <p class="card-text text-muted small">
+            Configuration des étapes de validation des demandes d'intérim.
+          </p>
+        </div>
+        <div class="card-footer bg-transparent border-0 pt-0">
+          <a href="{% url 'workflow_etapes_liste' %}" class="btn btn-outline-info btn-sm w-100">
+            <i class="fas fa-cog me-1"></i> Configurer
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Entités Organisationnelles -->
+  <h5 class="mb-3">
+    <i class="fas fa-sitemap me-2 text-primary"></i>
+    Entités Organisationnelles
+  </h5>
+
+  <div class="row">
+    <!-- Départements -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-secondary text-white py-2">
+          <h6 class="mb-0">
+            <i class="fas fa-building me-2"></i> Départements
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Total</span>
+            <span class="fw-bold">{{ stats.departements_total }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Actifs</span>
+            <span class="fw-bold text-success">{{ stats.departements_count }}</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex gap-2">
+            <a href="{% url 'departements_liste' %}" class="btn btn-outline-secondary btn-sm flex-fill">
+              <i class="fas fa-list me-1"></i> Gérer
+            </a>
+            <a href="{% url 'departement_ajouter' %}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-plus"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sites -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-secondary text-white py-2">
+          <h6 class="mb-0">
+            <i class="fas fa-map-marker-alt me-2"></i> Sites
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Total</span>
+            <span class="fw-bold">{{ stats.sites_total }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Actifs</span>
+            <span class="fw-bold text-success">{{ stats.sites_count }}</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex gap-2">
+            <a href="{% url 'sites_liste' %}" class="btn btn-outline-secondary btn-sm flex-fill">
+              <i class="fas fa-list me-1"></i> Gérer
+            </a>
+            <a href="{% url 'site_ajouter' %}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-plus"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Postes -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-secondary text-white py-2">
+          <h6 class="mb-0">
+            <i class="fas fa-briefcase me-2"></i> Postes
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Total</span>
+            <span class="fw-bold">{{ stats.postes_total }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Actifs</span>
+            <span class="fw-bold text-success">{{ stats.postes_count }}</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex gap-2">
+            <a href="{% url 'postes_liste' %}" class="btn btn-outline-secondary btn-sm flex-fill">
+              <i class="fas fa-list me-1"></i> Gérer
+            </a>
+            <a href="{% url 'poste_ajouter' %}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-plus"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motifs d'Absence -->
+    <div class="col-lg-6 col-xl-3 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-secondary text-white py-2">
+          <h6 class="mb-0">
+            <i class="fas fa-calendar-times me-2"></i> Motifs d'Absence
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Total</span>
+            <span class="fw-bold">{{ stats.motifs_total }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Actifs</span>
+            <span class="fw-bold text-success">{{ stats.motifs_count }}</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex gap-2">
+            <a href="{% url 'motifs_absence_liste' %}" class="btn btn-outline-secondary btn-sm flex-fill">
+              <i class="fas fa-list me-1"></i> Gérer
+            </a>
+            <a href="{% url 'motif_absence_ajouter' %}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-plus"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Import -->
+<div class="modal fade" id="modalImport" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-upload me-2"></i> Importer des paramètres
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formImport" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Attention :</strong> L'import peut créer ou modifier des données existantes.
+          </div>
+          <div class="mb-3">
+            <label for="fichierImport" class="form-label fw-semibold">
+              <i class="fas fa-file-code me-1 text-primary"></i>
+              Fichier JSON
+            </label>
+            <input type="file" class="form-control" id="fichierImport" name="fichier" accept=".json" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i> Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" id="btnImport">
+            <i class="fas fa-upload me-1"></i> Importer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.border-4 { border-width: 4px !important; }
+.card { transition: transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; }
+.bg-opacity-10 { --bs-bg-opacity: 0.1; }
+</style>
+
+<script>
+function testerConnexionKelio() {
+  fetch('{% url "config_kelio_tester" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+  })
+  .then(response => response.json())
+  .then(data => alert(data.success ? '✅ ' + data.message : '❌ ' + data.message));
+}
+
+function purgerCache() {
+  if (!confirm('Êtes-vous sûr de vouloir purger le cache expiré ?')) return;
+  fetch('{% url "cache_kelio_purger" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'type=expired'
+  })
+  .then(response => response.json())
+  .then(data => { alert(data.success ? '✅ ' + data.message : '❌ ' + data.message); if(data.success) location.reload(); });
+}
+
+document.getElementById('formImport').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  fetch('{% url "parametres_import" %}', { method: 'POST', body: formData })
+  .then(response => response.json())
+  .then(data => { alert(data.success ? '✅ ' + data.message : '❌ ' + data.message); if(data.success) location.reload(); });
+});
+</script>
+{% endblock %}

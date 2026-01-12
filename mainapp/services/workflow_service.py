@@ -1,15 +1,24 @@
 # -*- coding: utf-8 -*-
 # services/workflow_integration_service.py
 """
-Service d'integration complete du workflow d'interim
+Service d'integration complete du workflow d'interim - Version 2.1
 Orchestre les propositions manageriales, le scoring et les validations
+
+NOUVEAUTÉS V2.1 - LOGGING AVANCÉ :
+- ✅ Système de logging avec résumés détaillés
+- ✅ Détection automatique d'anomalies workflow
+- ✅ Logs dans fichiers ET base de données (JournalLog)
+- ✅ Métriques de performance intégrées
+- ✅ Configuration via settings.py
 """
 
 from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from typing import Dict, List, Tuple, Optional
 import logging
+import traceback
 
 from ..models import (
     DemandeInterim, ProfilUtilisateur, PropositionCandidat,
@@ -20,7 +29,209 @@ from ..models import (
 from .manager_proposals import ManagerProposalsService
 from .scoring_service import ScoringInterimService
 
-logger = logging.getLogger(__name__)
+# Import optionnel JournalLog
+try:
+    from ..models import JournalLog
+    JOURNAL_LOG_AVAILABLE = True
+except ImportError:
+    JOURNAL_LOG_AVAILABLE = False
+
+# ================================================================
+# CONFIGURATION DU LOGGING AVANCÉ
+# ================================================================
+WORKFLOW_LOGGING_CONFIG = getattr(settings, 'WORKFLOW_LOGGING', {
+    'enabled': True,
+    'log_to_db': True,
+    'log_anomalies': True,
+    'anomaly_thresholds': {
+        'validation_delay_warning_hours': 24,
+        'validation_delay_critical_hours': 72,
+        'propositions_min_expected': 3,
+        'error_rate_warning': 0.10,
+    }
+})
+
+# ================================================================
+# CLASSE DE LOGGING AVANCÉ POUR WORKFLOW
+# ================================================================
+
+class WorkflowLogger:
+    """Logger avancé pour le workflow d'intérim avec détection d'anomalies"""
+    
+    def __init__(self, operation_type='WORKFLOW'):
+        self.operation_type = operation_type
+        self.base_logger = logging.getLogger('workflow.service')
+        self.config = WORKFLOW_LOGGING_CONFIG
+        self.start_time = None
+        self.stats = {
+            'operations': 0,
+            'success': 0,
+            'errors': 0,
+            'warnings': 0,
+            'anomalies': []
+        }
+    
+    def _safe_str(self, text):
+        """Convertit en string safe pour les logs"""
+        try:
+            if isinstance(text, str):
+                return text.encode('ascii', 'ignore').decode('ascii')
+            return str(text).encode('ascii', 'ignore').decode('ascii')
+        except:
+            return "ENCODING_ERROR"
+    
+    def _log(self, level, msg, extra_data=None):
+        """Log avec protection et enregistrement BDD optionnel"""
+        try:
+            safe_msg = self._safe_str(msg)
+            getattr(self.base_logger, level)(safe_msg)
+            
+            if level == 'error':
+                self.stats['errors'] += 1
+            elif level == 'warning':
+                self.stats['warnings'] += 1
+            
+            # Log en BDD si activé
+            if self.config.get('log_to_db') and JOURNAL_LOG_AVAILABLE and level in ['error', 'warning']:
+                self._log_to_db(level, safe_msg, extra_data)
+        except:
+            pass
+    
+    def _log_to_db(self, level, message, extra_data=None):
+        """Log dans JournalLog"""
+        try:
+            severite_map = {'debug': 'DEBUG', 'info': 'INFO', 'warning': 'WARNING', 'error': 'ERROR'}
+            JournalLog.objects.create(
+                source='WORKFLOW_SERVICE',
+                categorie='WORKFLOW',
+                action=f'WORKFLOW_{self.operation_type}',
+                description=message[:500],
+                severite=severite_map.get(level, 'INFO'),
+                donnees_apres=extra_data if isinstance(extra_data, dict) else None
+            )
+        except:
+            pass
+    
+    def info(self, msg, extra_data=None): self._log('info', msg, extra_data)
+    def debug(self, msg, extra_data=None): self._log('debug', msg, extra_data)
+    def warning(self, msg, extra_data=None): self._log('warning', msg, extra_data)
+    def error(self, msg, extra_data=None): self._log('error', msg, extra_data)
+    
+    def start_operation(self, demande=None, operation_name=None):
+        """Démarre le tracking d'une opération"""
+        self.start_time = timezone.now()
+        self.stats = {'operations': 0, 'success': 0, 'errors': 0, 'warnings': 0, 'anomalies': []}
+        
+        msg = f"[WORKFLOW-START] {self.operation_type}"
+        if demande:
+            msg += f" - Demande: {demande.numero_demande}"
+        if operation_name:
+            msg += f" - Operation: {operation_name}"
+        self.info(msg)
+        return self.start_time
+    
+    def end_operation(self, success=True, results=None, demande=None):
+        """Termine le tracking avec résumé"""
+        duration = (timezone.now() - self.start_time).total_seconds() if self.start_time else 0
+        
+        # Détection d'anomalies
+        if demande:
+            self._detect_anomalies(demande, duration)
+        
+        # Résumé
+        status = "SUCCESS" if success else "FAILED"
+        msg = f"[WORKFLOW-END] {self.operation_type} - {status} en {duration:.2f}s"
+        msg += f" | Operations: {self.stats['operations']} | Erreurs: {self.stats['errors']}"
+        
+        if self.stats['anomalies']:
+            msg += f" | ANOMALIES: {len(self.stats['anomalies'])}"
+        
+        if success:
+            self.info(msg)
+        else:
+            self.error(msg)
+        
+        # Log résumé en BDD
+        if self.config.get('log_to_db') and JOURNAL_LOG_AVAILABLE:
+            self._log_resume_to_db(success, duration, results, demande)
+        
+        return {'success': success, 'duration': duration, 'stats': self.stats}
+    
+    def _detect_anomalies(self, demande, duration):
+        """Détecte les anomalies du workflow"""
+        thresholds = self.config.get('anomaly_thresholds', {})
+        
+        # Anomalie: Validation en retard
+        if demande.statut == 'EN_VALIDATION':
+            heures_attente = (timezone.now() - demande.date_creation).total_seconds() / 3600
+            if heures_attente >= thresholds.get('validation_delay_critical_hours', 72):
+                self._add_anomaly('CRITICAL', 'VALIDATION_RETARD_CRITIQUE',
+                    f"Validation en attente depuis {heures_attente:.0f}h (critique: {thresholds.get('validation_delay_critical_hours', 72)}h)")
+            elif heures_attente >= thresholds.get('validation_delay_warning_hours', 24):
+                self._add_anomaly('WARNING', 'VALIDATION_RETARD',
+                    f"Validation en attente depuis {heures_attente:.0f}h")
+        
+        # Anomalie: Peu de propositions
+        nb_propositions = demande.propositions_candidats.count() if hasattr(demande, 'propositions_candidats') else 0
+        if nb_propositions < thresholds.get('propositions_min_expected', 3) and demande.statut not in ['BROUILLON', 'ANNULEE']:
+            self._add_anomaly('WARNING', 'PROPOSITIONS_INSUFFISANTES',
+                f"Seulement {nb_propositions} proposition(s) (attendu: {thresholds.get('propositions_min_expected', 3)})")
+    
+    def _add_anomaly(self, severity, anomaly_type, description):
+        """Ajoute une anomalie"""
+        self.stats['anomalies'].append({
+            'severity': severity, 'type': anomaly_type,
+            'description': description, 'timestamp': timezone.now().isoformat()
+        })
+        if severity == 'CRITICAL':
+            self.error(f"[ANOMALIE-{anomaly_type}] {description}")
+        else:
+            self.warning(f"[ANOMALIE-{anomaly_type}] {description}")
+    
+    def _log_resume_to_db(self, success, duration, results, demande):
+        """Log le résumé en BDD"""
+        try:
+            severite = 'INFO' if success else 'ERROR'
+            if self.stats['anomalies']:
+                severite = 'WARNING' if not any(a['severity'] == 'CRITICAL' for a in self.stats['anomalies']) else 'CRITICAL'
+            
+            JournalLog.objects.create(
+                source='WORKFLOW_SERVICE',
+                categorie='RESUME',
+                action=f'WORKFLOW_RESUME_{self.operation_type}',
+                description=f"Workflow {self.operation_type}: {'OK' if success else 'ECHEC'} | "
+                           f"Duree: {duration:.1f}s | Erreurs: {self.stats['errors']} | "
+                           f"Anomalies: {len(self.stats['anomalies'])}",
+                severite=severite,
+                donnees_apres={
+                    'success': success, 'duration': duration, 'stats': self.stats,
+                    'demande_id': demande.id if demande else None
+                }
+            )
+        except:
+            pass
+    
+    def log_validation(self, demande, validation, success):
+        """Log une validation avec contexte"""
+        self.stats['operations'] += 1
+        if success:
+            self.stats['success'] += 1
+            self.info(f"[VALIDATION] Demande {demande.numero_demande} - Niveau {validation.niveau_validation} - {validation.decision}")
+        else:
+            self.stats['errors'] += 1
+            self.error(f"[VALIDATION-ECHEC] Demande {demande.numero_demande}")
+    
+    def log_proposition(self, demande, candidat, score, source):
+        """Log une proposition"""
+        self.stats['operations'] += 1
+        self.info(f"[PROPOSITION] Demande {demande.numero_demande} - Candidat: {candidat.matricule} - Score: {score} - Source: {source}")
+    
+    def log_notification(self, destinataire, type_notif, demande):
+        """Log une notification"""
+        self.info(f"[NOTIFICATION] {type_notif} -> {destinataire.matricule} - Demande: {demande.numero_demande}")
+
+# Logger global pour compatibilité
+logger = WorkflowLogger('GLOBAL')
 
 class WorkflowIntegrationService:
     """Service principal d'orchestration du workflow d'interim"""
@@ -30,7 +241,12 @@ class WorkflowIntegrationService:
     def initialiser_workflow_demande(demande: DemandeInterim) -> bool:
         """
         Initialise le workflow complet pour une nouvelle demande
+        Version 2.1 avec logging avancé
         """
+        # ===== LOGGING AVANCÉ V2.1 =====
+        wf_logger = WorkflowLogger('INIT_WORKFLOW')
+        wf_logger.start_operation(demande=demande, operation_name='initialiser_workflow')
+        
         try:
             # Creer le workflow
             etape_initiale = WorkflowEtape.objects.filter(
@@ -70,10 +286,15 @@ class WorkflowIntegrationService:
             # Passer a l'etape suivante
             WorkflowIntegrationService._avancer_workflow(demande, 'PROPOSITION_CANDIDATS')
             
+            # ===== RÉSUMÉ LOGGING =====
+            wf_logger.end_operation(success=True, demande=demande)
+            
             return True
             
         except Exception as e:
             logger.error(f"Erreur initialisation workflow: {e}")
+            wf_logger.error(f"[EXCEPTION] {e}", {'traceback': traceback.format_exc()})
+            wf_logger.end_operation(success=False, demande=demande)
             return False
     
     @staticmethod
@@ -217,7 +438,12 @@ class WorkflowIntegrationService:
     def traiter_validation(validation: ValidationDemande) -> bool:
         """
         Traite une validation dans le workflow
+        Version 2.1 avec logging avancé
         """
+        # ===== LOGGING AVANCÉ V2.1 =====
+        wf_logger = WorkflowLogger('VALIDATION')
+        wf_logger.start_operation(operation_name=f'validation_niveau_{validation.niveau_validation}')
+        
         try:
             demande = validation.demande
             
@@ -233,10 +459,16 @@ class WorkflowIntegrationService:
             elif validation.decision == 'CANDIDAT_AJOUTE':
                 WorkflowIntegrationService._traiter_ajout_candidat(demande, validation)
             
+            # ===== LOG VALIDATION =====
+            wf_logger.log_validation(demande, validation, success=True)
+            wf_logger.end_operation(success=True, demande=demande)
+            
             return True
             
         except Exception as e:
             logger.error(f"Erreur traitement validation: {e}")
+            wf_logger.error(f"[EXCEPTION] {e}")
+            wf_logger.end_operation(success=False, demande=demande if 'demande' in dir() else None)
             return False
     
     @staticmethod

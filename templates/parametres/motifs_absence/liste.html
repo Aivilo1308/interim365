@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Motifs d'Absence{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Motifs d'Absence</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-calendar-times me-2"></i>
+              Gestion des Motifs d'Absence
+            </h4>
+            <a href="{% url 'motif_absence_ajouter' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Nouveau Motif
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Statistiques -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="alert alert-primary mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-calendar-times fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.total }}</div>
+                    <small>Total motifs</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="alert alert-success mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-check-circle fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.actifs }}</div>
+                    <small>Actifs</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtres -->
+          <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-5">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Rechercher par nom ou code...">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select name="categorie" class="form-select">
+                <option value="">Toutes les catégories</option>
+                {% for val, label in categories %}
+                <option value="{{ val }}" {% if categorie_filtre == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-1"></i> Filtrer
+              </button>
+              <a href="{% url 'motifs_absence_liste' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+              </a>
+            </div>
+          </form>
+
+          <!-- Tableau -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Code</th>
+                  <th>Nom</th>
+                  <th>Catégorie</th>
+                  <th class="text-center">Couleur</th>
+                  <th class="text-center">Justificatif</th>
+                  <th class="text-center">Délai prévenance</th>
+                  <th class="text-center">Statut</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for motif in motifs %}
+                <tr>
+                  <td>
+                    <span class="badge bg-secondary">{{ motif.code }}</span>
+                  </td>
+                  <td>
+                    <strong>{{ motif.nom }}</strong>
+                    {% if motif.description %}
+                    <br><small class="text-muted">{{ motif.description|truncatechars:40 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if motif.categorie == 'MALADIE' %}
+                    <span class="badge bg-danger">Maladie</span>
+                    {% elif motif.categorie == 'CONGE' %}
+                    <span class="badge bg-success">Congé</span>
+                    {% elif motif.categorie == 'FORMATION' %}
+                    <span class="badge bg-info">Formation</span>
+                    {% elif motif.categorie == 'PERSONNEL' %}
+                    <span class="badge bg-warning text-dark">Personnel</span>
+                    {% else %}
+                    <span class="badge bg-primary">Professionnel</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <span class="badge" style="background-color: {{ motif.couleur }}; width: 30px;">&nbsp;</span>
+                  </td>
+                  <td class="text-center">
+                    {% if motif.necessite_justificatif %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-file-alt"></i> Requis</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Non</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {{ motif.delai_prevenance_jours }} jour(s)
+                  </td>
+                  <td class="text-center">
+                    {% if motif.actif %}
+                    <span class="badge bg-success">Actif</span>
+                    {% else %}
+                    <span class="badge bg-danger">Inactif</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'motif_absence_modifier' motif.pk %}" class="btn btn-outline-primary" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button type="button" class="btn btn-outline-{% if motif.actif %}warning{% else %}success{% endif %}" 
+                              onclick="toggleActif({{ motif.pk }}, '{{ motif.nom|escapejs }}', {{ motif.actif|yesno:'true,false' }})">
+                        <i class="fas fa-{% if motif.actif %}pause{% else %}play{% endif %}"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-danger" 
+                              onclick="supprimerMotif({{ motif.pk }}, '{{ motif.nom|escapejs }}')">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun motif d'absence trouvé</h5>
+                    <a href="{% url 'motif_absence_ajouter' %}" class="btn btn-primary">
+                      <i class="fas fa-plus me-1"></i> Créer un motif
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          {% if motifs.has_other_pages %}
+          <nav class="mt-4">
+            <ul class="pagination justify-content-center mb-0">
+              {% if motifs.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ motifs.previous_page_number }}">
+                  <i class="fas fa-chevron-left"></i>
+                </a>
+              </li>
+              {% endif %}
+              <li class="page-item active">
+                <span class="page-link">Page {{ motifs.number }} sur {{ motifs.paginator.num_pages }}</span>
+              </li>
+              {% if motifs.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ motifs.next_page_number }}">
+                  <i class="fas fa-chevron-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleActif(id, nom, estActif) {
+  const action = estActif ? 'désactiver' : 'activer';
+  if (!confirm(`Voulez-vous vraiment ${action} le motif "${nom}" ?`)) return;
+  
+  fetch(`{% url 'motif_absence_toggle_actif' 0 %}`.replace('0', id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => { if (data.success) location.reload(); else alert('❌ ' + data.message); });
+}
+
+function supprimerMotif(id, nom) {
+  if (!confirm(`Voulez-vous vraiment supprimer le motif "${nom}" ?\nCette action est irréversible.`)) return;
+  
+  fetch(`{% url 'motif_absence_supprimer' 0 %}`.replace('0', id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => { if (data.success) location.reload(); else alert('❌ ' + data.message); });
+}
+</script>
+{% endblock %}

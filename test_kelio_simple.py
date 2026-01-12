@@ -105,7 +105,7 @@ def main():
     auth = HTTPBasicAuth(KELIO_DEFAULT_AUTH['username'], KELIO_DEFAULT_AUTH['password'])
     
     print_flush(f"URL: {url}")
-    print_flush(f"Auth: {auth.username} / {'*' * len('12345')}")
+    print_flush(f"Auth: {auth.username}")
     print_flush("")
     
     # Test 1: Connectivité de base

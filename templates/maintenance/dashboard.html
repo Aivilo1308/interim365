@@ -1,0 +1,833 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance Système{% endblock %}
+
+{% block extra_css %}
+<style>
+  .maintenance-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .maintenance-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    transform: translate(50%, -50%);
+  }
+
+  .maintenance-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .maintenance-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+  }
+
+  .maintenance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .maintenance-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .maintenance-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  }
+
+  .maintenance-card-header {
+    padding: 1.25rem 1.5rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .maintenance-card-header.backup {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+  }
+
+  .maintenance-card-header.optimize {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+  }
+
+  .maintenance-card-header.database {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    color: white;
+  }
+
+  .maintenance-card-header.system {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+  }
+
+  .maintenance-card-body {
+    padding: 1.5rem;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .stat-row:last-child {
+    border-bottom: none;
+  }
+
+  .stat-label {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  .stat-value {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .stat-value.success {
+    color: #10b981;
+  }
+
+  .stat-value.warning {
+    color: #f59e0b;
+  }
+
+  .stat-value.danger {
+    color: #ef4444;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .action-btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+  }
+
+  .action-btn-primary {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .action-btn-primary:hover {
+    background: #2563eb;
+    color: white;
+  }
+
+  .action-btn-success {
+    background: #10b981;
+    color: white;
+  }
+
+  .action-btn-success:hover {
+    background: #059669;
+    color: white;
+  }
+
+  .action-btn-warning {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .action-btn-warning:hover {
+    background: #d97706;
+    color: white;
+  }
+
+  .action-btn-outline {
+    background: white;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+  }
+
+  .action-btn-outline:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .quick-action {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    color: #475569;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .quick-action:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+  }
+
+  .quick-action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 1rem;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.25rem;
+    transition: all 0.3s;
+  }
+
+  .quick-action:hover .quick-action-icon {
+    background: #dbeafe;
+    color: #3b82f6;
+  }
+
+  .quick-action-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .quick-action-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .progress-bar-container {
+    background: #e2e8f0;
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-bar-fill.success {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+
+  .progress-bar-fill.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  }
+
+  .progress-bar-fill.danger {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+
+  .backup-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .backup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    transition: all 0.2s;
+  }
+
+  .backup-item:hover {
+    background: #f1f5f9;
+  }
+
+  .backup-info {
+    flex: 1;
+  }
+
+  .backup-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.9rem;
+  }
+
+  .backup-meta {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .backup-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .backup-action-btn {
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .backup-action-btn.download {
+    background: #dbeafe;
+    color: #3b82f6;
+  }
+
+  .backup-action-btn.download:hover {
+    background: #bfdbfe;
+  }
+
+  .backup-action-btn.delete {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  .backup-action-btn.delete:hover {
+    background: #fecaca;
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .status-badge.success {
+    background: #d1fae5;
+    color: #059669;
+  }
+
+  .status-badge.warning {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .status-badge.danger {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  @media (max-width: 1200px) {
+    .maintenance-grid {
+      grid-template-columns: 1fr;
+    }
+    .quick-actions {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .quick-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'index' %}"><i class="fas fa-home me-1"></i> Accueil</a>
+      </li>
+      <li class="breadcrumb-item active">Maintenance</li>
+    </ol>
+  </nav>
+
+  <!-- En-tête -->
+  <div class="maintenance-header">
+    <h1 class="maintenance-title">
+      <i class="fas fa-wrench"></i>
+      Maintenance Système
+    </h1>
+    <p class="maintenance-subtitle">
+      Sauvegarde, optimisation et surveillance de l'application
+    </p>
+  </div>
+
+  <!-- Actions rapides -->
+  <div class="quick-actions">
+    <div class="quick-action" onclick="createBackup('json')">
+      <div class="quick-action-icon">
+        <i class="fas fa-database"></i>
+      </div>
+      <div class="quick-action-title">Sauvegarde Rapide</div>
+      <div class="quick-action-desc">Créer une sauvegarde JSON</div>
+    </div>
+    
+    <div class="quick-action" onclick="clearCache()">
+      <div class="quick-action-icon">
+        <i class="fas fa-broom"></i>
+      </div>
+      <div class="quick-action-title">Vider le Cache</div>
+      <div class="quick-action-desc">Nettoyer le cache système</div>
+    </div>
+    
+    <div class="quick-action" onclick="runVacuum()">
+      <div class="quick-action-icon">
+        <i class="fas fa-compress-arrows-alt"></i>
+      </div>
+      <div class="quick-action-title">Optimiser DB</div>
+      <div class="quick-action-desc">Exécuter VACUUM</div>
+    </div>
+    
+    <a href="{% url 'backup_liste' %}" class="quick-action">
+      <div class="quick-action-icon">
+        <i class="fas fa-history"></i>
+      </div>
+      <div class="quick-action-title">Historique</div>
+      <div class="quick-action-desc">Voir les sauvegardes</div>
+    </a>
+  </div>
+
+  <!-- Grille principale -->
+  <div class="maintenance-grid">
+    <!-- Sauvegardes -->
+    <div class="maintenance-card">
+      <div class="maintenance-card-header backup">
+        <i class="fas fa-cloud-upload-alt"></i>
+        Sauvegardes
+      </div>
+      <div class="maintenance-card-body">
+        <div class="stat-row">
+          <span class="stat-label">Dernière sauvegarde</span>
+          <span class="stat-value {% if backups %}success{% else %}danger{% endif %}">
+            {% if backups %}
+              {{ backups.0.created|date:"d/m/Y H:i" }}
+            {% else %}
+              Aucune
+            {% endif %}
+          </span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Nombre de sauvegardes</span>
+          <span class="stat-value">{{ backups|length }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Répertoire</span>
+          <span class="stat-value" style="font-size: 0.8rem;">{{ backup_dir|truncatechars:30 }}</span>
+        </div>
+        
+        {% if backups %}
+        <h6 class="mt-4 mb-3" style="color: #64748b; font-size: 0.9rem;">
+          <i class="fas fa-list me-1"></i> Dernières sauvegardes
+        </h6>
+        <div class="backup-list">
+          {% for backup in backups|slice:":5" %}
+          <div class="backup-item">
+            <div class="backup-info">
+              <div class="backup-name">{{ backup.filename|truncatechars:35 }}</div>
+              <div class="backup-meta">
+                {{ backup.created|date:"d/m/Y H:i" }} · {{ backup.size }} · {{ backup.type }}
+              </div>
+            </div>
+            <div class="backup-actions">
+              <a href="{% url 'backup_telecharger' backup.filename %}" class="backup-action-btn download" title="Télécharger">
+                <i class="fas fa-download"></i>
+              </a>
+              <button class="backup-action-btn delete" onclick="deleteBackup('{{ backup.filename }}')" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="action-buttons">
+          <button class="action-btn action-btn-success" onclick="createBackup('json')">
+            <i class="fas fa-plus"></i> Nouvelle sauvegarde
+          </button>
+          <a href="{% url 'backup_liste' %}" class="action-btn action-btn-outline">
+            <i class="fas fa-list"></i> Voir tout
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Base de données -->
+    <div class="maintenance-card">
+      <div class="maintenance-card-header database">
+        <i class="fas fa-database"></i>
+        Base de Données
+      </div>
+      <div class="maintenance-card-body">
+        <div class="stat-row">
+          <span class="stat-label">Moteur</span>
+          <span class="stat-value">{{ db_info.engine }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Taille</span>
+          <span class="stat-value">{{ db_info.size }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Tables</span>
+          <span class="stat-value">{{ db_info.tables_count }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Enregistrements</span>
+          <span class="stat-value">{{ db_info.total_rows|default:"N/A" }}</span>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="action-btn action-btn-primary" onclick="runVacuum()">
+            <i class="fas fa-compress-arrows-alt"></i> Optimiser
+          </button>
+          <a href="{% url 'optimisation_dashboard' %}" class="action-btn action-btn-outline">
+            <i class="fas fa-chart-line"></i> Analyser
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Système -->
+    <div class="maintenance-card">
+      <div class="maintenance-card-header system">
+        <i class="fas fa-server"></i>
+        Système
+      </div>
+      <div class="maintenance-card-body">
+        {% if system_stats.disk_usage %}
+        <div class="stat-row">
+          <span class="stat-label">Disque</span>
+          <span class="stat-value {% if system_stats.disk_usage.percent > 85 %}danger{% elif system_stats.disk_usage.percent > 70 %}warning{% else %}success{% endif %}">
+            {{ system_stats.disk_usage.percent }}% utilisé
+          </span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill {% if system_stats.disk_usage.percent > 85 %}danger{% elif system_stats.disk_usage.percent > 70 %}warning{% else %}success{% endif %}" 
+               style="width: {{ system_stats.disk_usage.percent }}%"></div>
+        </div>
+        {% endif %}
+        
+        {% if system_stats.memory_usage %}
+        <div class="stat-row mt-3">
+          <span class="stat-label">Mémoire</span>
+          <span class="stat-value {% if system_stats.memory_usage.percent > 85 %}danger{% elif system_stats.memory_usage.percent > 70 %}warning{% else %}success{% endif %}">
+            {{ system_stats.memory_usage.percent }}% utilisée
+          </span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill {% if system_stats.memory_usage.percent > 85 %}danger{% elif system_stats.memory_usage.percent > 70 %}warning{% else %}success{% endif %}" 
+               style="width: {{ system_stats.memory_usage.percent }}%"></div>
+        </div>
+        {% endif %}
+        
+        {% if system_stats.uptime %}
+        <div class="stat-row mt-3">
+          <span class="stat-label">Uptime</span>
+          <span class="stat-value success">{{ system_stats.uptime }}</span>
+        </div>
+        {% endif %}
+        
+        {% if not system_stats.disk_usage and not system_stats.memory_usage %}
+        <div class="text-center py-4 text-muted">
+          <i class="fas fa-info-circle fa-2x mb-2"></i>
+          <p class="mb-0">Installez <code>psutil</code> pour les stats système</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Cache -->
+    <div class="maintenance-card">
+      <div class="maintenance-card-header optimize">
+        <i class="fas fa-bolt"></i>
+        Cache & Performance
+      </div>
+      <div class="maintenance-card-body">
+        <div class="stat-row">
+          <span class="stat-label">Backend</span>
+          <span class="stat-value">{{ cache_stats.backend }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Statut</span>
+          <span class="stat-value">
+            <span class="status-badge {% if cache_stats.status == 'Opérationnel' %}success{% else %}warning{% endif %}">
+              {{ cache_stats.status }}
+            </span>
+          </span>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="action-btn action-btn-warning" onclick="clearCache()">
+            <i class="fas fa-broom"></i> Vider le cache
+          </button>
+          <button class="action-btn action-btn-outline" onclick="clearSessions()">
+            <i class="fas fa-user-clock"></i> Sessions
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retour -->
+  <div class="text-center mt-4">
+    <a href="{% url 'index' %}" class="action-btn action-btn-outline">
+      <i class="fas fa-arrow-left"></i> Retour au Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalTitle">Confirmation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="confirmModalBody">
+        Êtes-vous sûr ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="confirmModalBtn">Confirmer</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+// Notification
+function showNotification(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease;';
+  toast.innerHTML = `
+    <div class="d-flex align-items-center">
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+      <span>${message}</span>
+      <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 5000);
+}
+
+// Créer une sauvegarde
+function createBackup(type = 'json') {
+  const btn = event.target.closest('.action-btn, .quick-action');
+  if (btn) {
+    const icon = btn.querySelector('i');
+    if (icon) icon.classList.add('spinning');
+  }
+  
+  showNotification('Création de la sauvegarde en cours...', 'info');
+  
+  fetch('{% url "backup_creer" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: `backup_type=${type}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      showNotification(data.error || 'Erreur lors de la sauvegarde', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors de la sauvegarde', 'error');
+  })
+  .finally(() => {
+    if (btn) {
+      const icon = btn.querySelector('i');
+      if (icon) icon.classList.remove('spinning');
+    }
+  });
+}
+
+// Supprimer une sauvegarde
+function deleteBackup(filename) {
+  if (!confirm(`Supprimer la sauvegarde "${filename}" ?`)) return;
+  
+  fetch(`{% url 'backup_supprimer' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', filename), {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors de la suppression', 'error');
+  });
+}
+
+// Optimiser la base de données
+function runVacuum() {
+  showNotification('Optimisation en cours...', 'info');
+  
+  fetch('{% url "optimisation_vacuum" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors de l\'optimisation', 'error');
+  });
+}
+
+// Vider le cache
+function clearCache() {
+  showNotification('Vidage du cache en cours...', 'info');
+  
+  fetch('{% url "optimisation_clear_cache" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors du vidage du cache', 'error');
+  });
+}
+
+// Nettoyer les sessions
+function clearSessions() {
+  showNotification('Nettoyage des sessions...', 'info');
+  
+  fetch('{% url "optimisation_clear_sessions" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+    } else {
+      showNotification(data.error || 'Erreur', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    showNotification('Erreur lors du nettoyage', 'error');
+  });
+}
+
+// Animation CSS
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
+
+console.log('🔧 Module Maintenance chargé');
+</script>
+{% endblock %}

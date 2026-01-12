@@ -1,56 +1,288 @@
 # -*- coding: utf-8 -*-
 """
-Service de scoring automatique des candidats - Version 4.1 HARMONISE CORRIGÉ
-Compatible avec kelio_api_simplifie.py V4.1
+Service de scoring automatique des candidats - Version 4.2 HARMONISE CORRIGÉ
+Compatible avec kelio_api_simplifie.py V4.2
 Integration complete avec les nouvelles API Kelio et donnees enrichies
 CORRECTION: Utilisation systématique des pondérations ConfigurationScoring avec fallbacks
 
-Version : 4.1 - Harmonisation avec Kelio API V4.1 + ConfigurationScoring
+Version : 4.2 - Harmonisation avec Kelio API V4.2 + ConfigurationScoring + LOGGING AVANCÉ
 Auteur : Systeme Django Interim
 Date : 2025
+
+NOUVEAUTÉS V4.2 - LOGGING AVANCÉ :
+- ✅ Système de logging avec résumés détaillés par calcul de score
+- ✅ Détection automatique d'anomalies (scores anormaux, données manquantes)
+- ✅ Logs dans fichiers ET base de données (JournalLog)
+- ✅ Métriques de performance intégrées
+- ✅ Configuration via settings.py
 """
 
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
 from django.core.cache import cache
+from django.conf import settings
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, List, Tuple, Optional
 import math
 import logging
 import json
+import traceback
 from datetime import timedelta, date
 
 from ..models import (
     ProfilUtilisateur, DemandeInterim, PropositionCandidat, 
     ScoreDetailCandidat, ConfigurationScoring, CompetenceUtilisateur, 
     FormationUtilisateur, AbsenceUtilisateur, DisponibiliteUtilisateur,
-    # Nouveaux modeles Kelio V4.1
+    # Nouveaux modeles Kelio V4.2
     ProfilUtilisateurKelio, ProfilUtilisateurExtended, CacheApiKelio, 
     ConfigurationApiKelio
 )
 
-# Import des utilitaires Kelio V4.1
+# Import optionnel JournalLog
+try:
+    from ..models import JournalLog
+    JOURNAL_LOG_AVAILABLE = True
+except ImportError:
+    JOURNAL_LOG_AVAILABLE = False
+
+# Import des utilitaires Kelio V4.2
 from .kelio_api_simplifie import (
     safe_get_attribute, safe_date_conversion, generer_cle_cache_kelio,
     KelioBaseError, KelioDataError
 )
 
-# Logger securise harmonise avec Kelio V4.1
+# ================================================================
+# CONFIGURATION DU LOGGING AVANCÉ POUR SCORING
+# ================================================================
+SCORING_LOGGING_CONFIG = getattr(settings, 'SCORING_LOGGING', {
+    'enabled': True,
+    'log_to_db': True,
+    'log_anomalies': True,
+    'log_performance': True,
+    'anomaly_thresholds': {
+        'score_min_warning': 20,          # Score < 20 = warning
+        'score_max_warning': 95,          # Score > 95 = vérifier
+        'duration_warning_ms': 500,       # Calcul > 500ms = warning
+        'missing_data_warning': True,     # Alerter si données Kelio manquantes
+        'zero_competences_warning': True, # Alerter si aucune compétence
+    }
+})
+
+# ================================================================
+# CLASSE DE LOGGING AVANCÉ POUR SCORING
+# ================================================================
+
+class ScoringLogger:
+    """Logger avancé pour le service de scoring avec détection d'anomalies"""
+    
+    def __init__(self, operation_type='SCORING'):
+        self.operation_type = operation_type
+        self.base_logger = logging.getLogger('scoring.service')
+        self.config = SCORING_LOGGING_CONFIG
+        self.start_time = None
+        self.stats = {
+            'candidats_scores': 0,
+            'scores_calcules': [],
+            'erreurs': 0,
+            'warnings': 0,
+            'anomalies': [],
+            'kelio_data_used': 0,
+            'fallback_used': 0
+        }
+    
+    def _safe_str(self, text):
+        """Convertit en string safe pour les logs"""
+        try:
+            if isinstance(text, str):
+                return text.encode('ascii', 'ignore').decode('ascii')
+            return str(text).encode('ascii', 'ignore').decode('ascii')
+        except:
+            return "ENCODING_ERROR"
+    
+    def _log(self, level, msg, extra_data=None):
+        """Log avec protection"""
+        try:
+            safe_msg = self._safe_str(msg)
+            getattr(self.base_logger, level)(safe_msg)
+            
+            if level == 'error':
+                self.stats['erreurs'] += 1
+            elif level == 'warning':
+                self.stats['warnings'] += 1
+            
+            # Log en BDD si activé
+            if self.config.get('log_to_db') and JOURNAL_LOG_AVAILABLE and level in ['error', 'warning']:
+                self._log_to_db(level, safe_msg, extra_data)
+        except:
+            pass
+    
+    def _log_to_db(self, level, message, extra_data=None):
+        """Log dans JournalLog"""
+        try:
+            severite_map = {'debug': 'DEBUG', 'info': 'INFO', 'warning': 'WARNING', 'error': 'ERROR'}
+            JournalLog.objects.create(
+                source='SCORING_SERVICE',
+                categorie='SCORING',
+                action=f'SCORING_{self.operation_type}',
+                description=message[:500],
+                severite=severite_map.get(level, 'INFO'),
+                donnees_apres=extra_data if isinstance(extra_data, dict) else None
+            )
+        except:
+            pass
+    
+    def info(self, msg, extra_data=None): self._log('info', msg, extra_data)
+    def debug(self, msg, extra_data=None): self._log('debug', msg, extra_data)
+    def warning(self, msg, extra_data=None): self._log('warning', msg, extra_data)
+    def error(self, msg, extra_data=None): self._log('error', msg, extra_data)
+    
+    def start_scoring(self, demande=None, nb_candidats=0):
+        """Démarre le tracking d'un calcul de scoring"""
+        self.start_time = timezone.now()
+        self.stats = {
+            'candidats_scores': 0, 'scores_calcules': [], 'erreurs': 0,
+            'warnings': 0, 'anomalies': [], 'kelio_data_used': 0, 'fallback_used': 0
+        }
+        
+        msg = f"[SCORING-START] {self.operation_type}"
+        if demande:
+            msg += f" - Demande: {demande.numero_demande}"
+        msg += f" - {nb_candidats} candidat(s) a scorer"
+        self.info(msg)
+        return self.start_time
+    
+    def end_scoring(self, demande=None):
+        """Termine le tracking avec résumé"""
+        duration_ms = (timezone.now() - self.start_time).total_seconds() * 1000 if self.start_time else 0
+        
+        # Calcul statistiques scores
+        if self.stats['scores_calcules']:
+            score_moyen = sum(self.stats['scores_calcules']) / len(self.stats['scores_calcules'])
+            score_min = min(self.stats['scores_calcules'])
+            score_max = max(self.stats['scores_calcules'])
+        else:
+            score_moyen = score_min = score_max = 0
+        
+        # Détection anomalies globales
+        self._detect_global_anomalies(duration_ms)
+        
+        # Résumé
+        msg = f"[SCORING-END] {self.operation_type} en {duration_ms:.0f}ms"
+        msg += f" | Candidats: {self.stats['candidats_scores']}"
+        msg += f" | Scores: min={score_min}, moy={score_moyen:.1f}, max={score_max}"
+        msg += f" | Kelio: {self.stats['kelio_data_used']}, Fallback: {self.stats['fallback_used']}"
+        
+        if self.stats['anomalies']:
+            msg += f" | ANOMALIES: {len(self.stats['anomalies'])}"
+            self.warning(msg)
+        else:
+            self.info(msg)
+        
+        # Log résumé en BDD
+        if self.config.get('log_to_db') and JOURNAL_LOG_AVAILABLE:
+            self._log_resume_to_db(demande, duration_ms, score_moyen, score_min, score_max)
+        
+        return {
+            'duration_ms': duration_ms,
+            'candidats_scores': self.stats['candidats_scores'],
+            'score_moyen': score_moyen,
+            'anomalies': self.stats['anomalies']
+        }
+    
+    def _detect_global_anomalies(self, duration_ms):
+        """Détecte les anomalies globales"""
+        thresholds = self.config.get('anomaly_thresholds', {})
+        
+        # Anomalie: Durée excessive
+        if duration_ms >= thresholds.get('duration_warning_ms', 500):
+            self._add_anomaly('WARNING', 'DUREE_ELEVEE',
+                f"Calcul scoring en {duration_ms:.0f}ms (seuil: {thresholds.get('duration_warning_ms', 500)}ms)")
+        
+        # Anomalie: Trop de fallbacks
+        if self.stats['candidats_scores'] > 0:
+            fallback_rate = self.stats['fallback_used'] / self.stats['candidats_scores']
+            if fallback_rate > 0.5:
+                self._add_anomaly('WARNING', 'FALLBACK_ELEVE',
+                    f"{fallback_rate*100:.0f}% des scores utilisent le fallback (données Kelio manquantes)")
+    
+    def _add_anomaly(self, severity, anomaly_type, description):
+        """Ajoute une anomalie"""
+        self.stats['anomalies'].append({
+            'severity': severity, 'type': anomaly_type,
+            'description': description, 'timestamp': timezone.now().isoformat()
+        })
+    
+    def _log_resume_to_db(self, demande, duration_ms, score_moyen, score_min, score_max):
+        """Log le résumé en BDD"""
+        try:
+            severite = 'INFO'
+            if self.stats['anomalies']:
+                severite = 'WARNING'
+            
+            JournalLog.objects.create(
+                source='SCORING_SERVICE',
+                categorie='RESUME',
+                action=f'SCORING_RESUME_{self.operation_type}',
+                description=f"Scoring {self.operation_type}: {self.stats['candidats_scores']} candidats | "
+                           f"Scores: {score_min}-{score_max} (moy: {score_moyen:.1f}) | "
+                           f"Duree: {duration_ms:.0f}ms | Anomalies: {len(self.stats['anomalies'])}",
+                severite=severite,
+                donnees_apres={
+                    'candidats_scores': self.stats['candidats_scores'],
+                    'score_moyen': score_moyen,
+                    'score_min': score_min,
+                    'score_max': score_max,
+                    'duration_ms': duration_ms,
+                    'kelio_data_used': self.stats['kelio_data_used'],
+                    'fallback_used': self.stats['fallback_used'],
+                    'anomalies': self.stats['anomalies'],
+                    'demande_id': demande.id if demande else None
+                }
+            )
+        except:
+            pass
+    
+    def log_score_candidat(self, candidat, score, criteres=None, kelio_used=False):
+        """Log le score d'un candidat"""
+        self.stats['candidats_scores'] += 1
+        self.stats['scores_calcules'].append(score)
+        
+        if kelio_used:
+            self.stats['kelio_data_used'] += 1
+        else:
+            self.stats['fallback_used'] += 1
+        
+        # Détection anomalies individuelles
+        thresholds = self.config.get('anomaly_thresholds', {})
+        if score < thresholds.get('score_min_warning', 20):
+            self._add_anomaly('WARNING', 'SCORE_TRES_BAS',
+                f"Score très bas pour {candidat.matricule}: {score}")
+        elif score > thresholds.get('score_max_warning', 95):
+            self._add_anomaly('INFO', 'SCORE_TRES_HAUT',
+                f"Score très élevé pour {candidat.matricule}: {score} (à vérifier)")
+        
+        self.debug(f"[SCORE] {candidat.matricule}: {score}/100 (Kelio: {'Oui' if kelio_used else 'Non'})")
+    
+    def log_kelio_data_missing(self, candidat, data_type):
+        """Log les données Kelio manquantes"""
+        if self.config.get('anomaly_thresholds', {}).get('missing_data_warning', True):
+            self.debug(f"[KELIO-MISSING] {candidat.matricule}: données {data_type} non disponibles")
+
+# Logger global pour compatibilité
 try:
-    from django.conf import settings
-    logger = settings.get_safe_kelio_logger()
+    from django.conf import settings as django_settings
+    logger = django_settings.get_safe_kelio_logger()
 except:
-    import logging
-    logger = logging.getLogger('scoring.service')
+    logger = ScoringLogger('GLOBAL')
 
 class ScoringInterimService:
     """
-    Service principal pour le calcul de scores des candidats - Version 4.1 Harmonise
-    Integration complete avec les nouvelles API Kelio V4.1 et ConfigurationScoring
+    Service principal pour le calcul de scores des candidats - Version 4.2 Harmonise
+    Integration complete avec les nouvelles API Kelio V4.2 et ConfigurationScoring
     """
     
     def __init__(self, configuration_kelio=None):
-        """Initialise le service avec integration Kelio V4.1"""
+        """Initialise le service avec integration Kelio V4.2"""
         self.scores_cache = {}
         self.kelio_config = configuration_kelio or ConfigurationApiKelio.objects.filter(actif=True).first()
         
@@ -96,8 +328,12 @@ class ScoringInterimService:
                                    utiliser_cache: bool = True) -> int:
         """
         Calcule le score total d'un candidat pour une demande d'interim
-        Version 4.1 avec integration complete des donnees Kelio et ConfigurationScoring
+        Version 4.2 avec integration complete des donnees Kelio, ConfigurationScoring et logging avancé
         """
+        # ===== LOGGING AVANCÉ V4.2 =====
+        score_logger = ScoringLogger('SCORE_CANDIDAT')
+        kelio_used = False
+        
         try:
             # Cache intelligent avec cle Kelio
             cache_key = self._generer_cle_cache_score(candidat, demande)
@@ -113,11 +349,16 @@ class ScoringInterimService:
             # Si toujours pas de configuration, utiliser le calcul basique avec poids par défaut
             if not config:
                 logger.warning(f"WARNING Aucune configuration scoring trouvee pour demande {demande.id}, utilisation fallback")
-                return self._calculer_score_basique_v41(candidat, demande)
+                score = self._calculer_score_basique_v41(candidat, demande)
+                score_logger.log_score_candidat(candidat, score, kelio_used=False)
+                return score
             
-            # Calcul detaille avec configuration et donnees Kelio V4.1
+            # Calcul detaille avec configuration et donnees Kelio V4.2
             scores_criteres = self._calculer_scores_criteres_v41(candidat, demande, config)
             score_final = self._calculer_score_final_v41(scores_criteres, config)
+            
+            # Vérifier si données Kelio utilisées
+            kelio_used = any(k for k in scores_criteres.keys() if 'kelio' in k.lower() and scores_criteres[k] > 0)
             
             # CORRECTION: Bonus avec configuration ou fallback
             bonus_kelio = self._calculer_bonus_donnees_kelio(candidat, demande, config)
@@ -128,20 +369,25 @@ class ScoringInterimService:
             cache.set(cache_key, score_final, cache_duration)
             self.scores_cache[cache_key] = score_final
             
-            logger.info(f"OK Score V4.1 calcule pour {candidat.matricule}: {score_final} (config: {config.nom if config else 'fallback'})")
+            # ===== LOG SCORE =====
+            score_logger.log_score_candidat(candidat, score_final, criteres=scores_criteres, kelio_used=kelio_used)
+            
+            logger.info(f"OK Score V4.2 calcule pour {candidat.matricule}: {score_final} (config: {config.nom if config else 'fallback'})")
             return score_final
             
         except KelioBaseError as e:
             logger.error(f"ERROR Erreur Kelio lors calcul score {candidat.matricule}: {e}")
+            score_logger.log_kelio_data_missing(candidat, 'KELIO_API')
             return self._calculer_score_fallback(candidat, demande)
         except Exception as e:
             logger.error(f"ERROR Erreur calcul score candidat {candidat.matricule}: {e}")
+            score_logger.error(f"[EXCEPTION] {e}")
             return 50  # Score neutre par defaut
     
     def _calculer_scores_criteres_v41(self, candidat: ProfilUtilisateur, 
                                      demande: DemandeInterim,
                                      config: ConfigurationScoring) -> Dict[str, int]:
-        """Calcule les scores pour chaque critere avec donnees Kelio V4.1 et ConfigurationScoring"""
+        """Calcule les scores pour chaque critere avec donnees Kelio V4.2 et ConfigurationScoring"""
         
         scores = {
             'similarite_poste': self._score_similarite_poste_v41(candidat, demande),
@@ -156,12 +402,12 @@ class ScoringInterimService:
             'formations_kelio': self._score_formations_kelio_v41(candidat, demande)
         }
         
-        logger.debug(f">>> Scores criteres V4.1 pour {candidat.matricule}: {scores}")
+        logger.debug(f">>> Scores criteres V4.2 pour {candidat.matricule}: {scores}")
         return scores
     
     def _score_competences_kelio_v41(self, candidat: ProfilUtilisateur, 
                                     demande: DemandeInterim) -> int:
-        """Score base sur les competences avec donnees Kelio V4.1"""
+        """Score base sur les competences avec donnees Kelio V4.2"""
         try:
             score_base = 30  # Score minimal
             
@@ -220,12 +466,12 @@ class ScoringInterimService:
             return min(score_base, 100)
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score competences Kelio V4.1: {e}")
+            logger.warning(f"WARNING Erreur score competences Kelio V4.2: {e}")
             return self._score_competences_interne(candidat)
     
     def _score_experience_kelio_v41(self, candidat: ProfilUtilisateur, 
                                    demande: DemandeInterim) -> int:
-        """Score base sur l'experience avec donnees Kelio V4.1"""
+        """Score base sur l'experience avec donnees Kelio V4.2"""
         try:
             score = 40  # Base
             
@@ -285,12 +531,12 @@ class ScoringInterimService:
             return min(score, 100)
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score experience Kelio V4.1: {e}")
+            logger.warning(f"WARNING Erreur score experience Kelio V4.2: {e}")
             return self._score_experience_fallback(candidat, demande)
     
     def _score_disponibilite_kelio_v41(self, candidat: ProfilUtilisateur, 
                                       demande: DemandeInterim) -> int:
-        """Score base sur la disponibilite avec donnees Kelio V4.1 - CORRIGE"""
+        """Score base sur la disponibilite avec donnees Kelio V4.2 - CORRIGE"""
         try:
             # Verifications de base
             if candidat.statut_employe != 'ACTIF':
@@ -415,12 +661,12 @@ class ScoringInterimService:
             return max(0, min(score, 100))
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score disponibilite Kelio V4.1: {e}")
+            logger.warning(f"WARNING Erreur score disponibilite Kelio V4.2: {e}")
             return self._score_disponibilite_fallback(candidat, demande)
     
     def _score_formations_kelio_v41(self, candidat: ProfilUtilisateur, 
                                    demande: DemandeInterim) -> int:
-        """Score base sur les formations avec donnees Kelio V4.1"""
+        """Score base sur les formations avec donnees Kelio V4.2"""
         try:
             score = 0
             
@@ -460,12 +706,12 @@ class ScoringInterimService:
             return min(score, 30)  # Score maximal pour formations
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score formations Kelio V4.1: {e}")
+            logger.warning(f"WARNING Erreur score formations Kelio V4.2: {e}")
             return 0
     
     def _score_similarite_poste_v41(self, candidat: ProfilUtilisateur, 
                                    demande: DemandeInterim) -> int:
-        """Score base sur la similarite de poste avec donnees Kelio V4.1"""
+        """Score base sur la similarite de poste avec donnees Kelio V4.2"""
         try:
             if not candidat.poste or not demande.poste:
                 return 40
@@ -516,12 +762,12 @@ class ScoringInterimService:
             return min(score, 100)
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score similarite poste V4.1: {e}")
+            logger.warning(f"WARNING Erreur score similarite poste V4.2: {e}")
             return 40
     
     def _score_proximite_v41(self, candidat: ProfilUtilisateur, 
                             demande: DemandeInterim) -> int:
-        """Score base sur la proximite geographique avec donnees Kelio V4.1"""
+        """Score base sur la proximite geographique avec donnees Kelio V4.2"""
         try:
             if not candidat.site or not demande.poste.site:
                 return 40
@@ -562,11 +808,11 @@ class ScoringInterimService:
             return min(score, 90)  # Max 90 pour sites differents
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score proximite V4.1: {e}")
+            logger.warning(f"WARNING Erreur score proximite V4.2: {e}")
             return 50
     
     def _score_anciennete_v41(self, candidat: ProfilUtilisateur) -> int:
-        """Score base sur l'anciennete avec donnees Kelio V4.1"""
+        """Score base sur l'anciennete avec donnees Kelio V4.2"""
         try:
             # Utiliser les donnees Kelio si disponibles
             date_embauche = None
@@ -601,7 +847,7 @@ class ScoringInterimService:
                 return 25
             
         except Exception as e:
-            logger.warning(f"WARNING Erreur score anciennete V4.1: {e}")
+            logger.warning(f"WARNING Erreur score anciennete V4.2: {e}")
             return 40
     
     def _calculer_bonus_donnees_kelio(self, candidat: ProfilUtilisateur, 
@@ -780,7 +1026,7 @@ class ScoringInterimService:
                               proposition: PropositionCandidat = None,
                               config: ConfigurationScoring = None) -> ScoreDetailCandidat:
         """
-        CORRECTION: Cree un enregistrement detaille du score pour un candidat - Version V4.1
+        CORRECTION: Cree un enregistrement detaille du score pour un candidat - Version V4.2
         Utilise ConfigurationScoring ou fallback
         """
         try:
@@ -788,7 +1034,7 @@ class ScoringInterimService:
             if not config:
                 config = ConfigurationScoring.get_configuration_pour_demande(demande)
             
-            # Calculer les scores detailles V4.1
+            # Calculer les scores detailles V4.2
             scores_criteres = self._calculer_scores_criteres_v41(candidat, demande, config)
             
             # CORRECTION: Creer l'enregistrement avec metadonnees Kelio et version
@@ -830,11 +1076,11 @@ class ScoringInterimService:
                 except Exception as e:
                     logger.debug(f"Erreur incrementation config: {e}")
             
-            logger.info(f"OK Score detail V4.1 cree pour {candidat.matricule}: {score_detail.score_total} (config: {config.nom if config else 'fallback'})")
+            logger.info(f"OK Score detail V4.2 cree pour {candidat.matricule}: {score_detail.score_total} (config: {config.nom if config else 'fallback'})")
             return score_detail
             
         except Exception as e:
-            logger.error(f"ERROR Erreur creation score detail V4.1: {e}")
+            logger.error(f"ERROR Erreur creation score detail V4.2: {e}")
             raise
     
     def _calculer_penalites_v41(self, candidat: ProfilUtilisateur,
@@ -992,7 +1238,7 @@ class ScoringInterimService:
             scores['anciennete'] * self.default_weights['anciennete']
         )
         
-        logger.debug(f">>> Score basique V4.1 pour {candidat.matricule}: {int(score_final)}")
+        logger.debug(f">>> Score basique V4.2 pour {candidat.matricule}: {int(score_final)}")
         return int(score_final)
     
     def _score_competences_interne(self, candidat: ProfilUtilisateur) -> int:
@@ -1065,11 +1311,11 @@ class ScoringInterimService:
                                           inclure_donnees_kelio: bool = True,
                                           config: ConfigurationScoring = None) -> List[Dict]:
         """
-        CORRECTION: Genere une liste de candidats automatiques pour une demande - Version V4.1
+        CORRECTION: Genere une liste de candidats automatiques pour une demande - Version V4.2
         Utilise ConfigurationScoring pour les seuils et critères
         """
         try:
-            logger.info(f">>> Generation candidats automatiques V4.1 pour demande {demande.id}")
+            logger.info(f">>> Generation candidats automatiques V4.2 pour demande {demande.id}")
             
             # CORRECTION: Récupérer la configuration ou fallback
             if not config:
@@ -1124,7 +1370,7 @@ class ScoringInterimService:
                             demande.date_debut, demande.date_fin
                         )
                         
-                        # Justification enrichie V4.1 avec configuration
+                        # Justification enrichie V4.2 avec configuration
                         justification = self._generer_justification_auto_v41(candidat, demande, score, config)
                         
                         candidats_scores.append({
@@ -1152,11 +1398,11 @@ class ScoringInterimService:
             
             resultats_finaux = candidats_scores[:limite]
             
-            logger.info(f"OK {len(resultats_finaux)} candidats generes automatiquement V4.1 (config: {config.nom if config else 'fallback'})")
+            logger.info(f"OK {len(resultats_finaux)} candidats generes automatiquement V4.2 (config: {config.nom if config else 'fallback'})")
             return resultats_finaux
             
         except Exception as e:
-            logger.error(f"ERROR Erreur generation candidats automatiques V4.1: {e}")
+            logger.error(f"ERROR Erreur generation candidats automatiques V4.2: {e}")
             return []
     
     def _determiner_seuil_minimum(self, config: ConfigurationScoring, demande: DemandeInterim) -> int:
@@ -1188,7 +1434,7 @@ class ScoringInterimService:
                                        demande: DemandeInterim, score: int,
                                        config: ConfigurationScoring = None) -> str:
         """
-        CORRECTION: Genere une justification automatique enrichie V4.1 avec configuration
+        CORRECTION: Genere une justification automatique enrichie V4.2 avec configuration
         """
         
         justifications = []
@@ -1235,14 +1481,14 @@ class ScoringInterimService:
         if missions_reussies > 0:
             justifications.append(f"{missions_reussies} mission(s) intérim réussie(s)")
         
-        # Score global avec niveau V4.1 et configuration
+        # Score global avec niveau V4.2 et configuration
         config_info = f" ({config.nom})" if config else " (fallback)"
         if score >= 85:
-            justifications.append(f"Score de compatibilité excellent (V4.1{config_info})")
+            justifications.append(f"Score de compatibilité excellent (V4.2{config_info})")
         elif score >= 70:
-            justifications.append(f"Score de compatibilité élevé (V4.1{config_info})")
+            justifications.append(f"Score de compatibilité élevé (V4.2{config_info})")
         elif score >= 55:
-            justifications.append(f"Bonne compatibilité (V4.1{config_info})")
+            justifications.append(f"Bonne compatibilité (V4.2{config_info})")
         
         # Donnees Kelio disponibles
         if candidat.kelio_last_sync:
@@ -1258,12 +1504,12 @@ class ScoringInterimService:
                 justifications.append("Employé actif")
         
         if not justifications:
-            justifications.append(f"Candidat identifié automatiquement (V4.1{config_info})")
+            justifications.append(f"Candidat identifié automatiquement (V4.2{config_info})")
         
         return " >> ".join(justifications)
     
     # ================================================================
-    # METHODES UTILITAIRES KELIO V4.1 (Maintenues)
+    # METHODES UTILITAIRES KELIO V4.2 (Maintenues)
     # ================================================================
     
     def _get_cached_kelio_data(self, service_type: str, matricule: str) -> Optional[Dict]:
@@ -1298,18 +1544,18 @@ class ScoringInterimService:
         return "_".join(elements)
 
 # ================================================================
-# SERVICE D'ANALYSE HARMONISE V4.1 AVEC CONFIGURATIONSSCORING
+# SERVICE D'ANALYSE HARMONISE V4.2 AVEC CONFIGURATIONSSCORING
 # ================================================================
 
 class ScoringAnalyticsServiceV41:
-    """Service d'analyse des performances du scoring - Version V4.1 Harmonise avec ConfigurationScoring"""
+    """Service d'analyse des performances du scoring - Version V4.2 Harmonise avec ConfigurationScoring"""
     
     @staticmethod
     def analyser_efficacite_scoring_v41(periode_jours: int = 90, 
                                        inclure_donnees_kelio: bool = True,
                                        configuration_id: int = None) -> Dict:
         """
-        CORRECTION: Analyse l'efficacite du systeme de scoring V4.1 avec ConfigurationScoring
+        CORRECTION: Analyse l'efficacite du systeme de scoring V4.2 avec ConfigurationScoring
         """
         
         date_debut = timezone.now() - timedelta(days=periode_jours)
@@ -1341,10 +1587,10 @@ class ScoringAnalyticsServiceV41:
                 'taux_satisfaction': 0,
                 'donnees_kelio_utilisees': 0,
                 'configurations_utilisees': {},
-                'recommandations': ["Pas assez de données pour l'analyse V4.1"]
+                'recommandations': ["Pas assez de données pour l'analyse V4.2"]
             }
         
-        # Analyser les scores detailles V4.1
+        # Analyser les scores detailles V4.2
         scores_details = ScoreDetailCandidat.objects.filter(
             demande_interim__in=demandes_evaluees
         )
@@ -1367,7 +1613,7 @@ class ScoringAnalyticsServiceV41:
         except Exception as e:
             logger.warning(f"Erreur analyse configurations: {e}")
         
-        # Calculs statistiques V4.1 avec ConfigurationScoring
+        # Calculs statistiques V4.2 avec ConfigurationScoring
         score_moyen = scores_details.aggregate(avg=Avg('score_total'))['avg'] or 0
         
         evaluation_moyenne = demandes_evaluees.aggregate(
@@ -1418,30 +1664,30 @@ class ScoringAnalyticsServiceV41:
                                     missions_avec_kelio: int, total_missions: int,
                                     configurations_stats: Dict) -> List[str]:
         """
-        CORRECTION: Genere des recommandations d'amelioration V4.1 avec ConfigurationScoring
+        CORRECTION: Genere des recommandations d'amelioration V4.2 avec ConfigurationScoring
         """
         
         recommandations = []
         
         # Recommandations generales
         if taux_satisfaction < 70:
-            recommandations.append("Taux de satisfaction faible - Réviser les critères de scoring V4.1")
+            recommandations.append("Taux de satisfaction faible - Réviser les critères de scoring V4.2")
         
         if evaluation_moyenne < 3.5:
-            recommandations.append("Évaluations moyennes faibles - Améliorer la sélection automatique V4.1")
+            recommandations.append("Évaluations moyennes faibles - Améliorer la sélection automatique V4.2")
         
         if taux_satisfaction >= 85:
-            recommandations.append("Très bon taux de satisfaction - Système V4.1 performant")
+            recommandations.append("Très bon taux de satisfaction - Système V4.2 performant")
         
-        # Recommandations specifiques Kelio V4.1
+        # Recommandations specifiques Kelio V4.2
         taux_kelio = (missions_avec_kelio / max(1, total_missions)) * 100
         
         if taux_kelio < 30:
-            recommandations.append("Peu de données Kelio utilisées - Améliorer la synchronisation V4.1")
+            recommandations.append("Peu de données Kelio utilisées - Améliorer la synchronisation V4.2")
         elif taux_kelio >= 80:
-            recommandations.append("Excellente utilisation des données Kelio V4.1")
+            recommandations.append("Excellente utilisation des données Kelio V4.2")
         elif taux_kelio >= 50:
-            recommandations.append("Bonne utilisation des données Kelio V4.1")
+            recommandations.append("Bonne utilisation des données Kelio V4.2")
         
         # NOUVEAU: Recommandations spécifiques aux configurations
         if not configurations_stats:
@@ -1461,7 +1707,7 @@ class ScoringAnalyticsServiceV41:
             else:
                 recommandations.append("Performance exceptionnelle - Créer des configurations pour optimiser")
         
-        return recommandations or ["Système de scoring V4.1 avec ConfigurationScoring fonctionnel"]
+        return recommandations or ["Système de scoring V4.2 avec ConfigurationScoring fonctionnel"]
     
     @staticmethod
     def analyser_performance_par_configuration(periode_jours: int = 30) -> Dict:
@@ -1554,24 +1800,24 @@ class ScoringAnalyticsServiceV41:
         return recommandations or ["Configurations de scoring bien équilibrées"]
 
 # ================================================================
-# FONCTIONS UTILITAIRES V4.1 AVEC CONFIGURATIONSSCORING
+# FONCTIONS UTILITAIRES V4.2 AVEC CONFIGURATIONSSCORING
 # ================================================================
 
 def get_scoring_service_v41(configuration_kelio=None):
-    """Factory function pour le service de scoring V4.1 avec ConfigurationScoring"""
+    """Factory function pour le service de scoring V4.2 avec ConfigurationScoring"""
     try:
         service = ScoringInterimService(configuration_kelio)
-        logger.info(">>> Service de scoring V4.1 créé avec intégration Kelio et ConfigurationScoring")
+        logger.info(">>> Service de scoring V4.2 créé avec intégration Kelio et ConfigurationScoring")
         return service
     except Exception as e:
-        logger.error(f"ERROR Erreur création service scoring V4.1: {e}")
+        logger.error(f"ERROR Erreur création service scoring V4.2: {e}")
         raise
 
 def calculer_scores_pour_demande_v41(demande_id: int, 
                                     limite_candidats: int = 50,
                                     configuration_id: int = None) -> Dict:
     """
-    CORRECTION: Fonction principale pour calculer les scores pour une demande V4.1
+    CORRECTION: Fonction principale pour calculer les scores pour une demande V4.2
     Utilise ConfigurationScoring
     """
     try:
@@ -1611,7 +1857,7 @@ def calculer_scores_pour_demande_v41(demande_id: int,
         }
         
     except Exception as e:
-        logger.error(f"ERROR Erreur calcul scores demande V4.1 {demande_id}: {e}")
+        logger.error(f"ERROR Erreur calcul scores demande V4.2 {demande_id}: {e}")
         return {
             'demande_id': demande_id,
             'erreur': str(e),
@@ -1838,7 +2084,7 @@ def optimiser_configuration_automatique(demandes_historiques_ids: List[int] = No
 
 def generer_rapport_scoring_complet_v41(demande_id: int, configuration_id: int = None) -> Dict:
     """
-    CORRECTION: Genere un rapport complet de scoring pour une demande V4.1
+    CORRECTION: Genere un rapport complet de scoring pour une demande V4.2
     Avec support ConfigurationScoring
     """
     try:
@@ -1927,7 +2173,7 @@ def generer_rapport_scoring_complet_v41(demande_id: int, configuration_id: int =
         return rapport
         
     except Exception as e:
-        logger.error(f"ERROR Erreur generation rapport scoring V4.1: {e}")
+        logger.error(f"ERROR Erreur generation rapport scoring V4.2: {e}")
         return {'erreur': str(e)}
 
 # ================================================================
@@ -2020,15 +2266,15 @@ def _generer_recommandations_rapport(self, candidats_data: List[Dict],
 ScoringInterimService._generer_recommandations_rapport = _generer_recommandations_rapport
 
 # ================================================================
-# INITIALISATION ET CONFIGURATION V4.1 AVEC CONFIGURATIONSSCORING
+# INITIALISATION ET CONFIGURATION V4.2 AVEC CONFIGURATIONSSCORING
 # ================================================================
 
 def initialiser_scoring_service_v41():
     """
-    CORRECTION: Initialise le service de scoring V4.1 avec verifications ConfigurationScoring
+    CORRECTION: Initialise le service de scoring V4.2 avec verifications ConfigurationScoring
     """
     try:
-        logger.info(">>> Initialisation ScoringInterimService V4.1 avec ConfigurationScoring")
+        logger.info(">>> Initialisation ScoringInterimService V4.2 avec ConfigurationScoring")
         
         # Verifier la disponibilite des modeles Kelio et ConfigurationScoring
         verification = {
@@ -2082,7 +2328,7 @@ def initialiser_scoring_service_v41():
             'kelio_configs_actives': ConfigurationApiKelio.objects.filter(actif=True).count() if verification['models_kelio_disponibles'] else 0
         }
         
-        logger.info("OK ScoringInterimService V4.1 initialise avec succes")
+        logger.info("OK ScoringInterimService V4.2 initialise avec succes")
         logger.info(f">>> Verifications: {verification}")
         logger.info(f">>> Statistiques: {stats}")
         
@@ -2094,7 +2340,7 @@ def initialiser_scoring_service_v41():
         }
         
     except Exception as e:
-        logger.error(f"ERROR Erreur initialisation scoring V4.1: {e}")
+        logger.error(f"ERROR Erreur initialisation scoring V4.2: {e}")
         return {
             'erreur': str(e),
             'status': 'ERROR'
@@ -2154,10 +2400,10 @@ def afficher_statistiques_scoring_v41():
     """
     try:
         logger.info(">>> =================================================")
-        logger.info(">>> SCORING INTERIM SERVICE V4.1 - HARMONISE KELIO + CONFIGURATIONSSCORING")
+        logger.info(">>> SCORING INTERIM SERVICE V4.2 - HARMONISE KELIO + CONFIGURATIONSSCORING")
         logger.info(">>> =================================================")
-        logger.info("OK Nouvelles fonctionnalites V4.1 CORRIGEES:")
-        logger.info("   >>> Integration complete avec Kelio API V4.1")
+        logger.info("OK Nouvelles fonctionnalites V4.2 CORRIGEES:")
+        logger.info("   >>> Integration complete avec Kelio API V4.2")
         logger.info("   >>> Utilisation systematique ConfigurationScoring avec fallbacks")
         logger.info("   >>> Scores enrichis avec donnees professionnelles Kelio")
         logger.info("   >>> Pondérations configurables par administration")
@@ -2166,14 +2412,14 @@ def afficher_statistiques_scoring_v41():
         logger.info("   >>> Analytics enrichies avec métriques par configuration")
         logger.info("   >>> Fallback automatique si ConfigurationScoring indisponible")
         logger.info("")
-        logger.info(">>> Structure de scoring V4.1:")
+        logger.info(">>> Structure de scoring V4.2:")
         logger.info("   1. Récupération ConfigurationScoring pour demande")
         logger.info("   2. Utilisation poids configurés ou fallback default_weights")
         logger.info("   3. Calcul scores avec données Kelio enrichies")
         logger.info("   4. Application bonus/pénalités de configuration")
         logger.info("   5. Score final pondéré avec normalisation")
         logger.info("")
-        logger.info(">>> Criteres de scoring V4.1 (configurables):")
+        logger.info(">>> Criteres de scoring V4.2 (configurables):")
         logger.info("   Similarité poste: 25% (enrichi avec job_assignments)")
         logger.info("   Compétences Kelio: 25% (skill_assignments + niveaux)")
         logger.info("   Expérience Kelio: 20% (professional_experience + ancienneté)")
@@ -2205,11 +2451,11 @@ def afficher_statistiques_scoring_v41():
             logger.info(f">>> ConfigurationScoring non disponible: {e}")
         
     except Exception as e:
-        logger.error(f"ERROR Erreur affichage statistiques scoring V4.1: {e}")
+        logger.error(f"ERROR Erreur affichage statistiques scoring V4.2: {e}")
 
 # Afficher les statistiques au chargement du module
 afficher_statistiques_scoring_v41()
 
 # ================================================================
-# FIN DU SERVICE SCORING V4.1 HARMONISE AVEC CONFIGURATIONSSCORING
+# FIN DU SERVICE SCORING V4.2 HARMONISE AVEC CONFIGURATIONSSCORING
 # ================================================================

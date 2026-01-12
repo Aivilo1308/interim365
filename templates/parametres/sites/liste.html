@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Sites{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Sites</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-map-marker-alt me-2"></i>
+              Gestion des Sites
+            </h4>
+            <a href="{% url 'site_ajouter' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Nouveau Site
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Statistiques -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="alert alert-primary mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-map-marker-alt fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.total }}</div>
+                    <small>Total sites</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="alert alert-success mb-0 py-2">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-check-circle fa-2x me-3"></i>
+                  <div>
+                    <div class="fw-bold fs-4">{{ stats.actifs }}</div>
+                    <small>Actifs</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtres -->
+          <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Rechercher...">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select name="ville" class="form-select">
+                <option value="">Toutes les villes</option>
+                {% for v in villes %}
+                <option value="{{ v }}" {% if ville_filtre == v %}selected{% endif %}>{{ v }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="actif" class="form-select">
+                <option value="">Tous</option>
+                <option value="true" {% if actif_filtre == 'true' %}selected{% endif %}>Actifs</option>
+                <option value="false" {% if actif_filtre == 'false' %}selected{% endif %}>Inactifs</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-1"></i> Filtrer
+              </button>
+              <a href="{% url 'sites_liste' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+              </a>
+            </div>
+          </form>
+
+          <!-- Tableau -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Site</th>
+                  <th>Adresse</th>
+                  <th>Contact</th>
+                  <th>Responsable</th>
+                  <th class="text-center">Postes</th>
+                  <th class="text-center">Statut</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for site in sites %}
+                <tr>
+                  <td>
+                    <strong>{{ site.nom }}</strong>
+                    <br><small class="text-muted"><i class="fas fa-city me-1"></i>{{ site.ville }}</small>
+                  </td>
+                  <td>
+                    <small>
+                      {{ site.adresse }}<br>
+                      {{ site.code_postal }} {{ site.ville }}
+                    </small>
+                  </td>
+                  <td>
+                    {% if site.telephone %}
+                    <small><i class="fas fa-phone me-1 text-muted"></i>{{ site.telephone }}</small><br>
+                    {% endif %}
+                    {% if site.email %}
+                    <small><i class="fas fa-envelope me-1 text-muted"></i>{{ site.email }}</small>
+                    {% endif %}
+                    {% if not site.telephone and not site.email %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if site.responsable %}
+                    <small>{{ site.responsable.user.get_full_name }}</small>
+                    {% else %}
+                    <span class="text-muted">Non assigné</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-secondary">{{ site.nb_postes }}</span>
+                  </td>
+                  <td class="text-center">
+                    {% if site.actif %}
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Actif</span>
+                    {% else %}
+                    <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Inactif</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'site_modifier' site.pk %}" class="btn btn-outline-primary" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button type="button" class="btn btn-outline-{% if site.actif %}warning{% else %}success{% endif %}" 
+                              onclick="toggleActif({{ site.pk }}, '{{ site.nom|escapejs }}', {{ site.actif|yesno:'true,false' }})">
+                        <i class="fas fa-{% if site.actif %}pause{% else %}play{% endif %}"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center py-5">
+                    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun site trouvé</h5>
+                    <a href="{% url 'site_ajouter' %}" class="btn btn-primary">
+                      <i class="fas fa-plus me-1"></i> Créer un site
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          {% if sites.has_other_pages %}
+          <nav class="mt-4">
+            <ul class="pagination justify-content-center mb-0">
+              {% if sites.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ sites.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                  <i class="fas fa-chevron-left"></i>
+                </a>
+              </li>
+              {% endif %}
+              <li class="page-item active">
+                <span class="page-link">Page {{ sites.number }} sur {{ sites.paginator.num_pages }}</span>
+              </li>
+              {% if sites.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ sites.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                  <i class="fas fa-chevron-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleActif(id, nom, estActif) {
+  const action = estActif ? 'désactiver' : 'activer';
+  if (!confirm(`Voulez-vous vraiment ${action} le site "${nom}" ?`)) return;
+  
+  fetch(`{% url 'site_toggle_actif' 0 %}`.replace('0', id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => { if (data.success) location.reload(); else alert('❌ ' + data.message); });
+}
+</script>
+{% endblock %}

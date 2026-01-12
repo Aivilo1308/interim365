@@ -28,6 +28,114 @@ from mainapp.models import *
 
 logger = logging.getLogger(__name__)
 
+# ================================================================
+# CONFIGURATION LOGGING AVANCÉ
+# ================================================================
+
+import time
+import traceback
+
+logger = logging.getLogger('interim')
+action_logger = logging.getLogger('interim.actions')
+anomaly_logger = logging.getLogger('interim.anomalies')
+perf_logger = logging.getLogger('interim.performance')
+
+
+def log_action(category, action, message, request=None, **kwargs):
+    """Log une action utilisateur avec contexte complet"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    ip_addr = "-"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+        ip_addr = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '-'))
+        if ',' in ip_addr:
+            ip_addr = ip_addr.split(',')[0].strip()
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [{category}] [{action}] [User:{user_info}] [IP:{ip_addr}] {extra_info} {message}"
+    
+    action_logger.info(log_msg)
+    logger.info(log_msg)
+
+
+def log_anomalie(category, message, severite='WARNING', request=None, **kwargs):
+    """Log une anomalie détectée avec niveau de sévérité"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [ANOMALIE] [{category}] [{severite}] [User:{user_info}] {extra_info} {message}"
+    
+    if severite == 'ERROR':
+        anomaly_logger.error(f"❌ {log_msg}")
+        logger.error(f"❌ ANOMALIE: {log_msg}")
+    elif severite == 'CRITICAL':
+        anomaly_logger.critical(f"🔥 {log_msg}")
+        logger.critical(f"🔥 ANOMALIE CRITIQUE: {log_msg}")
+    else:
+        anomaly_logger.warning(f"⚠️ {log_msg}")
+        logger.warning(f"⚠️ ANOMALIE: {log_msg}")
+
+
+def log_resume(operation, stats, duree_ms=None):
+    """Log un résumé d'opération avec statistiques visuelles"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    lines = [
+        "",
+        "=" * 60,
+        f"📊 RÉSUMÉ: {operation}",
+        "=" * 60,
+        f"⏰ Date/Heure: {timestamp}",
+    ]
+    
+    if duree_ms is not None:
+        if duree_ms >= 60000:
+            duree_str = f"{duree_ms/60000:.1f} min"
+        elif duree_ms >= 1000:
+            duree_str = f"{duree_ms/1000:.1f} sec"
+        else:
+            duree_str = f"{duree_ms:.0f} ms"
+        lines.append(f"⏱️ Durée: {duree_str}")
+    
+    lines.append("📈 Statistiques:")
+    for key, value in stats.items():
+        icon = '✅' if 'succes' in key.lower() or 'ok' in key.lower() or 'cree' in key.lower() else \
+               '❌' if 'erreur' in key.lower() or 'echec' in key.lower() else \
+               '⚠️' if 'warning' in key.lower() or 'anomal' in key.lower() else '•'
+        lines.append(f"   {icon} {key}: {value}")
+    
+    lines.extend(["=" * 60, ""])
+    
+    resume_text = '\n'.join(lines)
+    perf_logger.info(resume_text)
+    logger.info(resume_text)
+
+
+def log_erreur(category, message, exception=None, request=None, **kwargs):
+    """Log une erreur avec stack trace complète"""
+    timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = "anonymous"
+    
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        user_info = request.user.username
+    
+    extra_info = ' '.join([f"[{k}:{v}]" for k, v in kwargs.items() if v is not None])
+    log_msg = f"[{timestamp}] [ERREUR] [{category}] [User:{user_info}] {extra_info} {message}"
+    
+    if exception:
+        log_msg += f"\n  Exception: {type(exception).__name__}: {str(exception)}"
+        log_msg += f"\n  Stack trace:\n{traceback.format_exc()}"
+    
+    logger.error(log_msg)
+    anomaly_logger.error(log_msg)
+
+
 @login_required
 @require_POST
 def demande_interim_ajouter_proposition(request, demande_id):

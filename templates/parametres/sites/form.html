@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_new %}Ajouter un Site{% else %}Modifier {{ site.nom }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'sites_liste' %}">Sites</a>
+      </li>
+      <li class="breadcrumb-item active">{% if is_new %}Ajouter{% else %}Modifier{% endif %}</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-secondary text-white py-3">
+          <h4 class="mb-0">
+            <i class="fas fa-{% if is_new %}plus-circle{% else %}edit{% endif %} me-2"></i>
+            {% if is_new %}Ajouter un Site{% else %}Modifier le Site{% endif %}
+          </h4>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Formulaire -->
+          <form method="POST" id="formSite">
+            {% csrf_token %}
+            
+            <!-- Nom -->
+            <div class="mb-4">
+              <label for="nom" class="form-label fw-semibold">
+                <i class="fas fa-building me-1 text-primary"></i>
+                Nom du site <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control form-control-lg" 
+                     id="nom" 
+                     name="nom" 
+                     value="{{ site.nom|default:'' }}"
+                     placeholder="Ex: Siège Social, Usine Nord"
+                     maxlength="100"
+                     required>
+            </div>
+
+            <!-- Adresse -->
+            <div class="mb-4">
+              <label for="adresse" class="form-label fw-semibold">
+                <i class="fas fa-map me-1 text-primary"></i>
+                Adresse <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control" 
+                        id="adresse" 
+                        name="adresse" 
+                        rows="2"
+                        placeholder="Numéro et nom de rue"
+                        required>{{ site.adresse|default:'' }}</textarea>
+            </div>
+
+            <!-- Ville et Code Postal -->
+            <div class="row mb-4">
+              <div class="col-md-8">
+                <label for="ville" class="form-label fw-semibold">
+                  <i class="fas fa-city me-1 text-primary"></i>
+                  Ville <span class="text-danger">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="ville" 
+                       name="ville" 
+                       value="{{ site.ville|default:'' }}"
+                       placeholder="Ex: Abidjan"
+                       maxlength="50"
+                       required>
+              </div>
+              <div class="col-md-4">
+                <label for="code_postal" class="form-label fw-semibold">
+                  <i class="fas fa-mail-bulk me-1 text-primary"></i>
+                  Code Postal <span class="text-danger">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="code_postal" 
+                       name="code_postal" 
+                       value="{{ site.code_postal|default:'' }}"
+                       placeholder="Ex: 00225"
+                       pattern="\d{5}"
+                       maxlength="5"
+                       required>
+              </div>
+            </div>
+
+            <!-- Pays -->
+            <div class="mb-4">
+              <label for="pays" class="form-label fw-semibold">
+                <i class="fas fa-globe-africa me-1 text-primary"></i>
+                Pays
+              </label>
+              <input type="text" 
+                     class="form-control" 
+                     id="pays" 
+                     name="pays" 
+                     value="{{ site.pays|default:"Côte d'Ivoire" }}"
+                     placeholder="Pays"
+                     maxlength="50">
+            </div>
+
+            <!-- Contact -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="telephone" class="form-label fw-semibold">
+                  <i class="fas fa-phone me-1 text-primary"></i>
+                  Téléphone
+                </label>
+                <input type="tel" 
+                       class="form-control" 
+                       id="telephone" 
+                       name="telephone" 
+                       value="{{ site.telephone|default:'' }}"
+                       placeholder="Ex: +225 27 XX XX XX XX"
+                       maxlength="20">
+              </div>
+              <div class="col-md-6">
+                <label for="email" class="form-label fw-semibold">
+                  <i class="fas fa-envelope me-1 text-primary"></i>
+                  Email
+                </label>
+                <input type="email" 
+                       class="form-control" 
+                       id="email" 
+                       name="email" 
+                       value="{{ site.email|default:'' }}"
+                       placeholder="site@entreprise.ci">
+              </div>
+            </div>
+
+            <!-- Responsable -->
+            <div class="mb-4">
+              <label for="responsable" class="form-label fw-semibold">
+                <i class="fas fa-user-tie me-1 text-primary"></i>
+                Responsable du site
+              </label>
+              <select class="form-select" id="responsable" name="responsable">
+                <option value="">-- Aucun responsable assigné --</option>
+                {% for r in responsables_disponibles %}
+                <option value="{{ r.pk }}" {% if site and site.responsable_id == r.pk %}selected{% endif %}>
+                  {{ r.user.get_full_name }} ({{ r.get_type_profil_display }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Statut -->
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="actif" 
+                       name="actif" 
+                       {% if is_new or site.actif %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="actif">
+                  <i class="fas fa-toggle-on me-1 text-success"></i>
+                  Site actif
+                </label>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Boutons -->
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'sites_liste' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-times me-2"></i>Annuler
+              </a>
+              <button type="submit" class="btn btn-primary btn-lg" id="btnSubmit">
+                <i class="fas fa-save me-2"></i>
+                {% if is_new %}Créer le site{% else %}Enregistrer{% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control-lg { font-size: 1rem; }
+.form-check-input:checked { background-color: #198754; border-color: #198754; }
+@media (max-width: 768px) {
+  .d-flex.justify-content-between { flex-direction: column; gap: 1rem; }
+  .d-flex.justify-content-between .btn { width: 100%; }
+}
+</style>
+
+<script>
+document.getElementById('formSite').addEventListener('submit', function(e) {
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion du Workflow{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'parametres_dashboard' %}">
+          <i class="fas fa-cogs me-1"></i> Paramètres
+        </a>
+      </li>
+      <li class="breadcrumb-item active">Workflow</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <!-- En-tête -->
+        <div class="card-header bg-info text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-project-diagram me-2"></i>
+              Étapes du Workflow de Validation
+            </h4>
+            <a href="{% url 'workflow_etape_ajouter' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus me-1"></i> Nouvelle Étape
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Alerte info -->
+          <div class="alert alert-info mb-4">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+              <div>
+                <strong>Workflow de validation</strong>
+                <p class="mb-0">
+                  Définissez les étapes par lesquelles passent les demandes d'intérim. 
+                  Glissez-déposez les étapes pour modifier l'ordre.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des étapes -->
+          <div id="listeEtapes">
+            {% for etape in etapes %}
+            <div class="card mb-3 etape-item {% if not etape.actif %}border-secondary opacity-50{% else %}border-info{% endif %}" 
+                 data-id="{{ etape.pk }}" draggable="true">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex align-items-start">
+                    <div class="me-3">
+                      <span class="badge bg-info fs-5 rounded-circle" style="width: 40px; height: 40px; line-height: 30px;">
+                        {{ etape.ordre }}
+                      </span>
+                    </div>
+                    <div>
+                      <h5 class="mb-1">{{ etape.nom }}</h5>
+                      <p class="text-muted mb-2 small">
+                        <span class="badge bg-secondary me-2">{{ etape.get_type_etape_display }}</span>
+                        {% if etape.obligatoire %}
+                        <span class="badge bg-danger me-2">Obligatoire</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark me-2">Optionnel</span>
+                        {% endif %}
+                        {% if etape.delai_max_heures %}
+                        <span class="badge bg-warning text-dark">
+                          <i class="fas fa-clock me-1"></i>{{ etape.delai_max_heures }}h max
+                        </span>
+                        {% endif %}
+                      </p>
+                      <small class="text-muted">
+                        <i class="fas fa-exclamation-circle me-1"></i>Urgence: {{ etape.get_condition_urgence_display }}
+                        {% if etape.permet_propositions_humaines %}
+                        | <i class="fas fa-user-plus me-1"></i>Propositions humaines autorisées
+                        {% endif %}
+                      </small>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    {% if etape.actif %}
+                    <span class="badge bg-success me-3">Actif</span>
+                    {% else %}
+                    <span class="badge bg-secondary me-3">Inactif</span>
+                    {% endif %}
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'workflow_etape_modifier' etape.pk %}" class="btn btn-outline-primary" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button type="button" class="btn btn-outline-danger" 
+                              onclick="supprimerEtape({{ etape.pk }}, '{{ etape.nom|escapejs }}')" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary drag-handle" title="Déplacer">
+                        <i class="fas fa-grip-vertical"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+              <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">Aucune étape de workflow définie</h5>
+              <p class="text-muted">Créez la première étape pour configurer le processus de validation.</p>
+              <a href="{% url 'workflow_etape_ajouter' %}" class="btn btn-info">
+                <i class="fas fa-plus me-1"></i> Créer une étape
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Statistiques -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+          <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Statistiques</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Total étapes</span>
+            <span class="fw-bold">{{ stats_workflow.total }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Étapes actives</span>
+            <span class="fw-bold text-success">{{ stats_workflow.actives }}</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Obligatoires</span>
+            <span class="fw-bold text-danger">{{ stats_workflow.obligatoires }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aperçu du flux -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+          <h6 class="mb-0"><i class="fas fa-stream me-2"></i>Aperçu du Flux</h6>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            {% for etape in etapes %}
+            {% if etape.actif %}
+            <div class="list-group-item d-flex align-items-center">
+              <span class="badge bg-info rounded-circle me-2">{{ etape.ordre }}</span>
+              <small>{{ etape.nom }}</small>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Aide -->
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Aide</h6>
+        </div>
+        <div class="card-body">
+          <ul class="small mb-0">
+            <li class="mb-2">Glissez-déposez les étapes pour les réordonner</li>
+            <li class="mb-2">Les étapes inactives sont ignorées dans le flux</li>
+            <li class="mb-2">Définissez un délai max pour activer les rappels automatiques</li>
+            <li>Les étapes obligatoires ne peuvent pas être sautées</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.etape-item {
+  cursor: move;
+  transition: all 0.2s;
+}
+.etape-item:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+.etape-item.dragging {
+  opacity: 0.5;
+}
+.etape-item.drag-over {
+  border-style: dashed !important;
+  border-color: #0dcaf0 !important;
+}
+</style>
+
+<script>
+// Drag and drop pour réordonner
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('listeEtapes');
+  const items = container.querySelectorAll('.etape-item');
+  let draggedItem = null;
+
+  items.forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+      draggedItem = this;
+      this.classList.add('dragging');
+    });
+
+    item.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      items.forEach(i => i.classList.remove('drag-over'));
+      sauvegarderOrdre();
+    });
+
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (this !== draggedItem) {
+        this.classList.add('drag-over');
+      }
+    });
+
+    item.addEventListener('dragleave', function() {
+      this.classList.remove('drag-over');
+    });
+
+    item.addEventListener('drop', function(e) {
+      e.preventDefault();
+      if (this !== draggedItem) {
+        const allItems = [...container.querySelectorAll('.etape-item')];
+        const draggedIdx = allItems.indexOf(draggedItem);
+        const targetIdx = allItems.indexOf(this);
+        
+        if (draggedIdx < targetIdx) {
+          this.parentNode.insertBefore(draggedItem, this.nextSibling);
+        } else {
+          this.parentNode.insertBefore(draggedItem, this);
+        }
+      }
+      this.classList.remove('drag-over');
+    });
+  });
+
+  function sauvegarderOrdre() {
+    const ordre = [...container.querySelectorAll('.etape-item')].map(item => item.dataset.id);
+    
+    fetch('{% url "workflow_etapes_reordonner" %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ordre: ordre })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Mettre à jour les numéros affichés
+        container.querySelectorAll('.etape-item').forEach((item, index) => {
+          item.querySelector('.badge.bg-info').textContent = index + 1;
+        });
+      }
+    });
+  }
+});
+
+function supprimerEtape(id, nom) {
+  if (!confirm(`Voulez-vous vraiment supprimer l'étape "${nom}" ?\nCette action est irréversible.`)) return;
+  
+  fetch(`{% url 'workflow_etape_supprimer' 0 %}`.replace('0', id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(response => response.json())
+  .then(data => { if (data.success) location.reload(); else alert('❌ ' + data.message); });
+}
+</script>
+{% endblock %}
