@@ -984,3 +984,37 @@
 ✅ Statut: SUCCÈS
 ============================================================
 
+[2026-01-12 17:54:28] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-12 17:54:28
+⏱️ Durée: 23 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 399
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-14 02:21:16] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-14 02:21:16
+⏱️ Durée: 87 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 399
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+

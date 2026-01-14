@@ -2001,3 +2001,26 @@ INFO 2025-06-22 22:04:46,143 autoreload 33128 24648 D:\DevProjects\Python\interi
 ============================================================
 
 [2026-01-12 17:54:28] [WARNING] [interim] [views:75] ⚠️ ANOMALIE: [2026-01-12 17:54:28] [ANOMALIE] [WORKFLOW] [INFO] [User:njb2]  Taux de validation bas: 17.6%
+[2026-01-14 02:21:15] [INFO] [interim] [views:1542] Accès index par utilisateur: njb2
+[2026-01-14 02:21:15] [INFO] [interim] [views:1278] Redirection superutilisateur: njb2 → Vue globale
+[2026-01-14 02:21:16] [INFO] [interim] [views:1564] Redirection de njb2 vers: /n3/
+[2026-01-14 02:21:16] [INFO] [interim.actions] [views:53] [2026-01-14 02:21:16] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-14 02:21:16] [INFO] [interim] [views:54] [2026-01-14 02:21:16] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-14 02:21:16] [INFO] [interim] [views:118] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-14 02:21:16
+⏱️ Durée: 87 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 399
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-14 02:21:16] [WARNING] [interim] [views:75] ⚠️ ANOMALIE: [2026-01-14 02:21:16] [ANOMALIE] [WORKFLOW] [INFO] [User:njb2]  Taux de validation bas: 17.6%

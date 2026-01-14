@@ -269,3 +269,4 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'config_scoring_toggle_actif'
 [2026-01-12 17:09:40] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
 [2026-01-12 17:10:19] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
 [2026-01-12 17:37:44] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html
+[2026-01-12 17:38:11] [ERROR] [interim] [views:11294] Erreur vue configuration: interim/admin/configuration.html

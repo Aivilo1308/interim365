@@ -152,3 +152,5 @@
 [2026-01-12 17:52:00] [2026-01-12 17:52:00] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
 [2026-01-12 17:53:27] [2026-01-12 17:53:27] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
 [2026-01-12 17:53:27] [2026-01-12 17:53:27] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-12 17:54:28] [2026-01-12 17:54:28] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-14 02:21:16] [2026-01-14 02:21:16] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3

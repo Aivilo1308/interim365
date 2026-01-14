@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Service de scoring automatique des candidats - Version 4.3 HARMONISE CORRIGÉ
-Compatible avec kelio_sync_v43.py V4.3
+Service de scoring automatique des candidats - Version 4.2 HARMONISE CORRIGÉ
+Compatible avec kelio_api_simplifie.py V4.2
 Integration complete avec les nouvelles API Kelio et donnees enrichies
 CORRECTION: Utilisation systématique des pondérations ConfigurationScoring avec fallbacks
 
-Version : 4.3 - Harmonisation avec Kelio API V4.3 + ConfigurationScoring + LOGGING AVANCÉ
+Version : 4.2 - Harmonisation avec Kelio API V4.2 + ConfigurationScoring + LOGGING AVANCÉ
 Auteur : Systeme Django Interim
 Date : 2025
 
-NOUVEAUTÉS V4.3 - MIGRATION kelio_api_simplifie -> kelio_sync_v43 :
-- ✅ Import depuis kelio_sync_v43 au lieu de kelio_api_simplifie
-- ✅ Fonctions utilitaires (safe_get_attribute, safe_date_conversion, generer_cle_cache_kelio) intégrées localement
-- ✅ Classes d'exception (KelioBaseError, KelioDataError) intégrées localement
-- ✅ Compatibilité maintenue avec le reste du code
+NOUVEAUTÉS V4.2 - LOGGING AVANCÉ :
 - ✅ Système de logging avec résumés détaillés par calcul de score
 - ✅ Détection automatique d'anomalies (scores anormaux, données manquantes)
 - ✅ Logs dans fichiers ET base de données (JournalLog)
@@ -49,93 +45,11 @@ try:
 except ImportError:
     JOURNAL_LOG_AVAILABLE = False
 
-# Import des utilitaires Kelio V4.3
-from .kelio_sync_v43 import (
-    safe_str, ultra_safe_str, safe_exception_msg,
-    KelioSyncServiceV43, get_kelio_sync_service_v43
+# Import des utilitaires Kelio V4.2
+from .kelio_api_simplifie import (
+    safe_get_attribute, safe_date_conversion, generer_cle_cache_kelio,
+    KelioBaseError, KelioDataError
 )
-
-# ================================================================
-# FONCTIONS UTILITAIRES KELIO - COMPATIBILITE V4.2 -> V4.3
-# ================================================================
-
-def safe_get_attribute(obj, attr_name, default=None):
-    """Recuperation securisee d'attribut avec gestion des None"""
-    try:
-        return getattr(obj, attr_name, default) if obj else default
-    except (AttributeError, TypeError):
-        return default
-
-def safe_date_conversion(date_value):
-    """Conversion securisee de date"""
-    if not date_value:
-        return None
-    try:
-        if isinstance(date_value, str):
-            # Essayer differents formats
-            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d %H:%M:%S']:
-                try:
-                    from datetime import datetime
-                    parsed = datetime.strptime(date_value, fmt)
-                    return parsed.date() if '%H:%M:%S' not in fmt else parsed
-                except ValueError:
-                    continue
-        elif hasattr(date_value, 'date'):
-            return date_value.date()
-        elif isinstance(date_value, date):
-            return date_value
-        return None
-    except Exception:
-        return None
-
-def generer_cle_cache_kelio(service_type, parametres):
-    """Genere une cle de cache unique pour les services Kelio"""
-    try:
-        import hashlib
-        import uuid
-        params_str = json.dumps(parametres, sort_keys=True, default=str)
-        signature = hashlib.md5(params_str.encode()).hexdigest()[:8]
-        timestamp = timezone.now().strftime('%Y%m%d_%H')
-        cle = f"{service_type}_{signature}_{timestamp}"
-        return cle
-    except Exception as e:
-        logger.warning(f"Erreur generation cle cache: {e}")
-        return f"{service_type}_{uuid.uuid4().hex[:8]}"
-
-# ================================================================
-# CLASSES D'EXCEPTION KELIO - COMPATIBILITE V4.2 -> V4.3
-# ================================================================
-
-class KelioBaseError(Exception):
-    """Exception de base pour les erreurs Kelio"""
-    def __init__(self, message, details=None):
-        self.message = message
-        self.details = details or {}
-        super().__init__(self.message)
-    
-    def to_dict(self):
-        return {
-            'error_type': self.__class__.__name__,
-            'message': self.message,
-            'details': self.details,
-            'timestamp': timezone.now().isoformat()
-        }
-
-class KelioDataError(KelioBaseError):
-    """Erreur dans les donnees retournees par Kelio"""
-    def __init__(self, message, details=None):
-        super().__init__(message, details)
-        if details:
-            self.data_type = details.get('data_type', 'Type de donnees non specifie')
-            self.expected_format = details.get('expected_format', 'Format attendu non specifie')
-            self.received_format = details.get('received_format', 'Format recu non specifie')
-        else:
-            self.data_type = 'Type de donnees non specifie'
-            self.expected_format = 'Format attendu non specifie'
-            self.received_format = 'Format recu non specifie'
-    
-    def __str__(self):
-        return f"Erreur de donnees Kelio: {self.message} (Type: {self.data_type})"
 
 # ================================================================
 # CONFIGURATION DU LOGGING AVANCÉ POUR SCORING

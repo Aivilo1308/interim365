@@ -33529,3 +33529,6 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'config_scoring_toggle_actif'
 [2026-01-12 17:54:28] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
 [2026-01-12 17:54:34] [INFO] [django.server] [basehttp:212] "GET /interim/admin-users/ HTTP/1.1" 200 116842
 [2026-01-12 17:56:21] [INFO] [django.server] [basehttp:212] "GET /admin/login/?next=/admin/mainapp/absenceutilisateur/ HTTP/1.1" 200 4336
+[2026-01-12 23:31:01] [INFO] [django.server] [basehttp:212] "GET /interim/admin-users/ HTTP/1.1" 200 116617
+[2026-01-14 02:21:16] [INFO] [django.server] [basehttp:212] "GET / HTTP/1.1" 302 0
+[2026-01-14 02:21:16] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
