@@ -36,6 +36,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.utils.crypto import get_random_string  # Pour remplacer make_random_password
 from utils.crypto_utils import KelioPasswordCipher
 
 # ================================================================
@@ -3578,7 +3579,7 @@ class KelioSyncServiceV43:
                 email=email,
                 first_name=safe_str(emp_data.get('prenom', '')),
                 last_name=safe_str(emp_data.get('nom', '')),
-                password=User.objects.make_random_password()
+                password=get_random_string(length=20)
             )
             return user, True
     
@@ -3664,7 +3665,7 @@ class KelioSyncServiceV43:
                         email=email,
                         first_name=prenom,
                         last_name=nom,
-                        password=User.objects.make_random_password()
+                        password=get_random_string(length=20)
                     )
                     return user, True
                 except IntegrityError:
@@ -3675,7 +3676,7 @@ class KelioSyncServiceV43:
                         email=email,
                         first_name=prenom,
                         last_name=nom,
-                        password=User.objects.make_random_password()
+                        password=get_random_string(length=20)
                     )
                     return user, True
                     

@@ -33532,3 +33532,346 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'config_scoring_toggle_actif'
 [2026-01-12 23:31:01] [INFO] [django.server] [basehttp:212] "GET /interim/admin-users/ HTTP/1.1" 200 116617
 [2026-01-14 02:21:16] [INFO] [django.server] [basehttp:212] "GET / HTTP/1.1" 302 0
 [2026-01-14 02:21:16] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
+[2026-01-16 17:03:09] [INFO] [django.utils.autoreload] [autoreload:667] Watching for file changes with StatReloader
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192] >>> SCORING INTERIM SERVICE V4.2 - HARMONISE KELIO + CONFIGURATIONSSCORING
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192] OK Nouvelles fonctionnalites V4.2 CORRIGEES:
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Integration complete avec Kelio API V4.2
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Utilisation systematique ConfigurationScoring avec fallbacks
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Scores enrichis avec donnees professionnelles Kelio
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Pondrations configurables par administration
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Bonus et pnalits personnalisables par configuration
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Configurations spcialises par dpartement/urgence
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Analytics enrichies avec mtriques par configuration
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    >>> Fallback automatique si ConfigurationScoring indisponible
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192] >>> Structure de scoring V4.2:
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    1. Rcupration ConfigurationScoring pour demande
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    2. Utilisation poids configurs ou fallback default_weights
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    3. Calcul scores avec donnes Kelio enrichies
+[2026-01-16 17:03:10] [INFO] [scoring.service] [scoring_service:192]    4. Application bonus/pnalits de configuration
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    5. Score final pondr avec normalisation
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] >>> Criteres de scoring V4.2 (configurables):
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Similarit poste: 25% (enrichi avec job_assignments)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Comptences Kelio: 25% (skill_assignments + niveaux)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Exprience Kelio: 20% (professional_experience + anciennet)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Disponibilit Kelio: 15% (labor_contracts + absence_requests)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Proximit: 10% (golocalisation + rayon dplacement)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Anciennet: 5% (donnes embauche Kelio)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] >>> Fonctionnalits ConfigurationScoring:
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Configurations par dpartement et type d'urgence
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Bonus hirarchiques personnalisables
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Pnalits configurables (indisponibilit, distance)
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Suivi utilisation et performance par configuration
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Tests et comparaisons de configurations
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192]    Optimisation automatique base sur historique
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] >>> Configurations actives: 1
+[2026-01-16 17:03:11] [INFO] [scoring.service] [scoring_service:192] >>> Configuration par dfaut: Scoring Hirarchique SafeSecur
+[2026-01-16 17:03:18] [INFO] [django.server] [basehttp:212] "GET / HTTP/1.1" 302 0
+[2026-01-16 17:03:18] [INFO] [django.server] [basehttp:212] "GET /connexion/?next=/ HTTP/1.1" 200 22567
+[2026-01-16 17:03:19] [WARNING] [django.request] [log:241] Not Found: /favicon.ico
+[2026-01-16 17:03:19] [WARNING] [django.server] [basehttp:212] "GET /favicon.ico HTTP/1.1" 404 179
+[2026-01-16 17:03:35] [INFO] [django.server] [basehttp:212] "POST /connexion/?next=/ HTTP/1.1" 302 0
+[2026-01-16 17:03:36] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
+[2026-01-16 17:03:36] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:03:36] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:03:46] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/parametres/ HTTP/1.1" 200 55753
+[2026-01-16 17:03:46] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:03:46] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:03:46] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.ico
+[2026-01-16 17:03:46] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.ico HTTP/1.1" 404 179
+[2026-01-16 17:03:55] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/ HTTP/1.1" 200 54213
+[2026-01-16 17:03:55] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:03:55] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:26:07] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/parametres/ HTTP/1.1" 200 55542
+[2026-01-16 17:26:07] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:26:07] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:26:10] [INFO] [django.server] [basehttp:212] "GET /interim/config-scoring/ HTTP/1.1" 200 53650
+[2026-01-16 17:26:10] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:26:10] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:26:41] [INFO] [django.server] [basehttp:212] "GET /interim/jours-feries/ HTTP/1.1" 200 84784
+[2026-01-16 17:26:41] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:26:41] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:29:40] [INFO] [django.server] [basehttp:212] "GET / HTTP/1.1" 302 0
+[2026-01-16 17:29:40] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
+[2026-01-16 17:29:40] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:29:40] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:29:43] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/parametres/ HTTP/1.1" 200 55767
+[2026-01-16 17:29:43] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:29:43] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:29:46] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/ HTTP/1.1" 200 54213
+[2026-01-16 17:29:46] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:29:46] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:30:06] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/modifier/ HTTP/1.1" 200 54308
+[2026-01-16 17:30:06] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:30:06] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:31:00] [INFO] [django.server] [basehttp:212] "GET /interim/config-kelio/modifier/ HTTP/1.1" 200 54308
+[2026-01-16 17:31:00] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:31:00] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:39:22] [INFO] [django.server] [basehttp:212] "GET / HTTP/1.1" 302 0
+[2026-01-16 17:39:22] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
+[2026-01-16 17:39:22] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:39:22] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:40:22] [INFO] [django.server] [basehttp:212] "GET /interim/api/refresh-stats/ HTTP/1.1" 200 137
+[2026-01-16 17:40:39] [INFO] [django.server] [basehttp:212] "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198487
+[2026-01-16 17:40:39] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:40:39] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Initialise pour synchronisation complete
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Debut synchronisation globale mode complete
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] SYNCHRONISATION COMPLETE V4.3 ETENDUE
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] ETAPE 1/4: EMPLOYES
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Debut synchronisation employes V4.3 FINAL
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] Session HTTP ultra-robuste cre pour webservices
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] Service Kelio V4.3 FINAL initialis pour Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-START] === DEBUT EMPLOYES === | Config: Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-CONFIG] Parametres: {'batch_size': 15, 'max_retries': 2, 'timeout': 30, 'fast_mode': True}
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [DEBUT] === DEBUT SYNCHRONISATION EMPLOYES V4.3.1 ULTRA-ROBUSTE ===
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [OPTIMISATION] Utilisation directe d'EmployeeService (EmployeeListService confirme defaillant)
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] [DIRECT] Utilisation directe EmployeeService
+[2026-01-16 17:41:12] [INFO] [kelio.sync] [kelio_sync_v43:215] Transport SOAP cree avec operation_timeout
+[2026-01-16 17:41:13] [INFO] [kelio.sync] [kelio_sync_v43:215] [OK] Client SOAP cree pour EmployeeService
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [EXTRACTION] Extraction mega-robuste depuis EmployeeService
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [STRATEGIE] STRATEGIE 1: Serialisation Zeep amelioree...
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [SERIALISE] Serialise: <class 'list'>
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [LISTE] Liste directe de 65 elements
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [SUCCESS] STRATEGIE 1 REUSSIE: 65 employes valides
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [SUCCESS] EmployeeService direct: 65 employes
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [DATA] 65 employe(s) recupere(s)
+[2026-01-16 17:41:21] [INFO] [kelio.sync] [kelio_sync_v43:215] [DEDUPE] 64 employe(s) apres deduplication avancee
+[2026-01-16 17:41:23] [INFO] [kelio.sync] [kelio_sync_v43:215] [BATCH 1/5] Traites: 15 | Crees: 6 | MAJ: 9 | Erreurs: 0
+[2026-01-16 17:41:25] [INFO] [kelio.sync] [kelio_sync_v43:215] [BATCH 2/5] Traites: 15 | Crees: 4 | MAJ: 11 | Erreurs: 0
+[2026-01-16 17:41:26] [INFO] [kelio.sync] [kelio_sync_v43:215] [BATCH 3/5] Traites: 15 | Crees: 3 | MAJ: 12 | Erreurs: 0
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [BATCH 4/5] Traites: 15 | Crees: 0 | MAJ: 15 | Erreurs: 0
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [BATCH 5/5] Traites: 4 | Crees: 0 | MAJ: 4 | Erreurs: 0
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [SUCCESS] Synchronisation V4.3.1 terminee: reussi en 14.78s
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-RESUME] === RESUME EMPLOYES ===
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Statut: REUSSI
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Duree: 14.79s
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Traites: 64 | Crees: 13 | MAJ: 51 | Erreurs: 0
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Taux succes: 100.0%
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Performance: 4.33 items/sec
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Employes: 64 traites
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] ETAPE 2/4: ABSENCES
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Lancement sync absences...
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] Session HTTP ultra-robuste cre pour webservices
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] Service Kelio V4.3 FINAL initialis pour Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-START] === DEBUT ABSENCES === | Config: Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-CONFIG] Parametres: {'date_debut': 'None', 'date_fin': 'None'}
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] DEBUT SYNCHRONISATION DES ABSENCES KELIO V4.3.1
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Date dbut par dfaut: 2026-01-01
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Date fin par dfaut: 2027-12-31 (inclut absences previsionnelles)
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Priode: 2026-01-01  2027-12-31
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Cration client SOAP AbsenceRequestService...
+[2026-01-16 17:41:27] [INFO] [kelio.sync] [kelio_sync_v43:215] Transport SOAP cree avec operation_timeout
+[2026-01-16 17:41:28] [INFO] [kelio.sync] [kelio_sync_v43:215] [OK] Client SOAP cree pour AbsenceRequestService
+[2026-01-16 17:41:28] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC]  Client SOAP cr
+[2026-01-16 17:41:28] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Appel API exportAbsenceRequests...
+[2026-01-16 17:41:28] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Paramtres: startDate=2026-01-01, endDate=2027-12-31
+[2026-01-16 17:41:28] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Appel sans paramtre requestState...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Reponse recue
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Extraction des absences...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-EXTRACT] Extraction des absences...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-EXTRACT]  Liste directe
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-EXTRACT]  3 absences valides
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] 3 absence(s) extraite(s)
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Repartition par statut: {'3': 3}
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Traitement des absences...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] FIN - Statut: REUSSI
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Traites: 3, Cres: 0, MAJ: 3, Erreurs: 0
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [ABSENCES-SYNC] Dure: 1.35s
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:29] [WARNING] [kelio.sync] [kelio_sync_v43:215] [ANOMALIE-VOLUME_FAIBLE] Volume faible: 3 traites (attendu minimum: 10)
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-RESUME] === RESUME ABSENCES ===
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Statut: REUSSI
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Duree: 1.36s
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Traites: 3 | Crees: 0 | MAJ: 3 | Erreurs: 0
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Taux succes: 100.0%
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [RESUME] Performance: 2.2 items/sec
+[2026-01-16 17:41:29] [WARNING] [kelio.sync] [kelio_sync_v43:215] [RESUME] ANOMALIES DETECTEES: 1
+[2026-01-16 17:41:29] [WARNING] [kelio.sync] [kelio_sync_v43:215] [RESUME]   - [WARNING] VOLUME_FAIBLE: Volume faible: 3 traites (attendu minimum: 10)
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Absences: 3 traitees
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Absences: 3 traitees
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] ETAPE 3/4: FORMATIONS
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Lancement sync formations...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] Session HTTP ultra-robuste cre pour webservices
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] Service Kelio V4.3 FINAL initialis pour Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-START] === DEBUT FORMATIONS === | Config: Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [FORMATIONS-SYNC] DEBUT SYNCHRONISATION DES FORMATIONS KELIO V4.3.1
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [FORMATIONS-SYNC] Cration client SOAP...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] Transport SOAP cree avec operation_timeout
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [OK] Client SOAP cree pour EmployeeTrainingHistoryService
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [FORMATIONS-SYNC]  Client cr
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [FORMATIONS-SYNC] Appel API Kelio...
+[2026-01-16 17:41:29] [INFO] [kelio.sync] [kelio_sync_v43:215] [FORMATIONS-SYNC] Appel exportEmployeeTrainingHistory()
+[2026-01-16 17:41:34] [ERROR] [kelio.sync] [kelio_sync_v43:215] [FORMATIONS-SYNC]  Erreur API: HTTPSConnectionPool(host='keliodemo-safesecur.kelio.io', port=443): Max retries exceeded with url: /open/services/EmployeeTrainingHistoryService (Caused by ResponseError('too many 500 error responses'))
+[2026-01-16 17:41:34] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Formations: 0 traitees
+[2026-01-16 17:41:34] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Formations: 0 traitees
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] ETAPE 4/4: COMPETENCES
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] ----------------------------------------------------------------------------------------------------
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Lancement sync competences...
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] Session HTTP ultra-robuste cre pour webservices
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] Service Kelio V4.3 FINAL initialis pour Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-SYNC-START] === DEBUT COMPETENCES === | Config: Configuration Kelio SafeSecur Hirarchique
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC] DEBUT SYNCHRONISATION DES COMPETENCES KELIO V4.3.1
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] ================================================================================
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC] Cration client SOAP SkillAssignmentService...
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] Transport SOAP cree avec operation_timeout
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [OK] Client SOAP cree pour SkillAssignmentService
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC]  Client cr
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC] Appel API Kelio...
+[2026-01-16 17:41:35] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC] Appel exportSkillAssignments()
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC]  Rponse reue
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC] Extraction des comptences...
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-EXTRACT] Extraction...
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-EXTRACT]  0 comptences
+[2026-01-16 17:41:36] [WARNING] [kelio.sync] [kelio_sync_v43:215] [COMPETENCES-SYNC]  Aucune comptence trouve
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Competences: 0 traitees
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Competences: 0 traitees
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] BILAN SYNCHRONISATION
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43]   [OK] EMPLOYEES: SUCCESS
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43]   [OK] ABSENCES: SUCCESS
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43]   [ECHEC] FORMATIONS: FAILED
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43]   [OK] COMPETENCES: SUCCESS
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] ====================================================================================================
+[2026-01-16 17:41:36] [INFO] [kelio.sync] [kelio_sync_v43:215] [KELIO-GLOBAL-MANAGER-V43] Synchronisation terminee en 23.19s
+[2026-01-16 17:41:36] [INFO] [django.server] [basehttp:212] "POST /interim/admin/kelio/sync-global/ HTTP/1.1" 200 2166
+[2026-01-16 17:41:41] [INFO] [django.server] [basehttp:212] "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198262
+[2026-01-16 17:41:41] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:41:41] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:44:46] [INFO] [django.server] [basehttp:212] "GET /interim/api/refresh-stats/ HTTP/1.1" 200 137
+[2026-01-16 17:44:50] [INFO] [django.server] [basehttp:212] "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198262
+[2026-01-16 17:44:50] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:44:50] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:44:55] [INFO] [django.server] [basehttp:212] "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198262
+[2026-01-16 17:44:55] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:44:55] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [INFO] [django.server] [basehttp:212] "GET /admin HTTP/1.1" 301 0
+[2026-01-16 17:45:46] [INFO] [django.server] [basehttp:212] "GET /admin/ HTTP/1.1" 200 21576
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/css/base.css
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/css/base.css HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/css/dark_mode.css
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/css/nav_sidebar.css
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/css/dashboard.css
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/css/dark_mode.css HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/css/responsive.css
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/js/theme.js
+[2026-01-16 17:45:46] [WARNING] [django.request] [log:241] Not Found: /static/admin/js/nav_sidebar.js
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/css/dashboard.css HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/css/responsive.css HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/js/theme.js HTTP/1.1" 404 179
+[2026-01-16 17:45:46] [WARNING] [django.server] [basehttp:212] "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 404 179
+[2026-01-16 17:50:03] [INFO] [django.server] [basehttp:212] "GET / HTTP/1.1" 302 0
+[2026-01-16 17:50:03] [INFO] [django.server] [basehttp:212] "GET /n3/ HTTP/1.1" 200 87375
+[2026-01-16 17:50:03] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:50:03] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 17:50:15] [INFO] [django.server] [basehttp:212] "GET /interim/admin/kelio/sync-global/ HTTP/1.1" 200 198487
+[2026-01-16 17:50:15] [WARNING] [django.request] [log:241] Not Found: /static/img/i365.png
+[2026-01-16 17:50:15] [WARNING] [django.server] [basehttp:212] "GET /static/img/i365.png HTTP/1.1" 404 179
+[2026-01-16 18:07:25] [INFO] [django.utils.autoreload] [autoreload:265] D:\DevProjects\Python\interim365\mainapp\services\kelio_sync_v43.py changed, reloading.
+[2026-01-16 18:07:26] [INFO] [django.utils.autoreload] [autoreload:667] Watching for file changes with StatReloader
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> SCORING INTERIM SERVICE V4.2 - HARMONISE KELIO + CONFIGURATIONSSCORING
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] OK Nouvelles fonctionnalites V4.2 CORRIGEES:
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Integration complete avec Kelio API V4.2
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Utilisation systematique ConfigurationScoring avec fallbacks
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Scores enrichis avec donnees professionnelles Kelio
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Pondrations configurables par administration
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Bonus et pnalits personnalisables par configuration
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Configurations spcialises par dpartement/urgence
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Analytics enrichies avec mtriques par configuration
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    >>> Fallback automatique si ConfigurationScoring indisponible
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> Structure de scoring V4.2:
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    1. Rcupration ConfigurationScoring pour demande
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    2. Utilisation poids configurs ou fallback default_weights
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    3. Calcul scores avec donnes Kelio enrichies
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    4. Application bonus/pnalits de configuration
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    5. Score final pondr avec normalisation
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> Criteres de scoring V4.2 (configurables):
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Similarit poste: 25% (enrichi avec job_assignments)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Comptences Kelio: 25% (skill_assignments + niveaux)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Exprience Kelio: 20% (professional_experience + anciennet)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Disponibilit Kelio: 15% (labor_contracts + absence_requests)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Proximit: 10% (golocalisation + rayon dplacement)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Anciennet: 5% (donnes embauche Kelio)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> Fonctionnalits ConfigurationScoring:
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Configurations par dpartement et type d'urgence
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Bonus hirarchiques personnalisables
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Pnalits configurables (indisponibilit, distance)
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Suivi utilisation et performance par configuration
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Tests et comparaisons de configurations
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192]    Optimisation automatique base sur historique
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> Configurations actives: 1
+[2026-01-16 18:07:26] [INFO] [scoring.service] [scoring_service:192] >>> Configuration par dfaut: Scoring Hirarchique SafeSecur
+[2026-01-16 18:13:17] [INFO] [django.utils.autoreload] [autoreload:265] D:\DevProjects\Python\interim365\mainapp\models.py changed, reloading.
+[2026-01-16 18:13:18] [INFO] [django.utils.autoreload] [autoreload:667] Watching for file changes with StatReloader
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> SCORING INTERIM SERVICE V4.2 - HARMONISE KELIO + CONFIGURATIONSSCORING
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] OK Nouvelles fonctionnalites V4.2 CORRIGEES:
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Integration complete avec Kelio API V4.2
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Utilisation systematique ConfigurationScoring avec fallbacks
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Scores enrichis avec donnees professionnelles Kelio
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Pondrations configurables par administration
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Bonus et pnalits personnalisables par configuration
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Configurations spcialises par dpartement/urgence
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Analytics enrichies avec mtriques par configuration
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    >>> Fallback automatique si ConfigurationScoring indisponible
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> Structure de scoring V4.2:
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    1. Rcupration ConfigurationScoring pour demande
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    2. Utilisation poids configurs ou fallback default_weights
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    3. Calcul scores avec donnes Kelio enrichies
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    4. Application bonus/pnalits de configuration
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    5. Score final pondr avec normalisation
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> Criteres de scoring V4.2 (configurables):
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Similarit poste: 25% (enrichi avec job_assignments)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Comptences Kelio: 25% (skill_assignments + niveaux)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Exprience Kelio: 20% (professional_experience + anciennet)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Disponibilit Kelio: 15% (labor_contracts + absence_requests)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Proximit: 10% (golocalisation + rayon dplacement)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Anciennet: 5% (donnes embauche Kelio)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] 
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> Fonctionnalits ConfigurationScoring:
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Configurations par dpartement et type d'urgence
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Bonus hirarchiques personnalisables
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Pnalits configurables (indisponibilit, distance)
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Suivi utilisation et performance par configuration
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Tests et comparaisons de configurations
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192]    Optimisation automatique base sur historique
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> =================================================
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> Configurations actives: 1
+[2026-01-16 18:13:18] [INFO] [scoring.service] [scoring_service:192] >>> Configuration par dfaut: Scoring Hirarchique SafeSecur

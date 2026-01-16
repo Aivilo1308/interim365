@@ -2120,7 +2120,6 @@ class DemandeInterim(TimestampedModel):
     class Meta:
         verbose_name = "Demande d'interim"
         verbose_name_plural = "Demandes d'interim"
-        ordering = ['-created_at']
 
 # ================================================================
 # MODELES PROPOSITIONS CANDIDATS

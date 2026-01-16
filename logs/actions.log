@@ -154,3 +154,32 @@
 [2026-01-12 17:53:27] [2026-01-12 17:53:27] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
 [2026-01-12 17:54:28] [2026-01-12 17:54:28] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
 [2026-01-14 02:21:16] [2026-01-14 02:21:16] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 17:03:11] [2026-01-16 17:03:11] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 17:03:35] [2026-01-16 17:03:35] [AUTH] [TENTATIVE_CONNEXION] [User:anonymous] [IP:-] [username:njb2] Tentative de connexion
+[2026-01-16 17:03:35] [2026-01-16 17:03:35] [AUTH] [CONNEXION_SUPERUSER] [User:njb2] [IP:127.0.0.1]  Connexion superutilisateur réussie
+[2026-01-16 17:03:35] [2026-01-16 17:03:35] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 17:03:46] [njb2] Accès dashboard paramètres
+[2026-01-16 17:26:07] [njb2] Accès dashboard paramètres
+[2026-01-16 17:26:41] [2026-01-16 17:26:41] [FERIES] [ACCES_LISTE] [User:njb2] [IP:127.0.0.1]  Accès liste jours fériés
+[2026-01-16 17:29:40] [2026-01-16 17:29:40] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 17:29:43] [njb2] Accès dashboard paramètres
+[2026-01-16 17:39:22] [2026-01-16 17:39:22] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 17:40:38] [2026-01-16 17:40:38] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 17:40:38] [2026-01-16 17:40:38] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 17:41:12] [2026-01-16 17:41:12] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:POST] Début synchronisation globale Kelio V4.3
+[2026-01-16 17:41:12] [2026-01-16 17:41:12] [KELIO] [PARAMETRES_SYNC] [User:njb2] [IP:127.0.0.1] [sync_mode:complete] [fast_mode:True] [batch_size:10] Mode: complete, Fast: True, Batch: 10
+[2026-01-16 17:41:12] [2026-01-16 17:41:12] [KELIO] [MODE_RAPIDE] [User:njb2] [IP:127.0.0.1]  Mode synchronisation rapide activé
+[2026-01-16 17:41:12] [2026-01-16 17:41:12] [KELIO] [INIT_SERVICE] [User:njb2] [IP:127.0.0.1]  Initialisation service Kelio V4.3
+[2026-01-16 17:41:12] [2026-01-16 17:41:12] [KELIO] [LANCEMENT_SYNC] [User:njb2] [IP:127.0.0.1]  Lancement synchronisation globale V4.3
+[2026-01-16 17:41:36] [2026-01-16 17:41:36] [KELIO] [SYNC_TERMINEE] [User:njb2] [IP:127.0.0.1] [crees:13] [maj:51] [erreurs:0] Synchronisation terminée: 64 employés
+[2026-01-16 17:41:41] [2026-01-16 17:41:41] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 17:41:41] [2026-01-16 17:41:41] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 17:44:50] [2026-01-16 17:44:50] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 17:44:50] [2026-01-16 17:44:50] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 17:44:55] [2026-01-16 17:44:55] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 17:44:55] [2026-01-16 17:44:55] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 17:50:03] [2026-01-16 17:50:03] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 17:50:15] [2026-01-16 17:50:15] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 17:50:15] [2026-01-16 17:50:15] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:07:26] [2026-01-16 18:07:26] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:13:18] [2026-01-16 18:13:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible

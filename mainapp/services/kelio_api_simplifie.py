@@ -1793,13 +1793,16 @@ class KelioSynchronizationServiceV41:
                 user.save()
                 return user, False
             else:
+
+                from django.utils.crypto import get_random_string
+                
                 # Creer un nouvel utilisateur
                 user = User.objects.create_user(
                     username=username,
                     email=email,
                     first_name=prenom,
                     last_name=nom,
-                    password=User.objects.make_random_password()
+                    password=get_random_string(length=20)
                 )
                 return user, True
                 
