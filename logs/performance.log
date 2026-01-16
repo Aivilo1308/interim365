@@ -1130,3 +1130,73 @@
 ✅ Statut: SUCCÈS
 ============================================================
 
+[2026-01-16 18:20:02] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-16 18:20:02
+⏱️ Durée: 28 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 412
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:29:37] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-16 18:29:37
+⏱️ Durée: 33 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 412
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:29:38] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-16 18:29:38
+⏱️ Durée: 15 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 412
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:32:23] 
+============================================================
+📊 RÉSUMÉ: SYNC_KELIO_GLOBAL_V43
+============================================================
+⏰ Date/Heure: 2026-01-16 18:32:23
+⏱️ Durée: 22.5 sec
+📈 Statistiques:
+   • utilisateur: njb2
+   • mode_sync: complete
+   • mode_rapide: True
+   • total_employes: 64
+   • total_crees: 13
+   • total_maj: 51
+   ❌ total_erreurs: 0
+   • doublons_geres: 0
+   • conflits_resolus: 0
+✅ Statut: SUCCÈS
+============================================================
+

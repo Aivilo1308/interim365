@@ -9,7 +9,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
 
 # Clé de cryptage Kelio
-KELIO_CRYPTO_KEY = config('KELIO_CRYPTO_KEY', default='').encode('utf-8')
+KELIO_CRYPTO_KEY = config('KELIO_CRYPTO_KEY', default='')
+if KELIO_CRYPTO_KEY:
+    # La clé Fernet doit être en bytes
+    KELIO_CRYPTO_KEY = KELIO_CRYPTO_KEY.encode('utf-8') if isinstance(KELIO_CRYPTO_KEY, str) else KELIO_CRYPTO_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)

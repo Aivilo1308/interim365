@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Service de synchronisation Kelio - Version 4.3.1 FINALE COMPLÈTE
-Solution DÉFINITIVE aux problèmes identifiés dans les logs
+Service de synchronisation Kelio - Version 4.3.2 CORRIGÉE
+Solution aux problèmes identifiés en production
 
-CORRECTIONS V4.3 FINALES :
+CORRECTIONS V4.3.2 :
+- ✅ Fix make_random_password → get_random_string
+- ✅ Gestion robuste des contraintes UNIQUE sur user_id
+- ✅ Vérification user_id AVANT création de ProfilUtilisateur
+- ✅ Meilleure gestion des IntegrityError SQL Server
+- ✅ Protection contre les transactions bloquées
+
+CORRECTIONS V4.3.1 PRÉCÉDENTES :
 - ✅ Résolution erreurs "objet modifié par un autre utilisateur"
 - ✅ Gestion robuste des structures de réponse non reconnues
 - ✅ Extraction multi-stratégie pour tous formats SOAP
@@ -36,7 +43,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.conf import settings
-from django.utils.crypto import get_random_string  # Pour remplacer make_random_password
+from django.utils.crypto import get_random_string  # V4.3.2 - Fix make_random_password
 from utils.crypto_utils import KelioPasswordCipher
 
 # ================================================================
@@ -3584,28 +3591,57 @@ class KelioSyncServiceV43:
             return user, True
     
     def _create_or_update_profil_fast(self, emp_data, user):
-        """Version rapide ProfilUtilisateur avec protection encodage"""
+        """Version rapide ProfilUtilisateur avec protection encodage
+        
+        CORRECTION V4.3.2: Gestion robuste des contraintes UNIQUE sur user_id
+        """
         matricule = safe_str(emp_data.get('matricule'))
         
-        # Recherche simple
-        profil = ProfilUtilisateur.objects.filter(matricule=matricule).first()
+        # Recherche par user d'abord (pour éviter les doublons user_id)
+        profil = None
+        if user:
+            profil = ProfilUtilisateur.objects.filter(user=user).first()
+        
+        # Si pas trouvé par user, chercher par matricule
+        if not profil and matricule:
+            profil = ProfilUtilisateur.objects.filter(matricule=matricule).first()
         
         if profil:
-            # Mise à jour minimale
-            profil.user = user
+            # Mise à jour minimale - ne pas écraser user si différent
+            if profil.user is None or profil.user == user:
+                profil.user = user
             profil.actif = not emp_data.get('archived', False)
             profil.save()
             return profil, False
         else:
-            # Création simple
-            profil = ProfilUtilisateur.objects.create(
-                user=user,
-                matricule=matricule,
-                type_profil='UTILISATEUR',
-                statut_employe='ACTIF',
-                actif=not emp_data.get('archived', False)
-            )
-            return profil, True
+            # Vérifier que user n'est pas déjà utilisé
+            if user:
+                existing = ProfilUtilisateur.objects.filter(user=user).first()
+                if existing:
+                    existing.actif = not emp_data.get('archived', False)
+                    existing.save()
+                    return existing, False
+            
+            # Création simple avec gestion d'erreur
+            try:
+                profil = ProfilUtilisateur.objects.create(
+                    user=user,
+                    matricule=matricule,
+                    type_profil='UTILISATEUR',
+                    statut_employe='ACTIF',
+                    actif=not emp_data.get('archived', False)
+                )
+                return profil, True
+            except IntegrityError:
+                # En cas d'erreur, essayer de récupérer le profil existant
+                profil = ProfilUtilisateur.objects.filter(
+                    models.Q(user=user) | models.Q(matricule=matricule)
+                ).first()
+                if profil:
+                    profil.actif = not emp_data.get('archived', False)
+                    profil.save()
+                    return profil, False
+                raise
 
     def _process_single_employee_ultra_safe(self, emp_data):
         """Traitement ultra-sécurisé d'un employé unique avec protection encodage"""
@@ -3686,26 +3722,40 @@ class KelioSyncServiceV43:
             raise
     
     def _create_or_update_profil_ultra_safe(self, emp_data, user):
-        """Création/mise à jour ultra-sécurisée de ProfilUtilisateur avec protection encodage"""
+        """Création/mise à jour ultra-sécurisée de ProfilUtilisateur avec protection encodage
+        
+        CORRECTION V4.3.2: Gestion robuste des contraintes UNIQUE sur user_id ET matricule
+        """
         matricule = safe_str(emp_data.get('matricule'))
         kelio_employee_key = safe_str(emp_data.get('employee_key'))
         
         try:
-            # Chercher profil existant avec verrou exclusif
+            # Chercher profil existant par plusieurs critères
             profil = None
             
-            if matricule:
-                profil = ProfilUtilisateur.objects.select_for_update().filter(matricule=matricule).first()
+            # 1. D'abord chercher par user_id (contrainte UNIQUE la plus importante)
+            if user:
+                profil = ProfilUtilisateur.objects.filter(user=user).first()
             
-            # Recherche alternative par kelio_employee_key
+            # 2. Si pas trouvé, chercher par matricule
+            if not profil and matricule:
+                profil = ProfilUtilisateur.objects.filter(matricule=matricule).first()
+            
+            # 3. Recherche alternative par kelio_employee_key
             if not profil and kelio_employee_key:
-                profil = ProfilUtilisateur.objects.select_for_update().filter(
+                profil = ProfilUtilisateur.objects.filter(
                     kelio_employee_key=kelio_employee_key
                 ).first()
             
             if profil:
                 # Mise à jour avec protection
-                profil.user = user
+                # Ne mettre à jour user que si le profil n'a pas déjà un user différent
+                if profil.user is None or profil.user == user:
+                    profil.user = user
+                elif profil.user != user:
+                    # Le profil a un autre user, vérifier si l'autre user a déjà un profil
+                    logger.warning(f"Profil {matricule} déjà lié à user {profil.user.username}, ignoré")
+                
                 profil.actif = not emp_data.get('archived', False)
                 profil.kelio_badge_code = safe_str(emp_data.get('badge_code', '')) or profil.kelio_badge_code
                 
@@ -3721,6 +3771,16 @@ class KelioSyncServiceV43:
                 profil.save()
                 return profil, False
             else:
+                # AVANT de créer, vérifier que user n'est pas déjà utilisé par un autre profil
+                if user:
+                    existing_profil_with_user = ProfilUtilisateur.objects.filter(user=user).first()
+                    if existing_profil_with_user:
+                        # User déjà utilisé, mettre à jour ce profil existant
+                        logger.warning(f"User {user.username} déjà lié au profil {existing_profil_with_user.matricule}")
+                        existing_profil_with_user.actif = not emp_data.get('archived', False)
+                        existing_profil_with_user.save()
+                        return existing_profil_with_user, False
+                
                 # Création avec gestion des contraintes UNIQUE
                 profil_data = {
                     'user': user,
@@ -3744,14 +3804,28 @@ class KelioSyncServiceV43:
                     profil = ProfilUtilisateur.objects.create(**profil_data)
                     return profil, True
                 except IntegrityError as e:
-                    if "matricule" in str(e):
-                        # Matricule déjà existant, essayer de récupérer
-                        profil = ProfilUtilisateur.objects.get(matricule=matricule)
-                        profil.user = user
-                        profil.save()
-                        return profil, False
-                    else:
-                        raise
+                    error_str = str(e).lower()
+                    # Gestion de toutes les contraintes UNIQUE possibles
+                    if "user_id" in error_str or "user" in error_str:
+                        # User déjà utilisé par un autre profil
+                        profil = ProfilUtilisateur.objects.filter(user=user).first()
+                        if profil:
+                            profil.actif = not emp_data.get('archived', False)
+                            profil.save()
+                            return profil, False
+                    elif "matricule" in error_str:
+                        # Matricule déjà existant, récupérer le profil
+                        profil = ProfilUtilisateur.objects.filter(matricule=matricule).first()
+                        if profil:
+                            if profil.user is None:
+                                profil.user = user
+                            profil.actif = not emp_data.get('archived', False)
+                            profil.save()
+                            return profil, False
+                    
+                    # Si on arrive ici, re-lever l'exception
+                    logger.error(f"IntegrityError non gérée pour {matricule}: {error_str}")
+                    raise
                         
         except Exception as e:
             error_safe = ultra_safe_str(e)

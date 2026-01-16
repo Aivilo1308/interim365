@@ -579,3 +579,37 @@
 [2026-01-16 17:50:15] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 17:50:15] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
 [2026-01-16 18:07:26] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:07:26] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
 [2026-01-16 18:13:18] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:13:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:19:57] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:19:57] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:20:14] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:20:14] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:20:14] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:20:14] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:26:34] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:26:34] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:30:49] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:30:49] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:30:49] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:30:49] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:32:01] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:01] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:POST] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:32:01] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:01] [KELIO] [PARAMETRES_SYNC] [User:njb2] [IP:127.0.0.1] [sync_mode:complete] [fast_mode:True] [batch_size:10] Mode: complete, Fast: True, Batch: 10
+[2026-01-16 18:32:01] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:01] [KELIO] [MODE_RAPIDE] [User:njb2] [IP:127.0.0.1]  Mode synchronisation rapide activé
+[2026-01-16 18:32:01] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:01] [KELIO] [INIT_SERVICE] [User:njb2] [IP:127.0.0.1]  Initialisation service Kelio V4.3
+[2026-01-16 18:32:01] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:01] [KELIO] [LANCEMENT_SYNC] [User:njb2] [IP:127.0.0.1]  Lancement synchronisation globale V4.3
+[2026-01-16 18:32:23] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:23] [KELIO] [SYNC_TERMINEE] [User:njb2] [IP:127.0.0.1] [crees:13] [maj:51] [erreurs:0] Synchronisation terminée: 64 employés
+[2026-01-16 18:32:23] [INFO] [interim.kelio] [views_kelio:121] 
+============================================================
+📊 RÉSUMÉ: SYNC_KELIO_GLOBAL_V43
+============================================================
+⏰ Date/Heure: 2026-01-16 18:32:23
+⏱️ Durée: 22.5 sec
+📈 Statistiques:
+   • utilisateur: njb2
+   • mode_sync: complete
+   • mode_rapide: True
+   • total_employes: 64
+   • total_crees: 13
+   • total_maj: 51
+   ❌ total_erreurs: 0
+   • doublons_geres: 0
+   • conflits_resolus: 0
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:32:28] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:28] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:32:28] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:32:28] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:42:04] [INFO] [interim.kelio] [views_kelio:55] [2026-01-16 18:42:04] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible

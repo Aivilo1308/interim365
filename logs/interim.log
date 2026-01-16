@@ -2207,3 +2207,125 @@ INFO 2025-06-22 22:04:46,143 autoreload 33128 24648 D:\DevProjects\Python\interi
 [2026-01-16 18:13:18] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1132]    >>> Selection finale optimisee
 [2026-01-16 18:13:18] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1133]    >>> Integration complete avec les modeles existants
 [2026-01-16 18:13:18] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:13:18] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3320] ✅ Administration des jours fériés chargée
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3321]    • ModeleJourFerie: Templates de jours fériés
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3322]    • JourFerie: Instances par année
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3323]    • HistoriqueModification: Traçabilité des changements
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3320] ✅ Administration des jours fériés chargée
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3321]    • ModeleJourFerie: Templates de jours fériés
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3322]    • JourFerie: Instances par année
+[2026-01-16 18:19:57] [INFO] [mainapp.admin] [admin:3323]    • HistoriqueModification: Traçabilité des changements
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1126] OK Service ManagerProposalsService cree avec succes
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1127] >>> Fonctionnalites principales:
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1128]    >>> Proposition de candidats par les managers
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1129]    >>> Evaluation et scoring avec bonus selon role
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1130]    >>> Validation multi-niveaux progressive
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1131]    >>> Notifications intelligentes automatiques
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1132]    >>> Selection finale optimisee
+[2026-01-16 18:19:57] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1133]    >>> Integration complete avec les modeles existants
+[2026-01-16 18:19:57] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:19:57] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:20:02] [INFO] [interim.actions] [views:53] [2026-01-16 18:20:02] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 18:20:02] [INFO] [interim] [views:54] [2026-01-16 18:20:02] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 18:20:02] [INFO] [interim] [views:118] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-16 18:20:02
+⏱️ Durée: 28 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 412
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:20:02] [WARNING] [interim] [views:75] ⚠️ ANOMALIE: [2026-01-16 18:20:02] [ANOMALIE] [WORKFLOW] [INFO] [User:njb2]  Taux de validation bas: 17.6%
+[2026-01-16 18:20:14] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:20:14] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:20:14] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:20:14] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:26:34] [INFO] [mainapp.admin] [admin:3320] ✅ Administration des jours fériés chargée
+[2026-01-16 18:26:34] [INFO] [mainapp.admin] [admin:3321]    • ModeleJourFerie: Templates de jours fériés
+[2026-01-16 18:26:34] [INFO] [mainapp.admin] [admin:3322]    • JourFerie: Instances par année
+[2026-01-16 18:26:34] [INFO] [mainapp.admin] [admin:3323]    • HistoriqueModification: Traçabilité des changements
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1126] OK Service ManagerProposalsService cree avec succes
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1127] >>> Fonctionnalites principales:
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1128]    >>> Proposition de candidats par les managers
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1129]    >>> Evaluation et scoring avec bonus selon role
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1130]    >>> Validation multi-niveaux progressive
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1131]    >>> Notifications intelligentes automatiques
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1132]    >>> Selection finale optimisee
+[2026-01-16 18:26:34] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1133]    >>> Integration complete avec les modeles existants
+[2026-01-16 18:26:34] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:26:34] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
+[2026-01-16 18:29:37] [INFO] [interim] [views:1542] Accès index par utilisateur: njb2
+[2026-01-16 18:29:37] [INFO] [interim] [views:1278] Redirection superutilisateur: njb2 → Vue globale
+[2026-01-16 18:29:37] [INFO] [interim] [views:1564] Redirection de njb2 vers: /n3/
+[2026-01-16 18:29:37] [INFO] [interim.actions] [views:53] [2026-01-16 18:29:37] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 18:29:37] [INFO] [interim] [views:54] [2026-01-16 18:29:37] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 18:29:37] [INFO] [interim] [views:118] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-16 18:29:37
+⏱️ Durée: 33 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 412
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:29:37] [WARNING] [interim] [views:75] ⚠️ ANOMALIE: [2026-01-16 18:29:37] [ANOMALIE] [WORKFLOW] [INFO] [User:njb2]  Taux de validation bas: 17.6%
+[2026-01-16 18:29:37] [INFO] [interim] [views:1542] Accès index par utilisateur: njb2
+[2026-01-16 18:29:37] [INFO] [interim] [views:1278] Redirection superutilisateur: njb2 → Vue globale
+[2026-01-16 18:29:37] [INFO] [interim] [views:1564] Redirection de njb2 vers: /n3/
+[2026-01-16 18:29:37] [INFO] [interim.actions] [views:53] [2026-01-16 18:29:37] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 18:29:37] [INFO] [interim] [views:54] [2026-01-16 18:29:37] [DASHBOARD] [ACCES_N3_GLOBAL] [User:njb2] [IP:127.0.0.1]  Accès dashboard global N3
+[2026-01-16 18:29:38] [INFO] [interim] [views:118] 
+============================================================
+📊 RÉSUMÉ: DASHBOARD_N3_GLOBAL
+============================================================
+⏰ Date/Heure: 2026-01-16 18:29:38
+⏱️ Durée: 15 ms
+📈 Statistiques:
+   • utilisateur: njb2
+   • type_profil: ADMIN
+   • demandes_total: 34
+   • demandes_en_attente: 8
+   • employes_total: 412
+   • taux_validation: 17.6%
+   • alertes: 3
+✅ Statut: SUCCÈS
+============================================================
+
+[2026-01-16 18:29:38] [WARNING] [interim] [views:75] ⚠️ ANOMALIE: [2026-01-16 18:29:38] [ANOMALIE] [WORKFLOW] [INFO] [User:njb2]  Taux de validation bas: 17.6%
+[2026-01-16 18:30:04] [INFO] [interim.actions] [views_parametres:64] [njb2] Accès dashboard paramètres
+[2026-01-16 18:30:49] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:30:49] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:30:49] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:30:49] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:32:01] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:01] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:POST] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:32:01] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:01] [KELIO] [PARAMETRES_SYNC] [User:njb2] [IP:127.0.0.1] [sync_mode:complete] [fast_mode:True] [batch_size:10] Mode: complete, Fast: True, Batch: 10
+[2026-01-16 18:32:01] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:01] [KELIO] [MODE_RAPIDE] [User:njb2] [IP:127.0.0.1]  Mode synchronisation rapide activé
+[2026-01-16 18:32:01] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:01] [KELIO] [INIT_SERVICE] [User:njb2] [IP:127.0.0.1]  Initialisation service Kelio V4.3
+[2026-01-16 18:32:01] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:01] [KELIO] [LANCEMENT_SYNC] [User:njb2] [IP:127.0.0.1]  Lancement synchronisation globale V4.3
+[2026-01-16 18:32:23] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:23] [KELIO] [SYNC_TERMINEE] [User:njb2] [IP:127.0.0.1] [crees:13] [maj:51] [erreurs:0] Synchronisation terminée: 64 employés
+[2026-01-16 18:32:28] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:28] [KELIO] [DEBUT_SYNC_GLOBAL] [User:njb2] [IP:127.0.0.1] [method:GET] Début synchronisation globale Kelio V4.3
+[2026-01-16 18:32:28] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:32:28] [KELIO] [ACCES_PAGE] [User:njb2] [IP:127.0.0.1]  Accès page synchronisation Kelio
+[2026-01-16 18:42:04] [INFO] [mainapp.admin] [admin:3320] ✅ Administration des jours fériés chargée
+[2026-01-16 18:42:04] [INFO] [mainapp.admin] [admin:3321]    • ModeleJourFerie: Templates de jours fériés
+[2026-01-16 18:42:04] [INFO] [mainapp.admin] [admin:3322]    • JourFerie: Instances par année
+[2026-01-16 18:42:04] [INFO] [mainapp.admin] [admin:3323]    • HistoriqueModification: Traçabilité des changements
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1126] OK Service ManagerProposalsService cree avec succes
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1127] >>> Fonctionnalites principales:
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1128]    >>> Proposition de candidats par les managers
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1129]    >>> Evaluation et scoring avec bonus selon role
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1130]    >>> Validation multi-niveaux progressive
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1131]    >>> Notifications intelligentes automatiques
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1132]    >>> Selection finale optimisee
+[2026-01-16 18:42:04] [INFO] [mainapp.services.manager_proposals] [manager_proposals:1133]    >>> Integration complete avec les modeles existants
+[2026-01-16 18:42:04] [INFO] [interim.actions] [views_kelio:54] [2026-01-16 18:42:04] [KELIO] [SERVICE_INIT] [User:anonymous] [IP:-]  Service Kelio V4.3 disponible
